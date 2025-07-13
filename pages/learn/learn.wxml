@@ -1,0 +1,93 @@
+<view class="container">
+  <!-- 学习进度 -->
+  <view class="progress-header">
+    <text class="progress-text">{{currentIndex + 1}} / {{wordList.length}}</text>
+    <view class="progress-dots">
+      <view 
+        wx:for="{{wordList}}" 
+        wx:key="id"
+        class="dot {{index <= currentIndex ? 'active' : ''}}"
+      ></view>
+    </view>
+  </view>
+
+  <!-- 单词卡片 -->
+  <view class="word-card-wrapper">
+    <view class="word-card" bindtap="playAudio">
+      <view class="word-main">
+        <text class="word-text">{{currentWord.word}}</text>
+        <view class="word-kana">
+          <text>{{currentWord.kana}}</text>
+          <text class="romaji">{{currentWord.romaji}}</text>
+        </view>
+      </view>
+      
+      <view class="divider"></view>
+      
+      <view class="word-meaning">
+        <text class="meaning-text">{{currentWord.meaning}}</text>
+      </view>
+      
+      <view class="example-section" wx:if="{{showExample}}">
+        <view class="example-item" wx:for="{{currentWord.examples}}" wx:key="index">
+          <text class="example-jp">{{item.jp}}</text>
+          <text class="example-cn">{{item.cn}}</text>
+        </view>
+      </view>
+      
+      <view class="audio-hint">
+        <image src="/images/speaker.png" class="speaker-icon"></image>
+        <text>点击卡片播放语音</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-action" bindtap="toggleExample">
+      {{showExample ? '隐藏' : '显示'}}例句
+    </button>
+    <button class="btn-action" bindtap="addToWordbook">
+      <text class="{{inWordbook ? 'added' : ''}}">{{inWordbook ? '已添加' : '加入生词本'}}</text>
+    </button>
+  </view>
+
+  <!-- 掌握状态按钮 -->
+  <view class="master-buttons">
+    <button class="btn-master forgot" bindtap="markStatus" data-status="forgot">
+      <text class="icon">😕</text>
+      <text>不认识</text>
+    </button>
+    <button class="btn-master fuzzy" bindtap="markStatus" data-status="fuzzy">
+      <text class="icon">🤔</text>
+      <text>模糊</text>
+    </button>
+    <button class="btn-master mastered" bindtap="markStatus" data-status="mastered">
+      <text class="icon">😊</text>
+      <text>掌握</text>
+    </button>
+  </view>
+
+  <!-- 完成提示 -->
+  <view class="complete-modal" wx:if="{{showComplete}}">
+    <view class="modal-content">
+      <text class="complete-title">🎉 今日学习完成！</text>
+      <text class="complete-desc">你已经学习了 {{wordList.length}} 个新词</text>
+      <view class="complete-stats">
+        <view class="stat-item">
+          <text class="stat-label">掌握</text>
+          <text class="stat-value">{{masteredCount}}</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">模糊</text>
+          <text class="stat-value">{{fuzzyCount}}</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">不认识</text>
+          <text class="stat-value">{{forgotCount}}</text>
+        </view>
+      </view>
+      <button class="btn-primary" bindtap="goBack">返回首页</button>
+    </view>
+  </view>
+</view>
