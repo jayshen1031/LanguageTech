@@ -1,4 +1,5 @@
 const app = getApp()
+const audioMCP = require('../../utils/audioMCP')
 
 // 模拟单词数据
 const mockWords = [
@@ -98,18 +99,60 @@ Page({
   },
 
   // 播放音频
-  playAudio() {
+  async playAudio() {
     const { currentWord } = this.data
     
-    // 创建音频对象
-    const innerAudioContext = wx.createInnerAudioContext()
-    innerAudioContext.src = currentWord.audioUrl
+    try {
+      // 首先尝试使用音频MCP服务
+      const result = await audioMCP.generateAudio(currentWord.word, 'ja')
+      
+      if (typeof result === 'string') {
+        // 如果返回的是音频URL，播放音频
+        wx.showLoading({
+          title: '加载中...',
+          mask: true
+        })
+        
+        audioMCP.playAudio(result, {
+          onPlay: () => {
+            wx.hideLoading()
+            console.log('开始播放:', currentWord.word)
+          },
+          onError: (err) => {
+            wx.hideLoading()
+            console.error('播放失败:', err)
+            this.showReadingInfo()
+          },
+          onEnded: () => {
+            console.log('播放结束')
+          }
+        })
+      } else {
+        // 如果返回的是读音信息，显示读音
+        this.showReadingInfo()
+      }
+    } catch (error) {
+      console.error('音频服务错误:', error)
+      // 如果MCP服务不可用，显示读音信息
+      this.showReadingInfo()
+    }
+  },
+  
+  // 显示读音信息（备用方案）
+  showReadingInfo() {
+    const { currentWord } = this.data
     
-    // 由于是模拟数据，这里只显示提示
-    wx.showToast({
-      title: '播放语音',
-      icon: 'none',
-      duration: 1000
+    // 使用震动反馈
+    wx.vibrateShort({
+      type: 'light'
+    })
+    
+    // 显示读音信息
+    wx.showModal({
+      title: currentWord.word,
+      content: `读音：${currentWord.kana}\n罗马音：${currentWord.romaji}`,
+      showCancel: false,
+      confirmText: '知道了'
     })
   },
 
