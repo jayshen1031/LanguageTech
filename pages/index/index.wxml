@@ -2,7 +2,8 @@
   <!-- 顶部用户信息 -->
   <view class="user-section card">
     <view class="user-info">
-      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="avatar" wx:if="{{!userInfo.avatarUrl}}">👤</view>
+      <image class="avatar" wx:else src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
       <view class="user-details">
         <text class="username">{{userInfo.nickName || '语伴君用户'}}</text>
         <text class="study-days">已坚持学习 {{studyDays}} 天</text>

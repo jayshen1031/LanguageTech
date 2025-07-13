@@ -22,27 +22,19 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "images/home.png",
-        "selectedIconPath": "images/home-active.png"
+        "text": "首页"
       },
       {
         "pagePath": "pages/learn/learn",
-        "text": "学习",
-        "iconPath": "images/learn.png",
-        "selectedIconPath": "images/learn-active.png"
+        "text": "学习"
       },
       {
         "pagePath": "pages/wordbook/wordbook",
-        "text": "生词本",
-        "iconPath": "images/book.png",
-        "selectedIconPath": "images/book-active.png"
+        "text": "生词本"
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "images/profile.png",
-        "selectedIconPath": "images/profile-active.png"
+        "text": "我的"
       }
     ]
   },

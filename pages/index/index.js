@@ -32,7 +32,7 @@ Page({
       this.setData({
         userInfo: {
           nickName: '语伴君用户',
-          avatarUrl: '/images/default-avatar.png'
+          avatarUrl: ''
         }
       })
     }

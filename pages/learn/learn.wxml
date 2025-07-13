@@ -36,8 +36,7 @@
       </view>
       
       <view class="audio-hint">
-        <image src="/images/speaker.png" class="speaker-icon"></image>
-        <text>点击卡片播放语音</text>
+        <text>🔊 点击卡片播放语音</text>
       </view>
     </view>
   </view>
