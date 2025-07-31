@@ -1,0 +1,35 @@
+<!-- 语音录音组件 -->
+<view class="voice-recorder">
+  <!-- 录音按钮 -->
+  <view class="record-button {{isRecording ? 'recording' : ''}}" bindtap="toggleRecord">
+    <view class="icon-wrapper">
+      <view wx:if="{{!isRecording}}" class="icon-mic">🎤</view>
+      <view wx:else class="icon-stop">⏹️</view>
+    </view>
+    <view class="button-text">{{isRecording ? '停止录音' : '开始录音'}}</view>
+  </view>
+  
+  <!-- 录音时间显示 -->
+  <view wx:if="{{isRecording}}" class="recording-info">
+    <view class="recording-time">{{formatTime(recordingTime)}}</view>
+    
+    <!-- 波形可视化 -->
+    <view class="waveform">
+      <view wx:for="{{waveformData}}" wx:key="index" 
+            class="wave-bar" 
+            style="height: {{item}}%"></view>
+    </view>
+    
+    <!-- 录音控制按钮 -->
+    <view class="record-controls">
+      <button class="control-btn" size="mini" bindtap="pauseRecord">暂停</button>
+      <button class="control-btn" size="mini" bindtap="resumeRecord">继续</button>
+    </view>
+  </view>
+  
+  <!-- 录音提示 -->
+  <view class="record-tips">
+    <text wx:if="{{!isRecording}}">点击开始录音，最长{{maxDuration/1000}}秒</text>
+    <text wx:else class="recording-text">正在录音中...</text>
+  </view>
+</view>

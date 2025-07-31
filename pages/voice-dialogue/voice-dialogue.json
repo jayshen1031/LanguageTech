@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "语音对话",
+  "usingComponents": {
+    "voice-recorder": "/components/voice-recorder/voice-recorder"
+  }
+}

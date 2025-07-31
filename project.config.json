@@ -5,6 +5,38 @@
       {
         "value": ".eslintrc.js",
         "type": "file"
+      },
+      {
+        "value": "audio-mcp-server",
+        "type": "folder"
+      },
+      {
+        "value": "test-mcp.js",
+        "type": "file"
+      },
+      {
+        "value": "start-audio-mcp.sh",
+        "type": "file"
+      },
+      {
+        "value": "docs",
+        "type": "folder"
+      },
+      {
+        "value": "data",
+        "type": "folder"
+      },
+      {
+        "value": "setup-cloud.sh",
+        "type": "file"
+      },
+      {
+        "value": "CLAUDE.md",
+        "type": "file"
+      },
+      {
+        "value": "PROJECT_ITERATION_LOG.md",
+        "type": "file"
       }
     ],
     "include": []
@@ -12,7 +44,7 @@
   "setting": {
     "bundle": false,
     "userConfirmedBundleSwitch": false,
-    "urlCheck": true,
+    "urlCheck": false,
     "scopeDataCheck": false,
     "coverView": true,
     "es6": true,
@@ -78,5 +110,7 @@
       ]
     }
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "cloudfunctionRoot": "cloudfunctions/",
+  "cloudbaseRoot": "cloudbase/"
 }

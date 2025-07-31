@@ -1,0 +1,100 @@
+<!-- 语音对话页面 -->
+<view class="voice-dialogue">
+  <!-- 顶部工具栏 -->
+  <view class="toolbar">
+    <view class="scene-selector">
+      <text class="label">场景：</text>
+      <picker bindchange="onSceneChange" value="{{currentScene}}" range="{{scenes}}">
+        <view class="picker-value">
+          {{currentScene}} ▼
+        </view>
+      </picker>
+    </view>
+    
+    <view class="toolbar-actions">
+      <button class="tool-btn" size="mini" bindtap="switchLanguage">
+        {{language === 'ja' ? '🇯🇵' : '🇺🇸'}}
+      </button>
+      <button class="tool-btn" size="mini" bindtap="clearMessages">
+        清空
+      </button>
+    </view>
+  </view>
+
+  <!-- 对话消息区域 -->
+  <scroll-view class="messages-container" scroll-y="true" scroll-with-animation="true">
+    <view class="messages-list">
+      <block wx:for="{{messages}}" wx:key="id">
+        <view class="message-item {{item.type}}">
+          <view class="message-content">
+            <view class="message-text">{{item.text}}</view>
+            <view class="message-meta">
+              <text class="message-time">{{item.time}}</text>
+              <button wx:if="{{item.type === 'ai' && item.audioUrl}}" 
+                      class="replay-btn" 
+                      size="mini"
+                      data-id="{{item.id}}"
+                      bindtap="replayAudio">
+                🔊 重播
+              </button>
+            </view>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 处理中提示 -->
+      <view wx:if="{{isProcessing}}" class="message-item ai processing">
+        <view class="message-content">
+          <view class="typing-indicator">
+            <view class="dot"></view>
+            <view class="dot"></view>
+            <view class="dot"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="input-area">
+    <!-- 语音输入模式 -->
+    <view wx:if="{{inputMode === 'voice'}}" class="voice-input">
+      <voice-recorder 
+        bind:start="onRecordStart"
+        bind:stop="onRecordStop"
+        bind:error="onRecordError"
+        maxDuration="30000">
+      </voice-recorder>
+      
+      <button class="mode-switch" size="mini" bindtap="toggleInputMode">
+        ⌨️ 文字
+      </button>
+    </view>
+    
+    <!-- 文字输入模式 -->
+    <view wx:else class="text-input">
+      <input 
+        class="text-input-field"
+        type="text"
+        placeholder="输入消息..."
+        value="{{textInput}}"
+        bindinput="onTextInput"
+        bindconfirm="sendTextMessage"
+        disabled="{{isProcessing}}"
+      />
+      <button class="send-btn" bindtap="sendTextMessage" disabled="{{!textInput || isProcessing}}">
+        发送
+      </button>
+      <button class="mode-switch" size="mini" bindtap="toggleInputMode">
+        🎤 语音
+      </button>
+    </view>
+  </view>
+
+  <!-- 使用提示 -->
+  <view wx:if="{{messages.length === 1}}" class="usage-tips">
+    <view class="tip-item">💡 点击麦克风按钮开始录音</view>
+    <view class="tip-item">💡 支持{{language === 'ja' ? '日语' : '英语'}}对话练习</view>
+    <view class="tip-item">💡 可以切换不同场景进行练习</view>
+  </view>
+</view>

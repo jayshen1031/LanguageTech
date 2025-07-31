@@ -1,0 +1,9 @@
+{
+  "name": "azure-gpt4o-fast",
+  "version": "1.0.0",
+  "description": "Azure GPT-4o 快速版本",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

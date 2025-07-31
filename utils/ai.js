@@ -93,11 +93,97 @@ const cloudAI = {
   }
 }
 
+
+// Azure GPT-4o 接口
+const azureGPT4o = {
+  // 对话
+  chat: async (messages, options = {}) => {
+    try {
+      const res = await callCloudFunction('azure-gpt4o', {
+        action: 'chat',
+        messages: messages,
+        temperature: options.temperature || 0.7,
+        maxTokens: options.maxTokens || 2000
+      })
+      return res.data
+    } catch (error) {
+      console.error('Azure GPT-4o 对话失败:', error)
+      throw error
+    }
+  },
+  
+  // 语法分析（支持图片）
+  analyzeGrammar: async (sentence, imageUrl) => {
+    try {
+      const res = await callCloudFunction('azure-gpt4o', {
+        action: 'grammar',
+        sentence: sentence,
+        imageUrl: imageUrl
+      })
+      return res.data
+    } catch (error) {
+      console.error('Azure GPT-4o 语法分析失败:', error)
+      throw error
+    }
+  },
+  
+  // 简化的对话接口
+  simpleChat: async (message) => {
+    try {
+      // 使用超简化云函数
+      const res = await wx.cloud.callFunction({
+        name: 'azure-gpt4o-simple',
+        data: { prompt: message }
+      })
+      
+      if (res.result.success) {
+        return res.result.content
+      } else {
+        throw new Error(res.result.error || 'AI调用失败')
+      }
+    } catch (error) {
+      console.error('Azure GPT-4o 简单调用失败:', error)
+      throw error
+    }
+  }
+}
+
+
+// 通用的发送消息接口（用于语音对话）
+const sendMessage = async (prompt) => {
+  try {
+    // 使用 Azure GPT-4o
+    return await azureGPT4o.simpleChat(prompt)
+  } catch (error) {
+    console.error('Azure GPT-4o 调用失败:', error)
+    
+    // 降级方案：返回简单的回复
+    const fallbackResponses = {
+      '日常对话': '很抱歉，我现在无法理解您的话。请稍后再试。',
+      '购物': '对不起，系统暂时出现问题。请稍后再来。',
+      '餐厅': '抱歉，我们的系统暂时无法响应。',
+      '旅行': '很抱歉，服务暂时不可用。',
+      '工作': '系统繁忙，请稍后重试。'
+    }
+    
+    // 从prompt中提取场景信息
+    for (const scene in fallbackResponses) {
+      if (prompt.includes(scene)) {
+        return fallbackResponses[scene]
+      }
+    }
+    
+    return '很抱歉，AI服务暂时不可用，请稍后再试。'
+  }
+}
+
 module.exports = {
   analyzeGrammar,
   chatWithAI,
   generateExamples,
   evaluatePronunciation,
   getReviewPlan,
-  cloudAI
+  cloudAI,
+  azureGPT4o,
+  sendMessage
 }

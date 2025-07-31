@@ -26,6 +26,10 @@
       
       <view class="word-meaning">
         <text class="meaning-text">{{currentWord.meaning}}</text>
+        <view class="word-meta">
+          <text class="word-type">{{currentWord.type}}</text>
+          <text class="word-level">{{currentWord.level}}</text>
+        </view>
       </view>
       
       <view class="example-section" wx:if="{{showExample}}">
@@ -48,6 +52,12 @@
     </button>
     <button class="btn-action" bindtap="addToWordbook">
       <text class="{{inWordbook ? 'added' : ''}}">{{inWordbook ? '已添加' : '加入生词本'}}</text>
+    </button>
+    <button class="btn-action" bindtap="testMCPConnection" style="background: #ff6b6b; color: white;">
+      测试MCP连接
+    </button>
+    <button class="btn-action" bindtap="goToAITest" style="background: #667eea; color: white;">
+      AI测试
     </button>
   </view>
 

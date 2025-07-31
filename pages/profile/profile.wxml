@@ -1,3 +1,24 @@
 <view class="container">
-  <text>个人中心页面开发中...</text>
+  <!-- 用户信息 -->
+  <view class="user-section">
+    <view class="user-info">
+      <view class="avatar-placeholder"></view>
+      <view class="user-details">
+        <text class="nickname">语言学习者</text>
+        <text class="study-days">已学习 0 天</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="menu-btn admin-btn" bindtap="goToAdmin">
+      <text>🔧 词汇管理</text>
+    </view>
+  </view>
+
+  <!-- 其他功能 -->
+  <view class="other-section">
+    <text class="tips">更多功能开发中...</text>
+  </view>
 </view>

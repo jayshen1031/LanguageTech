@@ -1,0 +1,8 @@
+# 环境变量文件
+.env
+
+# 依赖
+node_modules/
+
+# 日志
+*.log

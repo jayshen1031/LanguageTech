@@ -19,3 +19,4 @@ build/
 
 # 云函数
 cloudfunctions/*/node_modules/
+cloudfunctions/*/config.js

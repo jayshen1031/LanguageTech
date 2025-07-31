@@ -1,0 +1,433 @@
+/* 语法学习页面样式 */
+.container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding-bottom: 20rpx;
+}
+
+/* 进度头部 */
+.progress-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 40rpx 30rpx;
+  text-align: center;
+}
+
+.week-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.week-theme {
+  font-size: 28rpx;
+  opacity: 0.9;
+}
+
+/* 今日任务 */
+.today-section {
+  padding: 20rpx;
+}
+
+.task-group {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.group-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.group-count {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 课程列表 */
+.lesson-list {
+  margin-top: 20rpx;
+}
+
+.lesson-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+  transition: all 0.3s;
+}
+
+.lesson-item:active {
+  transform: scale(0.98);
+}
+
+.lesson-item.completed {
+  background: #e8f5e9;
+}
+
+.lesson-item.review {
+  background: #e3f2fd;
+}
+
+.lesson-info {
+  flex: 1;
+}
+
+.lesson-title {
+  font-size: 30rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.lesson-grammar {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.lesson-status {
+  margin-left: 20rpx;
+}
+
+.status-icon {
+  font-size: 36rpx;
+}
+
+.start-btn, .review-btn {
+  font-size: 26rpx;
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* 学习建议 */
+.tips-section {
+  background: #f0f4ff;
+  border-radius: 16rpx;
+  padding: 25rpx;
+  margin-top: 30rpx;
+}
+
+.tips-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #667eea;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.tips-content {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 课程详情 */
+.lesson-detail {
+  padding: 20rpx;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.back-btn {
+  font-size: 28rpx;
+  color: #667eea;
+  margin-right: 20rpx;
+}
+
+.detail-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+  text-align: center;
+}
+
+/* 语法说明 */
+.grammar-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.grammar-box {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 25rpx;
+}
+
+.grammar-pattern {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #667eea;
+  display: block;
+  margin-bottom: 15rpx;
+  text-align: center;
+}
+
+.grammar-explain {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 例句展示 */
+.examples-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.example-card {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 25rpx;
+  margin-bottom: 20rpx;
+}
+
+.example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.example-jp {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+}
+
+.play-icon {
+  font-size: 32rpx;
+  margin-left: 20rpx;
+}
+
+.example-kana {
+  font-size: 26rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.example-romaji {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 12rpx;
+  font-style: italic;
+}
+
+.example-cn {
+  font-size: 28rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.example-grammar {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+}
+
+/* 操作区域 */
+.action-section {
+  padding: 30rpx 0;
+}
+
+.practice-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 500;
+  border-radius: 50rpx;
+  padding: 25rpx 0;
+  text-align: center;
+  box-shadow: 0 8rpx 30rpx rgba(102, 126, 234, 0.3);
+}
+
+.practice-btn::after {
+  display: none;
+}
+
+/* 练习模式 */
+.practice-section {
+  padding: 20rpx;
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.practice-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.practice-progress {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.practice-content {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-bottom: 30rpx;
+}
+
+/* 填空题 */
+.fill-question {
+  text-align: center;
+}
+
+.question-text {
+  font-size: 36rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 40rpx;
+  line-height: 1.8;
+}
+
+.answer-input {
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 12rpx;
+  padding: 20rpx 30rpx;
+  font-size: 32rpx;
+  text-align: center;
+  width: 80%;
+  margin: 0 auto;
+}
+
+/* 翻译题 */
+.translate-question {
+  text-align: center;
+}
+
+.question-label {
+  font-size: 28rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.question-jp {
+  font-size: 36rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 15rpx;
+}
+
+.question-kana {
+  font-size: 28rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 30rpx;
+}
+
+.translate-input {
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  font-size: 30rpx;
+  width: 100%;
+  min-height: 120rpx;
+}
+
+/* 答案展示 */
+.answer-section {
+  margin-top: 40rpx;
+  padding-top: 30rpx;
+  border-top: 2rpx solid #e9ecef;
+}
+
+.answer-result {
+  font-size: 32rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.answer-result.correct {
+  color: #4caf50;
+}
+
+.answer-result.incorrect {
+  color: #f44336;
+}
+
+.correct-answer {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  text-align: center;
+}
+
+.answer-label {
+  font-size: 26rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.answer-text {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 练习操作按钮 */
+.practice-actions {
+  margin-top: 40rpx;
+}
+
+.check-btn, .next-btn {
+  background: #667eea;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 500;
+  border-radius: 50rpx;
+  padding: 20rpx 0;
+  text-align: center;
+}
+
+.check-btn::after, .next-btn::after {
+  display: none;
+}
+

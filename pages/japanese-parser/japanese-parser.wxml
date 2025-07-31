@@ -1,0 +1,150 @@
+<view class="container">
+  <!-- 顶部简洁标题 -->
+  <view class="header-simple">
+    <text class="header-title">日语解析</text>
+  </view>
+
+  <!-- 主内容区域 -->
+  <view class="main-content">
+    <!-- 输入方式切换 -->
+    <view class="method-switch">
+      <view 
+        class="method-btn {{inputMethod === 'text' ? 'active' : ''}}"
+        bindtap="switchInputMethod"
+        data-method="text"
+      >
+        <text>文本</text>
+      </view>
+      <view 
+        class="method-btn {{inputMethod === 'image' ? 'active' : ''}}"
+        bindtap="switchInputMethod"
+        data-method="image"
+      >
+        <text>图片</text>
+      </view>
+    </view>
+
+    <!-- 输入区域 -->
+    <view class="input-area">
+      <!-- 文本输入 -->
+      <view wx:if="{{inputMethod === 'text'}}" class="text-mode">
+        <textarea 
+          class="text-input"
+          placeholder="请输入日语文本（如：私は学生です）"
+          placeholder-class="placeholder"
+          value="{{inputText}}"
+          bindinput="onTextInput"
+          maxlength="500"
+        />
+        <view class="input-footer">
+          <text class="char-count">{{inputText.length}}/500</text>
+        </view>
+      </view>
+
+      <!-- 图片输入 -->
+      <view wx:else class="image-mode">
+        <view wx:if="{{!imageUrl}}" class="upload-box" bindtap="chooseImage">
+          <view class="upload-icon">+</view>
+          <text class="upload-text">上传图片</text>
+        </view>
+        <view wx:else class="image-container">
+          <image src="{{imageUrl}}" mode="aspectFit" class="preview-image" />
+          <view class="image-overlay" bindtap="chooseImage">
+            <text>点击更换</text>
+          </view>
+        </view>
+        
+        <!-- 图片模式提示 -->
+        <view wx:if="{{imageUrl && inputMethod === 'image'}}" class="image-tip">
+          <text class="tip-text">点击"开始解析"，Azure GPT-4o 将直接识别并分析图片中的日语内容</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-bar">
+      <button 
+        class="btn-analyze {{((!inputText && inputMethod === 'text') || (!imageUrl && inputMethod === 'image') || isAnalyzing) ? 'disabled' : ''}}" 
+        bindtap="startAnalysis"
+        disabled="{{(!inputText && inputMethod === 'text') || (!imageUrl && inputMethod === 'image') || isAnalyzing}}"
+      >
+        {{isAnalyzing ? '解析中...' : '开始解析'}}
+      </button>
+      <button class="btn-clear" bindtap="clearContent" wx:if="{{inputText || imageUrl}}">清空</button>
+    </view>
+  </view>
+
+  <!-- 解析结果 -->
+  <view wx:if="{{showResult}}" class="result-container">
+    <view class="result-header">
+      <text class="result-title">解析结果</text>
+      <text class="copy-btn" bindtap="copyResult">复制全部</text>
+    </view>
+
+    <!-- 平铺展示解析结果 -->
+    <view class="result-content">
+      <view wx:for="{{analysisResult}}" wx:key="index" class="result-flat">
+        <!-- 句子编号 -->
+        <view class="result-row">
+          <text class="row-label">📘 第{{item.index}}句</text>
+          <text class="save-link" bindtap="saveToWordbook" data-sentence="{{item}}">保存词汇</text>
+        </view>
+        
+        <!-- 日文原文 -->
+        <view class="result-row">
+          <text class="row-label">【日文原文】</text>
+          <text class="row-value japanese">{{item.originalText}}</text>
+        </view>
+        
+        <!-- 罗马音 -->
+        <view class="result-row">
+          <text class="row-label">【罗马音】</text>
+          <text class="row-value romaji">{{item.romaji}}</text>
+        </view>
+        
+        <!-- 中文翻译 -->
+        <view class="result-row">
+          <text class="row-label">【中文翻译】</text>
+          <text class="row-value translation">{{item.translation}}</text>
+        </view>
+        
+        <!-- 精简结构 -->
+        <view class="result-row">
+          <text class="row-label">【精简结构】</text>
+          <text class="row-value structure">{{item.structure}}</text>
+        </view>
+        
+        <!-- 句子结构分析 -->
+        <view class="result-row align-top">
+          <text class="row-label">【句子结构分析】</text>
+          <text class="row-value detail">{{item.analysis}}</text>
+        </view>
+        
+        <!-- 语法点说明 -->
+        <view class="result-row align-top">
+          <text class="row-label">【语法点说明】</text>
+          <text class="row-value grammar">{{item.grammar}}</text>
+        </view>
+        
+        <!-- 词汇明细表 -->
+        <view class="result-row align-top">
+          <text class="row-label">【词汇明细表】</text>
+          <view class="vocab-table-flat">
+            <view wx:for="{{item.vocabulary}}" wx:for-item="vocab" wx:key="index" class="vocab-row-flat">
+              <text class="vocab-cell">{{vocab.japanese}}｜{{vocab.romaji}}｜{{vocab.chinese}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 分隔线 -->
+        <view class="result-divider" wx:if="{{index < analysisResult.length - 1}}"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态提示 -->
+  <view wx:if="{{!showResult && !isAnalyzing && !inputText}}" class="empty-state">
+    <text class="empty-icon">📝</text>
+    <text class="empty-text">输入日语文本或上传图片开始解析</text>
+  </view>
+</view>

@@ -1,3 +1,4 @@
+// app.js
 App({
   onLaunch() {
     // 展示本地存储能力
@@ -31,10 +32,16 @@ App({
       console.error('请使用 2.2.3 或以上的基础库以使用云能力')
     } else {
       wx.cloud.init({
-        env: 'languagetech-prod',
+        env: 'cloud1-2g49srond2b01891',
         traceUser: true,
       })
+      console.log('云开发环境初始化成功')
     }
+  },
+
+  // 获取云开发实例的方法
+  getCloud() {
+    return wx.cloud
   },
 
   globalData: {

@@ -1,0 +1,162 @@
+<view class="container">
+  <!-- 学习进度 -->
+  <view class="progress-header">
+    <text class="week-title">第{{currentWeek}}周 - 第{{currentDay}}天</text>
+    <text class="week-theme">{{weekPlan.title}}</text>
+  </view>
+
+  <!-- 今日任务 -->
+  <view class="today-section" wx:if="{{!currentLesson}}">
+    <!-- 新课学习 -->
+    <view class="task-group" wx:if="{{todayLessons.length > 0}}">
+      <view class="group-header">
+        <text class="group-title">📚 今日新课</text>
+        <text class="group-count">{{todayLessons.length}}课</text>
+      </view>
+      <view class="lesson-list">
+        <view 
+          class="lesson-item {{studyProgress.completedLessons.includes(item.id) ? 'completed' : ''}}"
+          wx:for="{{todayLessons}}" 
+          wx:key="id"
+          bindtap="startLesson"
+          data-lesson="{{item}}"
+        >
+          <view class="lesson-info">
+            <text class="lesson-title">{{item.title}}</text>
+            <text class="lesson-grammar">{{item.grammar}}</text>
+          </view>
+          <view class="lesson-status">
+            <text wx:if="{{studyProgress.completedLessons.includes(item.id)}}" class="status-icon">✅</text>
+            <text wx:else class="start-btn">开始</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 复习内容 -->
+    <view class="task-group" wx:if="{{todayReview.length > 0}}">
+      <view class="group-header">
+        <text class="group-title">🔄 今日复习</text>
+        <text class="group-count">{{todayReview.length}}课</text>
+      </view>
+      <view class="lesson-list">
+        <view 
+          class="lesson-item review"
+          wx:for="{{todayReview}}" 
+          wx:key="id"
+          bindtap="viewGrammarDetail"
+          data-lesson="{{item}}"
+        >
+          <view class="lesson-info">
+            <text class="lesson-title">{{item.title}}</text>
+            <text class="lesson-grammar">{{item.grammar}}</text>
+          </view>
+          <text class="review-btn">复习</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 学习建议 -->
+    <view class="tips-section">
+      <text class="tips-title">💡 学习建议</text>
+      <text class="tips-content">每天坚持练习{{weekPlan.dailyPractice}}个句子，循序渐进掌握语法！</text>
+    </view>
+  </view>
+
+  <!-- 课程详情 -->
+  <view class="lesson-detail" wx:if="{{currentLesson && !practiceMode}}">
+    <view class="detail-header">
+      <text class="back-btn" bindtap="backToList">← 返回</text>
+      <text class="detail-title">{{currentLesson.title}}</text>
+    </view>
+
+    <!-- 语法说明 -->
+    <view class="grammar-section">
+      <view class="section-title">📖 语法结构</view>
+      <view class="grammar-box">
+        <text class="grammar-pattern">{{currentLesson.grammar}}</text>
+        <text class="grammar-explain">{{currentLesson.explanation}}</text>
+      </view>
+    </view>
+
+    <!-- 例句展示 -->
+    <view class="examples-section">
+      <view class="section-title">📝 例句学习</view>
+      <view class="example-list">
+        <view class="example-card" wx:for="{{currentLesson.examples}}" wx:key="index">
+          <view class="example-header" bindtap="playExample" data-text="{{item.jp}}">
+            <text class="example-jp">{{item.jp}}</text>
+            <text class="play-icon">🔊</text>
+          </view>
+          <text class="example-kana">{{item.kana}}</text>
+          <text class="example-romaji">{{item.romaji}}</text>
+          <text class="example-cn">{{item.cn}}</text>
+          <text class="example-grammar" wx:if="{{item.grammar}}">语法：{{item.grammar}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 开始练习按钮 -->
+    <view class="action-section">
+      <button class="practice-btn" bindtap="startPractice">开始练习</button>
+    </view>
+  </view>
+
+  <!-- 练习模式 -->
+  <view class="practice-section" wx:if="{{practiceMode}}">
+    <view class="practice-header">
+      <text class="practice-title">练习模式</text>
+      <text class="practice-progress">{{currentExampleIndex + 1}}/{{practiceExamples.length}}</text>
+    </view>
+
+    <!-- 当前练习题 -->
+    <view class="practice-content" wx:if="{{practiceExamples[currentExampleIndex]}}">
+      <!-- 填空题 -->
+      <view wx:if="{{practiceExamples[currentExampleIndex].type === 'fill'}}" class="fill-question">
+        <text class="question-text">{{practiceExamples[currentExampleIndex].question}}</text>
+        <input 
+          class="answer-input"
+          placeholder="请输入答案"
+          value="{{userAnswer}}"
+          bindinput="onAnswerInput"
+          disabled="{{showAnswer}}"
+        />
+      </view>
+
+      <!-- 翻译题 -->
+      <view wx:elif="{{practiceExamples[currentExampleIndex].type === 'translate'}}" class="translate-question">
+        <text class="question-label">请翻译以下句子：</text>
+        <text class="question-jp">{{practiceExamples[currentExampleIndex].jp}}</text>
+        <text class="question-kana" wx:if="{{practiceExamples[currentExampleIndex].kana}}">{{practiceExamples[currentExampleIndex].kana}}</text>
+        <textarea 
+          class="translate-input"
+          placeholder="请输入中文翻译"
+          value="{{userAnswer}}"
+          bindinput="onAnswerInput"
+          disabled="{{showAnswer}}"
+        />
+      </view>
+
+      <!-- 答案展示 -->
+      <view class="answer-section" wx:if="{{showAnswer}}">
+        <view class="answer-result {{isCorrect ? 'correct' : 'incorrect'}}">
+          <text wx:if="{{isCorrect}}">✅ 回答正确！</text>
+          <text wx:else>❌ 回答错误</text>
+        </view>
+        <view class="correct-answer">
+          <text class="answer-label">正确答案：</text>
+          <text class="answer-text">{{practiceExamples[currentExampleIndex].answer || practiceExamples[currentExampleIndex].cn}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="practice-actions">
+        <button wx:if="{{!showAnswer}}" class="check-btn" bindtap="checkAnswer">检查答案</button>
+        <button wx:else class="next-btn" bindtap="nextExample">
+          {{currentExampleIndex < practiceExamples.length - 1 ? '下一题' : '完成练习'}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>
+

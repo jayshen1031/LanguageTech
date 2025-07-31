@@ -1,0 +1,464 @@
+.container {
+  padding-bottom: 100rpx;
+}
+
+/* 假名类型切换 */
+.kana-type-switch {
+  display: flex;
+  margin: 20rpx;
+  background: #f5f5f5;
+  border-radius: 16rpx;
+  padding: 8rpx;
+}
+
+.switch-btn {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.switch-btn.active {
+  background: #fff;
+  color: #4a90e2;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 音类型标签 */
+.sound-tabs {
+  display: flex;
+  padding: 0 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.tab-item {
+  margin-right: 30rpx;
+  padding: 16rpx 0;
+  color: #999;
+  font-size: 28rpx;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #4a90e2;
+  font-weight: 500;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: #4a90e2;
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20rpx 20rpx;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  margin-left: 20rpx;
+  background: #f5f5f5;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.tool-btn .iconfont {
+  margin-right: 8rpx;
+  font-size: 28rpx;
+}
+
+/* 网格视图 */
+.grid-view {
+  display: grid;
+  gap: 1rpx;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  padding: 0;
+  grid-template-columns: repeat(5, 1fr);
+  background: #f0f0f0;
+}
+
+.column-headers {
+  display: none;
+}
+
+.kana-row {
+  display: contents;
+}
+
+.row-title {
+  display: none;
+}
+
+.kana-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+  transition: all 0.3s;
+  border-right: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.kana-cell.empty {
+  background: #fff;
+  visibility: hidden;
+}
+
+.kana-cell:not(.empty):active {
+  background: #f8f9fa;
+  transform: scale(0.98);
+}
+
+.kana-cell.selected {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.kana-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+  color: #333;
+}
+
+.romaji-text {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.kana-cell.selected .romaji-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 去除最右侧边框 */
+.kana-cell:nth-child(5n) {
+  border-right: none;
+}
+
+/* 其他音网格视图 */
+.other-grid-view {
+  display: grid;
+  gap: 1rpx;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  padding: 0;
+  grid-template-columns: repeat(5, 1fr);
+  background: #f0f0f0;
+}
+
+.kana-item {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+  transition: all 0.3s;
+  border-right: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.kana-item:active {
+  background: #f8f9fa;
+  transform: scale(0.98);
+}
+
+.kana-item.selected {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.kana-item .kana-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+  color: #333;
+}
+
+.kana-item .romaji-text {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.kana-item.selected .romaji-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 去除最右侧边框 */
+.kana-item:nth-child(5n) {
+  border-right: none;
+}
+
+/* 列表视图 */
+.list-view {
+  padding: 0 20rpx;
+}
+
+.group-title {
+  font-size: 28rpx;
+  color: #999;
+  font-weight: 500;
+  padding: 20rpx 0 10rpx;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.list-item:active {
+  transform: scale(0.98);
+}
+
+.list-item.selected {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.kana-info {
+  display: flex;
+  align-items: center;
+}
+
+.list-item .kana-text {
+  font-size: 48rpx;
+  font-weight: 500;
+  margin-right: 30rpx;
+}
+
+.list-item .romaji-text {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.list-item.selected .romaji-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.play-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.play-btn .iconfont {
+  font-size: 32rpx;
+  color: #fff;
+}
+
+/* 练习模式 */
+.practice-mode {
+  padding: 20rpx;
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.score {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #4a90e2;
+}
+
+.exit-btn {
+  padding: 12rpx 24rpx;
+  background: #f5f5f5;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.practice-content {
+  text-align: center;
+}
+
+.question {
+  margin-bottom: 60rpx;
+}
+
+.question-kana {
+  font-size: 120rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 30rpx;
+}
+
+.replay-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  background: #f5f5f5;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.replay-btn .iconfont {
+  margin-right: 8rpx;
+  font-size: 32rpx;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.option-item {
+  width: calc(50% - 30rpx);
+  padding: 30rpx;
+  margin: 15rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.option-item:active {
+  transform: scale(0.95);
+  background: #4a90e2;
+  color: #fff;
+}
+
+/* 假名详情 */
+.kana-detail {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  padding: 30rpx;
+  z-index: 100;
+}
+
+.detail-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-kana {
+  font-size: 60rpx;
+  font-weight: bold;
+  color: #333;
+  margin-right: 20rpx;
+}
+
+.detail-romaji {
+  font-size: 36rpx;
+  color: #666;
+  flex: 1;
+}
+
+.detail-actions {
+  display: flex;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  background: #4a90e2;
+  color: #fff;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+}
+
+.action-btn .iconfont {
+  margin-right: 8rpx;
+  font-size: 32rpx;
+}
+
+/* 播放提示 */
+.playing-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 30rpx 40rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+.playing-toast .iconfont {
+  margin-right: 16rpx;
+  font-size: 40rpx;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* 图标字体 */
+.iconfont {
+  font-family: 'iconfont';
+}
+
+.icon-grid::before {
+  content: '\e6a0';
+}
+
+.icon-list::before {
+  content: '\e6a1';
+}
+
+.icon-practice::before {
+  content: '\e6a2';
+}
+
+.icon-play::before {
+  content: '\e6a3';
+}
+
+.icon-sound::before {
+  content: '\e6a4';
+}

@@ -5,8 +5,14 @@
     "pages/review/review",
     "pages/wordbook/wordbook",
     "pages/ai-grammar/ai-grammar",
-    "pages/dialogue/dialogue",
-    "pages/profile/profile"
+    "pages/voice-dialogue/voice-dialogue",
+    "pages/profile/profile",
+    "pages/admin/admin",
+    "pages/import/import",
+    "pages/kana-study/kana-study",
+    "pages/grammar-study/grammar-study",
+    "pages/japanese-parser/japanese-parser",
+    "pages/ai-test/ai-test"
   ],
   "window": {
     "backgroundTextStyle": "light",

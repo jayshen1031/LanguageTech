@@ -1,0 +1,412 @@
+/* 日语解析工具页面样式 - 优化布局 */
+.container {
+  min-height: 100vh;
+  background: #f7f8fa;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 顶部简洁标题 */
+.header-simple {
+  background: #fff;
+  padding: 15rpx 20rpx;
+  border-bottom: 1rpx solid #eee;
+  flex-shrink: 0;
+}
+
+.header-title {
+  font-size: 34rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 主内容区域 */
+.main-content {
+  background: #fff;
+  margin: 15rpx;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 输入方式切换 - 更紧凑 */
+.method-switch {
+  display: flex;
+  background: #f5f6f8;
+  border-radius: 8rpx;
+  padding: 4rpx;
+  margin-bottom: 20rpx;
+  flex-shrink: 0;
+}
+
+.method-btn {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 6rpx;
+  transition: all 0.2s;
+}
+
+.method-btn.active {
+  background: #fff;
+  color: #333;
+  font-weight: 500;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 输入区域 */
+.input-area {
+  margin-bottom: 20rpx;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 文本输入模式 */
+.text-mode {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-input {
+  width: 100%;
+  min-height: 300rpx;
+  flex: 1;
+  padding: 20rpx;
+  background: #f8f9fb;
+  border: 1rpx solid #e5e8eb;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  line-height: 1.6;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.placeholder {
+  color: #bbb;
+}
+
+.input-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10rpx;
+}
+
+.char-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 图片输入模式 */
+.image-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  flex: 1;
+}
+
+.upload-box {
+  flex: 1;
+  min-height: 400rpx;
+  background: #f8f9fb;
+  border: 2rpx dashed #d9dde2;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.upload-box:active {
+  background: #f0f2f5;
+  border-color: #667eea;
+}
+
+.upload-icon {
+  font-size: 48rpx;
+  color: #bbb;
+  margin-bottom: 10rpx;
+}
+
+.upload-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.image-container {
+  position: relative;
+  flex: 1;
+  min-height: 400rpx;
+  background: #f8f9fb;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-align: center;
+  padding: 15rpx;
+  font-size: 26rpx;
+}
+
+/* 图片模式提示 */
+.image-tip {
+  background: #e8f0ff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-top: 15rpx;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: #4a90e2;
+  line-height: 1.6;
+}
+
+/* 操作按钮栏 */
+.action-bar {
+  display: flex;
+  gap: 20rpx;
+  flex-shrink: 0;
+  margin-top: 10rpx;
+}
+
+.btn-analyze {
+  flex: 1;
+  background: #667eea;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 500;
+  border-radius: 12rpx;
+  padding: 20rpx 0;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.btn-analyze:active:not(.disabled) {
+  background: #5a6dd8;
+  transform: scale(0.98);
+}
+
+.btn-analyze.disabled {
+  background: #e5e8eb;
+  color: #bbb;
+}
+
+.btn-analyze::after {
+  display: none;
+}
+
+.btn-clear {
+  width: 120rpx;
+  background: #fff;
+  color: #666;
+  border: 1rpx solid #e5e8eb;
+  font-size: 28rpx;
+  border-radius: 12rpx;
+  padding: 20rpx 0;
+  text-align: center;
+}
+
+.btn-clear::after {
+  display: none;
+}
+
+.btn-clear:active {
+  background: #f5f6f8;
+}
+
+/* 解析结果容器 */
+.result-container {
+  margin: 15rpx;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 0 10rpx;
+}
+
+.result-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.copy-btn {
+  font-size: 26rpx;
+  color: #667eea;
+  padding: 10rpx 20rpx;
+}
+
+/* 平铺式结果展示 */
+.result-content {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 25rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.result-flat {
+  margin-bottom: 30rpx;
+}
+
+.result-row {
+  display: flex;
+  margin-bottom: 20rpx;
+  align-items: flex-start;
+}
+
+.result-row.align-top {
+  align-items: flex-start;
+}
+
+.row-label {
+  font-size: 26rpx;
+  color: #666;
+  font-weight: 500;
+  width: 180rpx;
+  flex-shrink: 0;
+}
+
+.row-value {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.8;
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.save-link {
+  font-size: 26rpx;
+  color: #667eea;
+  margin-left: auto;
+}
+
+/* 特殊样式 */
+.japanese {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.romaji {
+  color: #666;
+  font-style: italic;
+}
+
+.translation {
+  color: #2196f3;
+}
+
+.structure {
+  color: #9c27b0;
+  font-weight: 500;
+}
+
+.detail {
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+
+.grammar {
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+
+/* 词汇表 */
+.vocab-table-flat {
+  flex: 1;
+}
+
+.vocab-row-flat {
+  margin-bottom: 8rpx;
+}
+
+.vocab-row-flat:last-child {
+  margin-bottom: 0;
+}
+
+.vocab-cell {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 分隔线 */
+.result-divider {
+  height: 1rpx;
+  background: #f0f2f5;
+  margin: 30rpx -25rpx;
+}
+
+/* 空状态提示 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.3;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #999;
+  line-height: 1.6;
+}
+
+/* 加载状态 */
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+  margin-top: 20rpx;
+}

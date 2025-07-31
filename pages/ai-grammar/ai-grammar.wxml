@@ -1,3 +1,97 @@
 <view class="container">
-  <text>AI语法讲解页面开发中...</text>
+  <!-- AI提供商切换 -->
+  <view class="ai-provider-switch">
+    <text class="switch-label">AI模型：</text>
+    <view class="switch-buttons">
+      <button 
+        class="provider-btn {{aiProvider === 'tcb' ? 'active' : ''}}"
+        bindtap="switchAIProvider"
+        data-provider="tcb"
+      >
+        腾讯云AI
+      </button>
+      <button 
+        class="provider-btn {{aiProvider === 'hunyuan' ? 'active' : ''}}"
+        bindtap="switchAIProvider"
+        data-provider="hunyuan"
+      >
+        腾讯混元
+      </button>
+      <button 
+        class="provider-btn {{aiProvider === 'openai' ? 'active' : ''}}"
+        bindtap="switchAIProvider"
+        data-provider="openai"
+      >
+        OpenAI
+      </button>
+    </view>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-section">
+    <textarea 
+      class="sentence-input"
+      placeholder="请输入要分析的日语句子..."
+      value="{{inputSentence}}"
+      bindinput="onInputChange"
+      auto-height
+    />
+    <view class="action-buttons">
+      <button class="analyze-btn" bindtap="analyzeSentence" disabled="{{isAnalyzing}}">
+        {{isAnalyzing ? '分析中...' : '分析语法'}}
+      </button>
+      <button class="example-btn" bindtap="generateExamples" disabled="{{isAnalyzing}}">
+        生成例句
+      </button>
+    </view>
+  </view>
+
+  <!-- 分析结果 -->
+  <view class="result-section" wx:if="{{analysisResult}}">
+    <view class="result-header">
+      <text class="result-title">语法分析结果</text>
+      <button class="copy-btn" bindtap="copyAnalysis" size="mini">复制</button>
+    </view>
+    
+    <!-- 分段显示 -->
+    <view class="result-content">
+      <view class="result-item" wx:if="{{analysisResult.sections.breakdown}}">
+        <text class="item-title">句子分解：</text>
+        <text class="item-content">{{analysisResult.sections.breakdown}}</text>
+      </view>
+      
+      <view class="result-item" wx:if="{{analysisResult.sections.grammar}}">
+        <text class="item-title">语法要点：</text>
+        <text class="item-content">{{analysisResult.sections.grammar}}</text>
+      </view>
+      
+      <view class="result-item" wx:if="{{analysisResult.sections.vocabulary}}">
+        <text class="item-title">词汇解释：</text>
+        <text class="item-content">{{analysisResult.sections.vocabulary}}</text>
+      </view>
+      
+      <view class="result-item" wx:if="{{analysisResult.sections.translation}}">
+        <text class="item-title">句子翻译：</text>
+        <text class="item-content">{{analysisResult.sections.translation}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 例句展示 -->
+  <view class="examples-section" wx:if="{{examples.length > 0}}">
+    <text class="examples-title">相关例句</text>
+    <view class="example-list">
+      <view class="example-item" wx:for="{{examples}}" wx:key="index">
+        <text class="example-sentence">{{item.sentence}}</text>
+        <text class="example-reading" wx:if="{{item.reading}}">{{item.reading}}</text>
+        <text class="example-translation" wx:if="{{item.translation}}">{{item.translation}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 使用提示 -->
+  <view class="tips" wx:if="{{!analysisResult && !isAnalyzing}}">
+    <text class="tip-text">💡 输入日语句子，AI会帮您分析语法结构</text>
+    <text class="tip-text">🤖 支持腾讯云AI、腾讯混元和OpenAI三种AI模型</text>
+  </view>
 </view>

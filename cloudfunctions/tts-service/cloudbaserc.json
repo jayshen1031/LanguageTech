@@ -1,0 +1,12 @@
+{
+  "version": "2.0",
+  "functions": [
+    {
+      "name": "tts-service",
+      "timeout": 20,
+      "runtime": "Nodejs12.16",
+      "memorySize": 256,
+      "maxConcurrency": 100
+    }
+  ]
+}

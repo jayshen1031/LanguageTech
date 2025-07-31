@@ -1,0 +1,10 @@
+{
+  "name": "azure-gpt4o",
+  "version": "1.0.0",
+  "description": "Azure GPT-4o 多模态大模型服务",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}
