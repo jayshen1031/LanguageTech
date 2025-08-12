@@ -1,0 +1,82 @@
+<!-- pages/history-vocabulary/history-vocabulary.wxml -->
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 词汇表内容 -->
+  <view wx:else class="vocab-content">
+    <!-- 头部工具栏 -->
+    <view class="header-toolbar">
+      <view class="search-bar">
+        <input 
+          class="search-input" 
+          placeholder="搜索词汇..." 
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+        />
+      </view>
+      
+      <view class="stats-info">
+        <text class="total-count">共{{filteredList.length}}个词汇</text>
+        <text class="selected-count" wx:if="{{selectedWords.length > 0}}">已选{{selectedWords.length}}个</text>
+      </view>
+    </view>
+
+    <!-- 操作栏 -->
+    <view class="action-bar">
+      <view class="select-actions">
+        <button class="btn-select-all {{selectAll ? 'active' : ''}}" bindtap="onSelectAll">
+          {{selectAll ? '取消全选' : '全选'}}
+        </button>
+      </view>
+      
+      <button 
+        class="btn-add-to-study {{selectedWords.length === 0 ? 'disabled' : ''}}" 
+        bindtap="addToStudyPlan"
+        disabled="{{selectedWords.length === 0}}"
+      >
+        加入学习计划 ({{selectedWords.length}})
+      </button>
+    </view>
+
+    <!-- 词汇列表 -->
+    <scroll-view class="vocab-list" scroll-y="true">
+      <view wx:if="{{filteredList.length === 0}}" class="empty-state">
+        <text class="empty-text">{{searchKeyword ? '没有找到匹配的词汇' : '暂无词汇'}}</text>
+      </view>
+
+      <view wx:for="{{filteredList}}" wx:key="japanese" class="vocab-item">
+        <view class="vocab-checkbox" bindtap="onSelectWord" data-index="{{index}}">
+          <view class="checkbox {{item.isSelected ? 'checked' : ''}}">
+            <text wx:if="{{item.isSelected}}" class="check-icon">✓</text>
+          </view>
+        </view>
+
+        <view class="vocab-info" bindtap="onPreviewWord" data-word="{{item}}">
+          <view class="vocab-main">
+            <text class="japanese-text">{{item.japanese}}</text>
+            <text class="chinese-text">{{item.chinese}}</text>
+          </view>
+          <view class="vocab-sub">
+            <text class="romaji-text">{{item.romaji}}</text>
+            <text class="status-tag" wx:if="{{item.addedToStudy}}">已加入</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 底部操作栏 -->
+    <view class="bottom-bar">
+      <button class="btn-back" bindtap="onBack">返回</button>
+      <button 
+        class="btn-add-selected {{selectedWords.length === 0 ? 'disabled' : ''}}" 
+        bindtap="addToStudyPlan"
+        disabled="{{selectedWords.length === 0}}"
+      >
+        添加选中词汇
+      </button>
+    </view>
+  </view>
+</view>

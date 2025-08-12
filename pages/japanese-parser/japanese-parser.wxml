@@ -2,6 +2,7 @@
   <!-- 顶部简洁标题 -->
   <view class="header-simple">
     <text class="header-title">日语解析</text>
+    <text class="history-btn" bindtap="viewHistory">历史</text>
   </view>
 
   <!-- 主内容区域 -->
@@ -72,6 +73,10 @@
       </button>
       <button class="btn-clear" bindtap="clearContent" wx:if="{{inputText || imageUrl}}">清空</button>
     </view>
+    
+    <!-- 复习入口已移至历史页面 -->
+    
+    
   </view>
 
   <!-- 解析结果 -->
@@ -83,12 +88,105 @@
 
     <!-- 平铺展示解析结果 -->
     <view class="result-content">
-      <view wx:for="{{analysisResult}}" wx:key="index" class="result-flat">
-        <!-- 句子编号 -->
-        <view class="result-row">
-          <text class="row-label">📘 第{{item.index}}句</text>
-          <text class="save-link" bindtap="saveToWordbook" data-sentence="{{item}}">保存词汇</text>
+      <!-- 单词类型显示 -->
+      <block wx:if="{{analysisResult[0] && analysisResult[0].isWord}}">
+        <view wx:for="{{analysisResult}}" wx:key="index" class="result-flat word-result">
+          <!-- 词汇编号 -->
+          <view class="result-row">
+            <text class="row-label">📘 词汇{{item.index}}</text>
+            <view class="result-actions">
+              <text class="save-link" bindtap="saveWordToWordbook" data-word="{{item}}">保存到生词本</text>
+            </view>
+          </view>
+          
+          <!-- 日文 -->
+          <view class="result-row">
+            <text class="row-label">【日文】</text>
+            <text class="row-value japanese large">{{item.word}}</text>
+          </view>
+          
+          <!-- 假名 -->
+          <view class="result-row">
+            <text class="row-label">【假名】</text>
+            <text class="row-value kana">{{item.kana}}</text>
+          </view>
+          
+          <!-- 罗马音 -->
+          <view class="result-row">
+            <text class="row-label">【罗马音】</text>
+            <text class="row-value romaji">{{item.romaji}}</text>
+          </view>
+          
+          <!-- 词性 -->
+          <view class="result-row">
+            <text class="row-label">【词性】</text>
+            <text class="row-value part-of-speech">{{item.partOfSpeech}}</text>
+          </view>
+          
+          <!-- 中文含义 -->
+          <view class="result-row">
+            <text class="row-label">【中文含义】</text>
+            <text class="row-value meaning">{{item.meaning}}</text>
+          </view>
+          
+          <!-- 词源说明 -->
+          <view wx:if="{{item.etymology}}" class="result-row align-top">
+            <text class="row-label">【词源说明】</text>
+            <text class="row-value etymology">{{item.etymology}}</text>
+          </view>
+          
+          <!-- 常用搭配 -->
+          <view wx:if="{{item.collocations && item.collocations.length > 0}}" class="result-row align-top">
+            <text class="row-label">【常用搭配】</text>
+            <view class="collocation-list">
+              <view wx:for="{{item.collocations}}" wx:for-item="coll" wx:key="index" class="collocation-item">
+                <text>• {{coll.japanese}} ({{coll.kana}}) - {{coll.chinese}}</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 例句 -->
+          <view wx:if="{{item.examples && item.examples.length > 0}}" class="result-row align-top">
+            <text class="row-label">【例句】</text>
+            <view class="example-list">
+              <view wx:for="{{item.examples}}" wx:for-item="ex" wx:for-index="exIndex" wx:key="exIndex" class="example-item">
+                <text class="ex-jp">{{exIndex + 1}}. {{ex.jp}}</text>
+                <text class="ex-kana" wx:if="{{ex.kana}}">   {{ex.kana}}</text>
+                <text class="ex-cn">   {{ex.cn}}</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 近义词 -->
+          <view wx:if="{{item.synonyms}}" class="result-row">
+            <text class="row-label">【近义词】</text>
+            <text class="row-value synonyms">{{item.synonyms}}</text>
+          </view>
+          
+          <!-- 反义词 -->
+          <view wx:if="{{item.antonyms}}" class="result-row">
+            <text class="row-label">【反义词】</text>
+            <text class="row-value antonyms">{{item.antonyms}}</text>
+          </view>
+          
+          <!-- 记忆技巧 -->
+          <view wx:if="{{item.memoryTip}}" class="result-row align-top">
+            <text class="row-label">【记忆技巧】</text>
+            <text class="row-value memory-tip">{{item.memoryTip}}</text>
+          </view>
         </view>
+      </block>
+      
+      <!-- 句子类型显示（原有的） -->
+      <block wx:else>
+        <view wx:for="{{analysisResult}}" wx:key="index" class="result-flat">
+          <!-- 句子编号 -->
+          <view class="result-row">
+            <text class="row-label">📘 第{{item.index}}句</text>
+            <view class="result-actions">
+              <text class="save-link" bindtap="saveToWordbook" data-sentence="{{item}}">保存词汇</text>
+            </view>
+          </view>
         
         <!-- 日文原文 -->
         <view class="result-row">
@@ -139,12 +237,15 @@
         <!-- 分隔线 -->
         <view class="result-divider" wx:if="{{index < analysisResult.length - 1}}"></view>
       </view>
+      </block>
     </view>
   </view>
 
   <!-- 空状态提示 -->
-  <view wx:if="{{!showResult && !isAnalyzing && !inputText}}" class="empty-state">
+  <view wx:if="{{!showResult && !isAnalyzing && !inputText && !imageUrl}}" class="empty-state">
     <text class="empty-icon">📝</text>
     <text class="empty-text">输入日语文本或上传图片开始解析</text>
   </view>
+
+  <!-- 历史记录功能已移至独立页面 -->
 </view>

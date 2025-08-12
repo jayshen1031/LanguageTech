@@ -416,6 +416,13 @@ Page({
     })
   },
 
+  // 切换到语法库
+  switchToLibrary() {
+    wx.navigateTo({
+      url: '/pages/grammar-library/grammar-library'
+    })
+  },
+
   // 分享
   onShareAppMessage() {
     return {

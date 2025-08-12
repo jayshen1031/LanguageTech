@@ -1,0 +1,493 @@
+/* 语法库页面样式 */
+.container {
+  padding: 0;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 搜索栏 */
+.search-bar {
+  position: relative;
+  padding: 20rpx;
+  background: #fff;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.search-input {
+  width: 100%;
+  height: 70rpx;
+  padding: 0 70rpx 0 30rpx;
+  background: #f5f5f5;
+  border-radius: 35rpx;
+  font-size: 28rpx;
+}
+
+.search-bar icon {
+  position: absolute;
+  right: 50rpx;
+  top: 45rpx;
+}
+
+/* 进度统计 */
+.progress-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 30rpx 20rpx;
+  background: #fff;
+  margin-bottom: 20rpx;
+}
+
+.stats-item {
+  text-align: center;
+}
+
+.stats-label {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 10rpx;
+}
+
+.stats-value {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 语法列表 */
+.grammar-list {
+  padding: 0 20rpx 20rpx;
+}
+
+.unit-section {
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+.unit-header {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.unit-title {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.unit-count {
+  font-size: 24rpx;
+  color: #999;
+  margin-right: 20rpx;
+}
+
+.expand-icon {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.lesson-list {
+  padding: 10rpx 0;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  padding: 25rpx 30rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.lesson-item:last-child {
+  border-bottom: none;
+}
+
+.lesson-main {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.lesson-title {
+  display: block;
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.lesson-grammar {
+  display: block;
+  font-size: 28rpx;
+  color: #1890ff;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+
+.lesson-explain {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;  /* 最多显示2行 */
+  -webkit-box-orient: vertical;
+}
+
+.lesson-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+}
+
+.tag {
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+
+.tag.favorite {
+  color: #ff9800;
+  background: #fff3e0;
+}
+
+.tag.mastered {
+  color: #4caf50;
+  background: #e8f5e9;
+}
+
+.tag.completed {
+  color: #2196f3;
+  background: #e3f2fd;
+}
+
+.tag.new {
+  color: #999;
+  background: #f5f5f5;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 100rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* 课程详情 */
+.lesson-detail {
+  background: #fff;
+  min-height: 100vh;
+}
+
+.back-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.back-btn {
+  color: #1890ff;
+  font-size: 28rpx;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 30rpx;
+}
+
+.action-btn {
+  color: #666;
+  font-size: 28rpx;
+  padding: 10rpx 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 20rpx;
+}
+
+.action-btn.favorited {
+  color: #ff9800;
+  border-color: #ff9800;
+  background: #fff3e0;
+}
+
+.detail-header {
+  padding: 40rpx 30rpx;
+  text-align: center;
+  border-bottom: 1rpx solid #eee;
+}
+
+.detail-unit {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.detail-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.detail-level {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  background: #e3f2fd;
+  color: #2196f3;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+/* 语法部分 */
+.grammar-section,
+.explanation-section,
+.examples-section {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.grammar-pattern {
+  display: block;
+  font-size: 36rpx;
+  color: #1890ff;
+  font-weight: bold;
+  padding: 20rpx;
+  background: #f0f8ff;
+  border-radius: 10rpx;
+  text-align: center;
+}
+
+.explanation-text {
+  display: block;
+  font-size: 30rpx;
+  color: #666;
+  line-height: 1.8;
+  white-space: pre-wrap;  /* 保留换行符 */
+}
+
+/* 例句部分 */
+.example-list {
+  margin-top: 20rpx;
+}
+
+.example-item {
+  padding: 30rpx;
+  background: #f8f8f8;
+  border-radius: 15rpx;
+  margin-bottom: 20rpx;
+}
+
+.example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.example-number {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.play-btn {
+  font-size: 32rpx;
+  padding: 10rpx;
+}
+
+.example-jp {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+  font-weight: 500;
+}
+
+.example-kana {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.example-romaji {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 15rpx;
+  font-style: italic;
+}
+
+.example-cn {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.example-grammar {
+  display: block;
+  font-size: 24rpx;
+  color: #1890ff;
+  margin-top: 15rpx;
+  padding: 10rpx;
+  background: #e6f7ff;
+  border-radius: 8rpx;
+}
+
+/* 练习按钮 */
+.practice-btn {
+  margin: 40rpx 30rpx;
+  background: #1890ff;
+  color: #fff;
+  font-size: 32rpx;
+  border-radius: 50rpx;
+  height: 90rpx;
+}
+
+/* 练习模式 */
+.practice-mode {
+  background: #fff;
+  min-height: 100vh;
+  padding: 30rpx;
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.practice-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.practice-progress {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.practice-content {
+  padding: 40rpx 20rpx;
+  background: #f8f8f8;
+  border-radius: 20rpx;
+  min-height: 400rpx;
+}
+
+.practice-instruction {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 30rpx;
+}
+
+.practice-question {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 40rpx;
+  line-height: 1.8;
+}
+
+.practice-jp {
+  display: block;
+  font-size: 36rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.practice-kana {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.answer-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 30rpx;
+  background: #fff;
+  border: 2rpx solid #ddd;
+  border-radius: 10rpx;
+  font-size: 30rpx;
+}
+
+.answer-section {
+  margin-top: 40rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-radius: 15rpx;
+}
+
+.answer-label {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 15rpx;
+}
+
+.answer-text {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.answer-result {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  text-align: center;
+  padding: 15rpx;
+  border-radius: 10rpx;
+}
+
+.answer-result.correct {
+  color: #4caf50;
+  background: #e8f5e9;
+}
+
+.answer-result.incorrect {
+  color: #f44336;
+  background: #ffebee;
+}
+
+.practice-actions {
+  margin-top: 40rpx;
+  text-align: center;
+}
+
+.check-btn,
+.next-btn {
+  width: 60%;
+  height: 80rpx;
+  background: #1890ff;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 40rpx;
+}

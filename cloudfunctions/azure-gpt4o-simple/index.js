@@ -26,7 +26,7 @@ exports.main = async (event) => {
         content: event.prompt || '你好'
       }],
       temperature: 0.3,
-      max_tokens: 1000
+      max_tokens: 4000
     })
     
     const options = {

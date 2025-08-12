@@ -1,0 +1,183 @@
+<view class="container">
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="header-left">
+      <text class="back-btn" bindtap="navigateBack">‹</text>
+      <text class="header-title">解析复习</text>
+    </view>
+    <view class="header-right">
+      <text class="mode-btn" bindtap="showModeSelection">
+        {{reviewMode === 'random' ? '随机' : reviewMode === 'favorite' ? '收藏' : '最近'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- 进度条 -->
+  <view class="progress-bar">
+    <view class="progress-info">
+      <text class="progress-text">{{reviewProgress.current + 1}} / {{reviewProgress.total}}</text>
+    </view>
+    <view class="progress-track">
+      <view 
+        class="progress-fill" 
+        style="width: {{reviewProgress.total > 0 ? (reviewProgress.current + 1) / reviewProgress.total * 100 : 0}}%"
+      ></view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{isLoading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{reviewList.length === 0}}" class="empty-state">
+    <text class="empty-icon">📚</text>
+    <text class="empty-text">暂无可复习的内容</text>
+    <text class="empty-subtitle">先去解析一些日语句子吧</text>
+  </view>
+
+  <!-- 复习内容 -->
+  <view wx:else class="review-content">
+    <!-- 句子卡片 -->
+    <view class="sentence-card">
+      <!-- 原始内容提示（如果是图片） -->
+      <view wx:if="{{currentItem.inputMethod === 'image' && currentItem.imageUrl}}" class="original-source">
+        <text class="source-label">来源：图片识别</text>
+        <text class="view-source-btn" bindtap="viewOriginalImage">查看原图</text>
+      </view>
+      
+      <!-- 日文原文 -->
+      <view class="sentence-main">
+        <text class="japanese-text">{{currentSentence.originalText}}</text>
+        <view class="sentence-actions">
+          <text class="action-btn" bindtap="playPronunciation">🔊</text>
+        </view>
+      </view>
+
+      <!-- 罗马音（点击显示答案后显示） -->
+      <view wx:if="{{showAnswer}}" class="sentence-romaji">
+        <text class="romaji-text">{{currentSentence.romaji}}</text>
+      </view>
+
+      <!-- 翻译（点击显示答案后显示） -->
+      <view wx:if="{{showAnswer}}" class="sentence-translation">
+        <text class="translation-text">{{currentSentence.translation}}</text>
+      </view>
+
+      <!-- 答案详情 -->
+      <view wx:if="{{showAnswer}}" class="answer-details">
+        <!-- 句子结构 -->
+        <view class="detail-section">
+          <text class="detail-label">句子结构</text>
+          <text class="detail-content">{{currentSentence.structure}}</text>
+        </view>
+
+        <!-- 语法点 -->
+        <view class="detail-section">
+          <text class="detail-label">语法点</text>
+          <text class="detail-content grammar-content">{{currentSentence.grammar}}</text>
+        </view>
+
+        <!-- 词汇表 -->
+        <view wx:if="{{currentSentence.vocabulary && currentSentence.vocabulary.length > 0}}" class="detail-section">
+          <text class="detail-label">词汇明细</text>
+          <view class="vocabulary-list">
+            <view wx:for="{{currentSentence.vocabulary}}" wx:key="index" class="vocab-item">
+              <text class="vocab-text">{{item.japanese}} | {{item.romaji}} | {{item.chinese}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <!-- 显示/隐藏答案 -->
+      <button 
+        wx:if="{{!showAnswer}}" 
+        class="btn-primary" 
+        bindtap="showAnswerDetail"
+      >
+        显示答案
+      </button>
+
+      <!-- 掌握程度选择 -->
+      <view wx:else class="mastery-buttons">
+        <button 
+          class="btn-difficult" 
+          bindtap="markMastery" 
+          data-mastered="{{false}}"
+        >
+          还需练习
+        </button>
+        <button 
+          class="btn-easy" 
+          bindtap="markMastery" 
+          data-mastered="{{true}}"
+        >
+          已掌握
+        </button>
+      </view>
+    </view>
+
+    <!-- 导航按钮 -->
+    <view class="nav-buttons">
+      <button 
+        class="btn-nav {{currentIndex === 0 ? 'disabled' : ''}}" 
+        bindtap="prevSentence"
+        disabled="{{currentIndex === 0}}"
+      >
+        上一个
+      </button>
+      <button class="btn-nav-primary" bindtap="nextSentence">
+        {{currentIndex < reviewList.length - 1 ? '下一个' : '完成'}}
+      </button>
+    </view>
+
+    <!-- 底部工具栏 -->
+    <view class="toolbar">
+      <text class="tool-btn" bindtap="saveToWordbook">📝 保存词汇</text>
+      <text class="tool-btn" bindtap="hideAnswer">👁️ 隐藏答案</text>
+    </view>
+  </view>
+
+  <!-- 模式选择弹窗 -->
+  <view wx:if="{{showModeSelect}}" class="mode-modal">
+    <view class="mode-container">
+      <view class="mode-header">
+        <text class="mode-title">选择复习模式</text>
+        <text class="close-btn" bindtap="hideModeSelection">×</text>
+      </view>
+      
+      <view class="mode-list">
+        <view 
+          class="mode-item {{reviewMode === 'random' ? 'active' : ''}}"
+          bindtap="switchMode"
+          data-mode="random"
+        >
+          <text class="mode-name">🎲 随机复习</text>
+          <text class="mode-desc">随机顺序复习所有句子</text>
+        </view>
+        
+        <view 
+          class="mode-item {{reviewMode === 'favorite' ? 'active' : ''}}"
+          bindtap="switchMode"
+          data-mode="favorite"
+        >
+          <text class="mode-name">⭐ 收藏复习</text>
+          <text class="mode-desc">只复习收藏的句子</text>
+        </view>
+        
+        <view 
+          class="mode-item {{reviewMode === 'recent' ? 'active' : ''}}"
+          bindtap="switchMode"
+          data-mode="recent"
+        >
+          <text class="mode-name">🕐 最近复习</text>
+          <text class="mode-desc">按时间顺序复习最近的句子</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

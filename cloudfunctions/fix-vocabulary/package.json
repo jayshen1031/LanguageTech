@@ -1,0 +1,12 @@
+{
+  "name": "fix-vocabulary",
+  "version": "1.0.0",
+  "description": "修复词汇数据中的假名字段",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "cloudfunctionTemplateRoot": "cloudfunctions/"
+}

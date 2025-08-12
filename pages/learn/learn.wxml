@@ -1,6 +1,20 @@
 <view class="container">
+  <!-- 学习设置（首次加载时显示） -->
+  <view class="setup-modal" wx:if="{{showSetup}}">
+    <view class="setup-content">
+      <text class="setup-title">今天想学习多少个单词？</text>
+      <view class="word-count-options">
+        <button class="count-option" bindtap="selectWordCount" data-count="5">5个</button>
+        <button class="count-option" bindtap="selectWordCount" data-count="10">10个</button>
+        <button class="count-option" bindtap="selectWordCount" data-count="15">15个</button>
+        <button class="count-option" bindtap="selectWordCount" data-count="20">20个</button>
+      </view>
+      <text class="setup-tip">建议每天学习10-15个新词</text>
+    </view>
+  </view>
+
   <!-- 学习进度 -->
-  <view class="progress-header">
+  <view class="progress-header" wx:if="{{!showSetup}}">
     <text class="progress-text">{{currentIndex + 1}} / {{wordList.length}}</text>
     <view class="progress-dots">
       <view 
@@ -29,14 +43,41 @@
         <view class="word-meta">
           <text class="word-type">{{currentWord.type}}</text>
           <text class="word-level">{{currentWord.level}}</text>
+          <text class="word-source" wx:if="{{currentWord.source === 'history'}}">解析词汇</text>
         </view>
       </view>
       
-      <view class="example-section" wx:if="{{showExample}}">
+      <!-- 例句部分 -->
+      <view class="example-section" wx:if="{{currentWord.examples && currentWord.examples.length > 0}}">
+        <text class="example-title">例句：</text>
         <view class="example-item" wx:for="{{currentWord.examples}}" wx:key="index">
           <text class="example-jp">{{item.jp}}</text>
           <text class="example-cn">{{item.cn}}</text>
         </view>
+        
+        <!-- 语法信息 -->
+        <view wx:if="{{currentWord.grammar || currentWord.structure || currentWord.analysis}}" class="grammar-section">
+          <view wx:if="{{currentWord.structure}}" class="grammar-item">
+            <text class="grammar-label">句子结构：</text>
+            <text class="grammar-content">{{currentWord.structure}}</text>
+          </view>
+          
+          <view wx:if="{{currentWord.grammar}}" class="grammar-item">
+            <text class="grammar-label">语法要点：</text>
+            <text class="grammar-content">{{currentWord.grammar}}</text>
+          </view>
+          
+          <view wx:if="{{currentWord.analysis}}" class="grammar-item">
+            <text class="grammar-label">详细解析：</text>
+            <text class="grammar-content">{{currentWord.analysis}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 无例句提示 -->
+      <view class="example-section" wx:if="{{!currentWord.examples || currentWord.examples.length === 0}}">
+        <text class="example-title">例句：</text>
+        <text class="no-example-hint">暂无例句</text>
       </view>
       
       <view class="audio-hint">
@@ -45,19 +86,23 @@
     </view>
   </view>
 
+  <!-- 翻页按钮 -->
+  <view class="nav-buttons">
+    <button class="btn-nav" bindtap="prevWord" disabled="{{currentIndex === 0}}">
+      上一个
+    </button>
+    <button class="btn-nav" bindtap="nextWord" disabled="{{currentIndex >= wordList.length - 1}}">
+      下一个
+    </button>
+  </view>
+
   <!-- 操作按钮 -->
   <view class="action-buttons">
     <button class="btn-action" bindtap="toggleExample">
-      {{showExample ? '隐藏' : '显示'}}例句
+      {{showExample ? '隐藏例句' : '显示例句'}}
     </button>
     <button class="btn-action" bindtap="addToWordbook">
       <text class="{{inWordbook ? 'added' : ''}}">{{inWordbook ? '已添加' : '加入生词本'}}</text>
-    </button>
-    <button class="btn-action" bindtap="testMCPConnection" style="background: #ff6b6b; color: white;">
-      测试MCP连接
-    </button>
-    <button class="btn-action" bindtap="goToAITest" style="background: #667eea; color: white;">
-      AI测试
     </button>
   </view>
 

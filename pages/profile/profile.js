@@ -1,5 +1,12 @@
+const audioCache = require('../../utils/audioCache')
+
 Page({
-  data: {},
+  data: {
+    cacheStats: {
+      fileCount: 0,
+      totalSizeMB: '0.00'
+    }
+  },
 
   onLoad() {
     console.log('个人中心页面加载')
@@ -7,46 +14,53 @@ Page({
     wx.cloud.init({
       env: 'cloud1-2g49srond2b01891'
     })
+    
+    // 获取缓存统计
+    this.updateCacheStats()
   },
-
-  // 跳转到管理页面
-  goToAdmin() {
-    console.log('点击了词汇管理按钮')
-    
-    // 先显示加载提示
-    wx.showLoading({
-      title: '正在跳转...',
-      mask: true
+  
+  onShow() {
+    // 每次显示页面时更新缓存统计
+    this.updateCacheStats()
+  },
+  
+  // 更新缓存统计信息
+  updateCacheStats() {
+    const stats = audioCache.getCacheStats()
+    this.setData({
+      cacheStats: stats
     })
-    
-    // 延迟一下再跳转，确保页面准备好
-    setTimeout(() => {
-      wx.hideLoading()
-      
-      wx.navigateTo({
-        url: '/pages/admin/admin',
-        success: (res) => {
-          console.log('跳转成功:', res)
-        },
-        fail: (err) => {
-          console.error('跳转失败详情:', err)
+  },
+  
+  // 清理音频缓存
+  clearAudioCache() {
+    wx.showModal({
+      title: '清理缓存',
+      content: `确定要清理所有音频缓存吗？当前缓存：${this.data.cacheStats.fileCount}个文件，${this.data.cacheStats.totalSizeMB}MB`,
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '清理中...' })
           
-          // 尝试使用 redirectTo
-          wx.redirectTo({
-            url: '/pages/admin/admin',
-            fail: (err2) => {
-              console.error('redirectTo 也失败:', err2)
-              
-              // 显示详细错误信息
-              wx.showModal({
-                title: '跳转失败',
-                content: `错误信息: ${err.errMsg}\n错误码: ${err.errno || '无'}`,
-                showCancel: false
-              })
-            }
-          })
+          const result = await audioCache.clearAllCache()
+          
+          wx.hideLoading()
+          
+          if (result) {
+            wx.showToast({
+              title: '清理成功',
+              icon: 'success'
+            })
+            
+            // 更新统计信息
+            this.updateCacheStats()
+          } else {
+            wx.showToast({
+              title: '清理失败',
+              icon: 'none'
+            })
+          }
         }
-      })
-    }, 100)
+      }
+    })
   }
 })

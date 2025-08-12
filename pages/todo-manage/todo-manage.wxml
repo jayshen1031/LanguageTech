@@ -1,0 +1,159 @@
+<view class="todo-container">
+  <view class="header">
+    <text class="title">项目待办管理</text>
+    <view class="add-btn" bindtap="showAddDialog">
+      <text class="icon">+</text>
+      <text>新建任务</text>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <input 
+      class="search-input"
+      placeholder="搜索任务..."
+      value="{{searchKey}}"
+      bindinput="onSearchInput"
+      bindconfirm="searchTodos"
+    />
+    <view class="search-btn" bindtap="searchTodos">搜索</view>
+  </view>
+
+  <!-- 状态筛选 -->
+  <view class="filter-tabs">
+    <view 
+      class="tab-item {{statusFilter === 'all' ? 'active' : ''}}"
+      data-status="all"
+      bindtap="filterByStatus"
+    >全部</view>
+    <view 
+      class="tab-item {{statusFilter === 'pending' ? 'active' : ''}}"
+      data-status="pending"
+      bindtap="filterByStatus"
+    >待处理</view>
+    <view 
+      class="tab-item {{statusFilter === 'in_progress' ? 'active' : ''}}"
+      data-status="in_progress"
+      bindtap="filterByStatus"
+    >进行中</view>
+    <view 
+      class="tab-item {{statusFilter === 'completed' ? 'active' : ''}}"
+      data-status="completed"
+      bindtap="filterByStatus"
+    >已完成</view>
+  </view>
+
+  <!-- Todo列表 -->
+  <scroll-view class="todo-list" scroll-y>
+    <view wx:for="{{filteredTodos}}" wx:key="_id" class="todo-item">
+      <view class="todo-header">
+        <view class="todo-title-line">
+          <view 
+            class="status-indicator {{item.status}}"
+            bindtap="toggleStatus"
+            data-id="{{item._id}}"
+            data-status="{{item.status}}"
+          ></view>
+          <text class="todo-title">{{item.title}}</text>
+          <text class="priority-tag priority-{{item.priority}}">P{{item.priority}}</text>
+        </view>
+        <view class="todo-actions">
+          <text class="action-btn" bindtap="editTodo" data-id="{{item._id}}">编辑</text>
+          <text class="action-btn delete" bindtap="deleteTodo" data-id="{{item._id}}">删除</text>
+        </view>
+      </view>
+      
+      <view wx:if="{{item.description}}" class="todo-desc">
+        {{item.description}}
+      </view>
+      
+      <view class="todo-footer">
+        <view class="todo-tags">
+          <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
+        </view>
+        <text class="todo-date">{{item.updateTime}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{filteredTodos.length === 0}}" class="empty-state">
+      <text>暂无待办事项</text>
+    </view>
+  </scroll-view>
+
+  <!-- 添加/编辑弹窗 -->
+  <view class="modal" wx:if="{{showModal}}" bindtap="hideModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">{{editingId ? '编辑任务' : '新建任务'}}</text>
+        <text class="close-btn" bindtap="hideModal">×</text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="form-item">
+          <text class="label">任务标题</text>
+          <input 
+            class="input"
+            placeholder="请输入任务标题"
+            value="{{formData.title}}"
+            bindinput="onInputTitle"
+          />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">任务描述</text>
+          <textarea 
+            class="textarea"
+            placeholder="请输入任务描述"
+            value="{{formData.description}}"
+            bindinput="onInputDesc"
+          />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">优先级</text>
+          <picker 
+            mode="selector" 
+            range="{{priorityOptions}}"
+            range-key="label"
+            value="{{priorityIndex}}"
+            bindchange="onPriorityChange"
+          >
+            <view class="picker">
+              {{priorityOptions[priorityIndex].label}}
+            </view>
+          </picker>
+        </view>
+        
+        <view class="form-item">
+          <text class="label">状态</text>
+          <picker 
+            mode="selector" 
+            range="{{statusOptions}}"
+            range-key="label"
+            value="{{statusIndex}}"
+            bindchange="onStatusChange"
+          >
+            <view class="picker">
+              {{statusOptions[statusIndex].label}}
+            </view>
+          </picker>
+        </view>
+        
+        <view class="form-item">
+          <text class="label">标签（用空格分隔）</text>
+          <input 
+            class="input"
+            placeholder="如：前端 优化 Bug"
+            value="{{formData.tagsStr}}"
+            bindinput="onInputTags"
+          />
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="btn cancel" bindtap="hideModal">取消</button>
+        <button class="btn confirm" bindtap="saveTodo">保存</button>
+      </view>
+    </view>
+  </view>
+</view>

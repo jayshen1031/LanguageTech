@@ -45,19 +45,18 @@ exports.main = async (event, context) => {
       }
     }
     
-    // 使用Google Translate TTS（备用）
-    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`
+    // 使用百度TTS（国内访问快）
+    const baiduTTS = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(text)}&spd=3&source=web`
     
-    // 使用VoiceRSS API（需要注册）
-    const voiceRSSKey = process.env.VOICERSS_KEY || 'demo'
-    const voiceRSSUrl = `https://api.voicerss.org/?key=${voiceRSSKey}&hl=ja-jp&src=${encodeURIComponent(text)}&f=16khz_16bit_stereo`
+    // 使用有道词典TTS（备选）
+    const youdaoTTS = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`
     
     // 返回多个选项，让客户端选择
     return {
       success: true,
-      audioUrl: googleTTS, // 主选项
-      alternatives: [voiceRSSUrl], // 备选
-      source: 'google-tts'
+      audioUrl: baiduTTS, // 主选项（百度）
+      alternatives: [youdaoTTS], // 备选（有道）
+      source: 'baidu-tts'
     }
     
   } catch (error) {

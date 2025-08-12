@@ -1,0 +1,65 @@
+<!-- pages/parser-history/parser-history.wxml -->
+<view class="container">
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <view class="filter-item {{filterType === 'all' ? 'active' : ''}}" bindtap="onFilterChange" data-type="all">
+      全部
+    </view>
+    <view class="filter-item {{filterType === 'favorite' ? 'active' : ''}}" bindtap="onFilterChange" data-type="favorite">
+      收藏
+    </view>
+    <view class="filter-item {{filterType === 'recent' ? 'active' : ''}}" bindtap="onFilterChange" data-type="recent">
+      最近使用
+    </view>
+  </view>
+
+  <!-- 词汇提取按钮 -->
+  <view class="vocab-extract-bar">
+    <button class="btn-extract-vocab" bindtap="extractVocabulary">
+      <text class="extract-icon">📚</text>
+      <text>提取历史词汇</text>
+    </button>
+  </view>
+
+  <!-- 历史列表 -->
+  <view class="history-list" wx:if="{{historyList.length > 0}}">
+    <view class="history-item" wx:for="{{historyList}}" wx:key="_id">
+      <view class="item-header">
+        <view class="item-time">{{item.displayTime}}</view>
+        <view class="item-actions">
+          <view class="action-btn" catchtap="onToggleFavorite" data-index="{{index}}">
+            <image src="/images/{{item.favorite ? 'star-filled' : 'star'}}.png" class="action-icon"></image>
+          </view>
+          <view class="action-btn delete-btn" catchtap="onDelete" data-index="{{index}}">
+            <text class="delete-text">删除</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="item-content" bindtap="onViewDetail" data-item="{{item}}">
+        <view class="item-preview">{{item.preview}}</view>
+        <view class="item-info">
+          <text class="info-tag">{{item.inputMethod === 'image' ? '图片' : '文本'}}</text>
+          <text class="info-count" wx:if="{{item.sentences}}">{{item.sentences.length}}个句子</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && historyList.length === 0}}">
+    <image src="/images/empty.png" class="empty-image"></image>
+    <text class="empty-text">暂无解析记录</text>
+    <view class="empty-button" bindtap="onGoToParser">去解析</view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-more" wx:if="{{loading && historyList.length > 0}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 没有更多 -->
+  <view class="no-more" wx:if="{{!hasMore && historyList.length > 0}}">
+    <text>没有更多了</text>
+  </view>
+</view>

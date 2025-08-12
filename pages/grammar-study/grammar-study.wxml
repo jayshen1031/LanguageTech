@@ -3,6 +3,7 @@
   <view class="progress-header">
     <text class="week-title">第{{currentWeek}}周 - 第{{currentDay}}天</text>
     <text class="week-theme">{{weekPlan.title}}</text>
+    <text class="switch-mode-btn" bindtap="switchToLibrary">切换到自由学习 →</text>
   </view>
 
   <!-- 今日任务 -->

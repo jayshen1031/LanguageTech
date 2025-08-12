@@ -75,6 +75,95 @@
   transform: scale(0.98);
 }
 
+/* 缓存管理 */
+.cache-section {
+  background: #fff;
+  padding: 30rpx;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.cache-info {
+  padding: 20rpx 0;
+}
+
+.cache-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15rpx 0;
+}
+
+.cache-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.cache-value {
+  font-size: 28rpx;
+  color: #4A90E2;
+  font-weight: bold;
+}
+
+.clear-cache-btn {
+  width: 100%;
+  height: 80rpx;
+  background: #FF6B6B;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 10rpx;
+  margin-top: 30rpx;
+  border: none;
+}
+
+.clear-cache-btn::after {
+  display: none;
+}
+
+.clear-cache-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+/* 管理功能 */
+.admin-section {
+  background: #fff;
+  padding: 30rpx;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
+}
+
+.admin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-item:last-child {
+  border-bottom: none;
+}
+
+.admin-label {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.admin-arrow {
+  font-size: 36rpx;
+  color: #999;
+}
+
 /* 其他 */
 .other-section {
   text-align: center;

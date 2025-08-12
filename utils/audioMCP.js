@@ -1,11 +1,14 @@
 // 音频服务客户端（云函数版本）
+const audioCache = require('./audioCache')
+
 class AudioService {
   constructor() {
-    this.cache = new Map() // 本地缓存
+    this.cache = new Map() // 内存缓存
+    this.fileCache = audioCache // 文件缓存系统
     this.preloadQueue = new Map() // 预加载队列
     this.audioContextPool = [] // 音频上下文池
     this.maxPoolSize = 5 // 最大池大小
-    console.log('🎵 AudioService初始化（云函数版本）')
+    console.log('🎵 AudioService初始化（云函数版本 + 本地缓存）')
     this.initAudioPool()
   }
   
@@ -25,20 +28,35 @@ class AudioService {
   
   // 生成音频（调用云函数）
   async generateAudio(text, lang = 'ja', voice = null) {
-    console.log(`🎤 调用云函数生成音频: "${text}" (${lang})`)
+    console.log(`🎤 生成音频: "${text}" (${lang})`)
     
-    // 检查本地缓存
+    const options = { voice, lang }
+    
+    // 1. 先检查文件缓存
+    const cachedFilePath = await this.fileCache.checkCache(text, options)
+    if (cachedFilePath) {
+      console.log('✅ 使用文件缓存:', cachedFilePath)
+      return {
+        success: true,
+        audioUrl: cachedFilePath,
+        cached: true,
+        source: 'file_cache'
+      }
+    }
+    
+    // 2. 检查内存缓存
     const cacheKey = `${text}_${lang}_${voice || 'default'}`
     if (this.cache.has(cacheKey)) {
-      console.log('✅ 使用本地缓存')
+      console.log('✅ 使用内存缓存')
       return this.cache.get(cacheKey)
     }
     
+    // 3. 调用云函数生成新音频
     return new Promise((resolve, reject) => {
       wx.cloud.callFunction({
         name: 'tts-service',
         data: { text, lang, voice },
-        success: (res) => {
+        success: async (res) => {
           console.log('🎵 云函数调用成功:', res.result)
           
           if (res.result && res.result.success) {
@@ -46,9 +64,28 @@ class AudioService {
             if (audioUrl) {
               console.log('✅ 获得音频URL:', audioUrl)
               console.log('🔄 备选源数量:', res.result.alternatives?.length || 0)
-              // 缓存完整结果
+              
+              // 保存到文件缓存（异步，不阻塞）
+              this.fileCache.saveToCache(text, audioUrl, options)
+                .then(localPath => {
+                  console.log('💾 已保存到文件缓存:', localPath)
+                  // 更新内存缓存，使用本地路径
+                  const cachedResult = {
+                    ...res.result,
+                    audioUrl: localPath,
+                    originalUrl: audioUrl,
+                    cached: true,
+                    source: 'local_file'
+                  }
+                  this.cache.set(cacheKey, cachedResult)
+                })
+                .catch(err => {
+                  console.warn('保存到文件缓存失败:', err)
+                })
+              
+              // 先保存到内存缓存
               this.cache.set(cacheKey, res.result)
-              resolve(res.result) // 返回完整结果而不是仅URL
+              resolve(res.result) // 返回完整结果
             } else {
               console.log('⚠️ 无音频URL，返回读音信息:', res.result.readingInfo)
               resolve(res.result.readingInfo)
@@ -136,15 +173,27 @@ class AudioService {
       // 在后台获取音频URL
       const result = await this.generateAudio(text, lang, voice)
       
-      // 预加载音频文件
+      // 预加载音频文件（优化：不实际播放，只设置src触发下载）
       if (result && result.audioUrl) {
         const ctx = wx.createInnerAudioContext()
         ctx.src = result.audioUrl
-        ctx.volume = 0 // 静音预加载
-        ctx.play()
-        ctx.stop()
-        ctx.destroy()
-        console.log('✅ 预加载完成:', text)
+        ctx.volume = 0 // 静音
+        
+        // 监听可播放事件，表示音频已加载
+        ctx.onCanplay(() => {
+          console.log('✅ 音频已缓存:', text)
+          // 立即销毁，避免占用资源
+          ctx.destroy()
+        })
+        
+        // 错误处理
+        ctx.onError((err) => {
+          console.warn('⚠️ 预加载出错:', text, err)
+          ctx.destroy()
+        })
+        
+        // 不调用play()，避免与实际播放冲突
+        console.log('📥 开始预加载:', text)
       }
     } catch (error) {
       console.warn('⚠️ 预加载失败:', text, error)

@@ -1,0 +1,192 @@
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar" wx:if="{{!currentLesson}}">
+    <input 
+      class="search-input"
+      placeholder="搜索语法名称、句型或说明"
+      value="{{searchKeyword}}"
+      bindinput="onSearchInput"
+    />
+    <icon type="search" size="20" color="#999" />
+  </view>
+
+  <!-- 进度统计 -->
+  <view class="progress-stats" wx:if="{{!currentLesson}}">
+    <view class="stats-item">
+      <text class="stats-label">总课程</text>
+      <text class="stats-value">{{totalLessons}}</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-label">已完成</text>
+      <text class="stats-value">{{studyProgress.completedLessons.length || 0}}</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-label">已掌握</text>
+      <text class="stats-value">{{studyProgress.masteredLessons.length || 0}}</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-label">收藏</text>
+      <text class="stats-value">{{favoriteIds.length}}</text>
+    </view>
+  </view>
+
+  <!-- 语法列表 -->
+  <view class="grammar-list" wx:if="{{!currentLesson}}">
+    <block wx:for="{{filteredUnits}}" wx:key="key">
+      <view class="unit-section">
+        <view class="unit-header" bindtap="toggleUnit" data-key="{{item.key}}">
+          <text class="unit-title">{{item.title}}</text>
+          <text class="unit-count">{{item.lessons.length}}课</text>
+          <text class="expand-icon">{{expandedUnits[item.key] ? '▼' : '▶'}}</text>
+        </view>
+        
+        <view class="lesson-list" wx:if="{{expandedUnits[item.key]}}">
+          <view 
+            class="lesson-item"
+            wx:for="{{item.lessons}}" 
+            wx:for-item="lesson"
+            wx:key="id"
+            bindtap="viewLesson"
+            data-lesson="{{lesson}}"
+          >
+            <view class="lesson-main">
+              <text class="lesson-title">{{lesson.title}}</text>
+              <text class="lesson-grammar">{{lesson.grammar}}</text>
+              <text class="lesson-explain">{{lesson.explanation}}</text>
+            </view>
+            <view class="lesson-tags">
+              <text wx:if="{{favoriteIds.includes(lesson.id)}}" class="tag favorite">★</text>
+              <text wx:if="{{studyProgress.masteredLessons.includes(lesson.id)}}" class="tag mastered">已掌握</text>
+              <text wx:elif="{{studyProgress.completedLessons.includes(lesson.id)}}" class="tag completed">已学习</text>
+              <text wx:else class="tag new">未学习</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!currentLesson && filteredUnits.length === 0}}">
+    <text>没有找到匹配的语法</text>
+  </view>
+
+  <!-- 课程详情 -->
+  <view class="lesson-detail" wx:if="{{currentLesson && !practiceMode}}">
+    <!-- 返回按钮 -->
+    <view class="back-header">
+      <text class="back-btn" bindtap="backToList">← 返回列表</text>
+      <view class="action-buttons">
+        <text 
+          class="action-btn {{favoriteIds.includes(currentLesson.id) ? 'favorited' : ''}}"
+          bindtap="toggleFavorite"
+        >
+          {{favoriteIds.includes(currentLesson.id) ? '★ 已收藏' : '☆ 收藏'}}
+        </text>
+        <text 
+          class="action-btn"
+          bindtap="markAsMastered"
+          wx:if="{{!studyProgress.masteredLessons.includes(currentLesson.id)}}"
+        >
+          标记掌握
+        </text>
+      </view>
+    </view>
+
+    <!-- 语法标题 -->
+    <view class="detail-header">
+      <text class="detail-unit">{{currentLesson.unitTitle}}</text>
+      <text class="detail-title">{{currentLesson.title}}</text>
+      <text class="detail-level">{{currentLesson.level}}</text>
+    </view>
+
+    <!-- 语法说明 -->
+    <view class="grammar-section">
+      <text class="section-title">句型</text>
+      <text class="grammar-pattern">{{currentLesson.grammar}}</text>
+    </view>
+
+    <view class="explanation-section">
+      <text class="section-title">说明</text>
+      <text class="explanation-text">{{currentLesson.explanation}}</text>
+    </view>
+
+    <!-- 例句 -->
+    <view class="examples-section">
+      <text class="section-title">例句 ({{currentLesson.examples.length}})</text>
+      <view class="example-list">
+        <view class="example-item" wx:for="{{currentLesson.examples}}" wx:key="index">
+          <view class="example-header">
+            <text class="example-number">例{{index + 1}}</text>
+            <text class="play-btn" bindtap="playExample" data-text="{{item.jp}}">🔊</text>
+          </view>
+          <text class="example-jp">{{item.jp}}</text>
+          <text class="example-kana">{{item.kana}}</text>
+          <text class="example-romaji">{{item.romaji}}</text>
+          <text class="example-cn">{{item.cn}}</text>
+          <text class="example-grammar" wx:if="{{item.grammar}}">句型分析：{{item.grammar}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 开始练习按钮 -->
+    <button class="practice-btn" bindtap="startPractice">开始练习</button>
+  </view>
+
+  <!-- 练习模式 -->
+  <view class="practice-mode" wx:if="{{practiceMode}}">
+    <view class="practice-header">
+      <text class="practice-title">{{currentLesson.title}} - 练习</text>
+      <text class="practice-progress">{{currentExampleIndex + 1}} / {{practiceExamples.length}}</text>
+    </view>
+
+    <view class="practice-content">
+      <!-- 填空题 -->
+      <block wx:if="{{practiceExamples[currentExampleIndex].type === 'fill'}}">
+        <text class="practice-question">{{practiceExamples[currentExampleIndex].question}}</text>
+        <input 
+          class="answer-input"
+          placeholder="请输入答案"
+          value="{{userAnswer}}"
+          bindinput="onAnswerInput"
+        />
+      </block>
+
+      <!-- 翻译题 -->
+      <block wx:if="{{practiceExamples[currentExampleIndex].type === 'translate'}}">
+        <text class="practice-instruction">请翻译以下句子：</text>
+        <text class="practice-jp">{{practiceExamples[currentExampleIndex].jp}}</text>
+        <text class="practice-kana" wx:if="{{practiceExamples[currentExampleIndex].kana}}">
+          {{practiceExamples[currentExampleIndex].kana}}
+        </text>
+      </block>
+
+      <!-- 显示答案 -->
+      <view class="answer-section" wx:if="{{showAnswer}}">
+        <text class="answer-label">正确答案：</text>
+        <text class="answer-text">{{practiceExamples[currentExampleIndex].answer || practiceExamples[currentExampleIndex].cn}}</text>
+        <text class="answer-result {{isCorrect ? 'correct' : 'incorrect'}}">
+          {{isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}}
+        </text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="practice-actions">
+        <button 
+          wx:if="{{!showAnswer}}" 
+          class="check-btn"
+          bindtap="checkAnswer"
+        >
+          检查答案
+        </button>
+        <button 
+          wx:if="{{showAnswer}}" 
+          class="next-btn"
+          bindtap="nextExample"
+        >
+          {{currentExampleIndex < practiceExamples.length - 1 ? '下一题' : '完成练习'}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

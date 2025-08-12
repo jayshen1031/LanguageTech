@@ -66,34 +66,12 @@
   <!-- 功能模块网格 -->
   <view class="features-section">
     <view class="features-header">
-      <text class="section-title">学习工具</text>
-      <view class="grid-options">
-        <view 
-          class="grid-option {{gridCols === 3 ? 'active' : ''}}"
-          bindtap="changeGridCols"
-          data-cols="3"
-        >3列</view>
-        <view 
-          class="grid-option {{gridCols === 4 ? 'active' : ''}}"
-          bindtap="changeGridCols"
-          data-cols="4"
-        >4列</view>
-        <view 
-          class="grid-option {{gridCols === 5 ? 'active' : ''}}"
-          bindtap="changeGridCols"
-          data-cols="5"
-        >5列</view>
-      </view>
+      <text class="section-title">特色功能</text>
     </view>
-    <view class="features-grid grid-cols-{{gridCols}}">
-      <view class="feature-card" bindtap="goToHiragana">
-        <view class="feature-icon hiragana">あ</view>
-        <text class="feature-name">平假名</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToKatakana">
-        <view class="feature-icon katakana">ア</view>
-        <text class="feature-name">片假名</text>
+    <view class="features-grid grid-cols-3">
+      <view class="feature-card" bindtap="goToKanaMerged">
+        <view class="feature-icon kana-merged">あア</view>
+        <text class="feature-name">假名对照</text>
       </view>
       
       <view class="feature-card" bindtap="goToGrammarStudy">
@@ -101,9 +79,9 @@
         <text class="feature-name">语法学习</text>
       </view>
       
-      <view class="feature-card" bindtap="goToAIGrammar">
-        <view class="feature-icon ai">🤖</view>
-        <text class="feature-name">AI语法</text>
+      <view class="feature-card" bindtap="goToGrammarLibrary">
+        <view class="feature-icon grammar-lib">📚</view>
+        <text class="feature-name">语法库</text>
       </view>
       
       <view class="feature-card" bindtap="goToVoiceDialogue">
@@ -111,49 +89,16 @@
         <text class="feature-name">语音对话</text>
       </view>
       
-      <view class="feature-card" bindtap="goToWordbook">
-        <view class="feature-icon wordbook">📖</view>
-        <text class="feature-name">生词本</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToReview">
-        <view class="feature-icon review">🔄</view>
-        <text class="feature-name">单词复习</text>
-      </view>
-      
-      <view class="feature-card" bindtap="showLearningStats">
-        <view class="feature-icon stats">📊</view>
-        <text class="feature-name">学习统计</text>
-      </view>
-      
       <view class="feature-card" bindtap="goToParser">
         <view class="feature-icon parser">🔍</view>
         <text class="feature-name">句子解析</text>
       </view>
       
-      <view class="feature-card" bindtap="showMore">
-        <view class="feature-icon more">⋯</view>
-        <text class="feature-name">更多</text>
+      <view class="feature-card" bindtap="goToParserReview">
+        <view class="feature-icon parser-review">📝</view>
+        <text class="feature-name">解析复习</text>
       </view>
     </view>
   </view>
 
-  <!-- 管理工具（开发模式） -->
-  <view class="admin-section" wx:if="{{showDevTools}}">
-    <view class="admin-header">
-      <text class="section-title">管理工具</text>
-      <text class="dev-badge">DEV</text>
-    </view>
-    <view class="admin-actions">
-      <button class="admin-btn" bindtap="goToAdmin">
-        <text>⚙️ 词汇管理</text>
-      </button>
-      <button class="admin-btn" bindtap="goToImport">
-        <text>📥 批量导入</text>
-      </button>
-      <button class="admin-btn" bindtap="goToAITest">
-        <text>🧪 AI测试</text>
-      </button>
-    </view>
-  </view>
 </view>

@@ -1,22 +1,48 @@
 /**app.wxss**/
-.container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 200rpx 0;
-  box-sizing: border-box;
-}
 
-/* 全局字体 */
+/* 页面全局样式 - 确保页面铺满屏幕 */
 page {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
     Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
     sans-serif;
   font-size: 28rpx;
   color: #333;
   background-color: #f5f5f5;
+  box-sizing: border-box;
+}
+
+/* 容器默认样式 - 铺满整个页面 */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* 带内边距的容器 */
+.container-padding {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+
+/* 居中容器 */
+.container-center {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 /* 通用卡片样式 */
@@ -110,4 +136,144 @@ page {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 全局重置样式 */
+view, scroll-view, swiper, movable-view, text, icon, progress,
+button, checkbox-group, checkbox, form, input, label, picker, picker-view,
+radio-group, radio, slider, switch, textarea, navigator, audio, image,
+video, map, canvas {
+  box-sizing: border-box;
+}
+
+/* 移除按钮默认样式 */
+button {
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+button::after {
+  border: none;
+}
+
+/* 图片默认样式 */
+image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 输入框默认样式 */
+input, textarea {
+  width: 100%;
+  padding: 20rpx;
+  font-size: 28rpx;
+  background: #fff;
+  border: 2rpx solid #ddd;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+}
+
+input:focus, textarea:focus {
+  border-color: #4A90E2;
+  outline: none;
+}
+
+/* 安全区域适配 */
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Flex布局工具类 */
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 间距工具类 */
+.mt-10 { margin-top: 10rpx; }
+.mt-20 { margin-top: 20rpx; }
+.mt-30 { margin-top: 30rpx; }
+.mb-10 { margin-bottom: 10rpx; }
+.mb-20 { margin-bottom: 20rpx; }
+.mb-30 { margin-bottom: 30rpx; }
+.ml-10 { margin-left: 10rpx; }
+.ml-20 { margin-left: 20rpx; }
+.mr-10 { margin-right: 10rpx; }
+.mr-20 { margin-right: 20rpx; }
+
+.pt-10 { padding-top: 10rpx; }
+.pt-20 { padding-top: 20rpx; }
+.pb-10 { padding-bottom: 10rpx; }
+.pb-20 { padding-bottom: 20rpx; }
+.pl-10 { padding-left: 10rpx; }
+.pl-20 { padding-left: 20rpx; }
+.pr-10 { padding-right: 10rpx; }
+.pr-20 { padding-right: 20rpx; }
+
+/* 文本对齐 */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* 隐藏元素 */
+.hidden {
+  display: none !important;
+}
+
+/* 单行文本省略 */
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 多行文本省略 */
+.ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 页面过渡动画 */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

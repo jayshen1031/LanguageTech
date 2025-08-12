@@ -1,0 +1,7 @@
+{
+  "name": "save-parsed-lyrics",
+  "version": "1.0.0",
+  "description": "Save parsed lyrics to database",
+  "main": "index.js",
+  "dependencies": {}
+}

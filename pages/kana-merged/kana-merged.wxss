@@ -1,0 +1,437 @@
+/* 假名合并学习页面样式 */
+.container {
+  min-height: 100vh;
+  background: #f8f9fb;
+  padding-bottom: 120rpx;
+}
+
+/* 顶部导航 */
+.header {
+  background: #667eea;
+  padding: 20rpx 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  padding: 10rpx 20rpx;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 28rpx;
+  border-radius: 20rpx;
+}
+
+.action-btn.primary {
+  background: #ff6b35;
+}
+
+/* 类型切换标签 */
+.type-tabs {
+  display: flex;
+  background: #fff;
+  padding: 20rpx;
+  gap: 20rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 30rpx;
+  color: #666;
+  background: #f5f6f8;
+  border-radius: 8rpx;
+  transition: all 0.3s;
+}
+
+.tab-item.active {
+  background: #667eea;
+  color: #fff;
+}
+
+/* 显示设置 */
+.display-settings {
+  background: #fff;
+  margin-top: 2rpx;
+  padding: 20rpx 30rpx;
+}
+
+.setting-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 20rpx;
+  min-width: 140rpx;
+}
+
+.setting-options {
+  display: flex;
+  gap: 30rpx;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.checkbox-label checkbox {
+  margin-right: 8rpx;
+  transform: scale(0.8);
+}
+
+.size-options {
+  display: flex;
+  gap: 20rpx;
+}
+
+.size-btn {
+  padding: 8rpx 24rpx;
+  background: #f5f6f8;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.size-btn.active {
+  background: #667eea;
+  color: #fff;
+}
+
+/* 内容区域 */
+.content-area {
+  padding: 20rpx;
+}
+
+/* 网格视图 */
+.kana-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16rpx;
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 12rpx;
+}
+
+.kana-cell {
+  aspect-ratio: 1;
+  background: #f8f9fb;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.kana-cell:active {
+  transform: scale(0.95);
+  background: #e8ecff;
+}
+
+.kana-cell.animated {
+  animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.kana-cell.empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+.kana-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.hiragana {
+  font-size: 36rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.katakana {
+  font-size: 36rpx;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.romaji {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 字体大小调整 */
+.small .hiragana,
+.small .katakana {
+  font-size: 32rpx;
+}
+
+.small .romaji {
+  font-size: 20rpx;
+}
+
+.large .hiragana,
+.large .katakana {
+  font-size: 42rpx;
+}
+
+.large .romaji {
+  font-size: 28rpx;
+}
+
+/* 列表视图 */
+.kana-list {
+  height: calc(100vh - 380rpx);
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+.kana-list-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.kana-list-item:active {
+  background: #f8f9fb;
+}
+
+.kana-list-item.animated {
+  animation: highlight 0.3s ease;
+}
+
+@keyframes highlight {
+  0% { background: #fff; }
+  50% { background: #e8ecff; }
+  100% { background: #fff; }
+}
+
+.kana-group {
+  display: flex;
+  gap: 30rpx;
+  flex: 1;
+}
+
+.kana-list-item .hiragana {
+  font-size: 40rpx;
+}
+
+.kana-list-item .katakana {
+  font-size: 40rpx;
+}
+
+.kana-list-item .romaji {
+  font-size: 30rpx;
+  margin-right: 30rpx;
+}
+
+.row-label {
+  font-size: 24rpx;
+  color: #999;
+  background: #f5f6f8;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+}
+
+/* 练习模式 */
+.practice-mode {
+  padding: 30rpx;
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.practice-title {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.practice-score {
+  font-size: 32rpx;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.practice-content {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+}
+
+.question-card {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.question-kana {
+  margin-bottom: 30rpx;
+}
+
+.hiragana-large {
+  font-size: 120rpx;
+  color: #333;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.katakana-large {
+  font-size: 120rpx;
+  color: #667eea;
+  font-weight: bold;
+  display: block;
+}
+
+.question-prompt {
+  font-size: 30rpx;
+  color: #666;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.option-btn {
+  padding: 30rpx;
+  background: #f8f9fb;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 36rpx;
+  color: #333;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.option-btn:active {
+  transform: scale(0.95);
+}
+
+.option-btn.correct {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.option-btn.wrong {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.result-feedback {
+  text-align: center;
+}
+
+.result-text {
+  font-size: 36rpx;
+  font-weight: 500;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.result-text.correct {
+  color: #28a745;
+}
+
+.result-text.wrong {
+  color: #dc3545;
+}
+
+.correct-answer {
+  font-size: 30rpx;
+  color: #666;
+  margin-bottom: 30rpx;
+}
+
+.next-btn {
+  width: 200rpx;
+  height: 80rpx;
+  background: #667eea;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 40rpx;
+  border: none;
+  margin: 0 auto;
+}
+
+.exit-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #f5f6f8;
+  color: #666;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+  border: none;
+  margin-top: 40rpx;
+}
+
+/* 底部工具栏 */
+.toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx;
+  display: flex;
+  gap: 20rpx;
+  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.08);
+}
+
+.tool-btn {
+  flex: 1;
+  height: 80rpx;
+  background: #667eea;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tool-btn::after {
+  display: none;
+}

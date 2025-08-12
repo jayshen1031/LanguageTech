@@ -1,0 +1,24 @@
+{
+  "version": "2.0",
+  "envId": "cloud1-2g49srond2b01891",
+  "framework": {
+    "name": "import-n2-vocabulary",
+    "plugins": {
+      "function": {
+        "use": "@cloudbase/framework-plugin-function",
+        "inputs": {
+          "functionRootPath": "./",
+          "functions": [
+            {
+              "name": "import-n2-vocabulary",
+              "timeout": 20,
+              "runtime": "Nodejs12.16",
+              "memorySize": 256,
+              "handler": "index.main"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

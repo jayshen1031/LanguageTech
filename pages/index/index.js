@@ -71,7 +71,7 @@ Page({
 
   // 跳转到学习页
   goToLearn() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/learn/learn'
     })
   },
@@ -91,62 +91,20 @@ Page({
     })
   },
 
-  // 跳转到AI语法讲解
-  goToAIGrammar() {
+  // 跳转到语法库
+  goToGrammarLibrary() {
     wx.navigateTo({
-      url: '/pages/ai-grammar/ai-grammar'
+      url: '/pages/grammar-library/grammar-library'
     })
   },
+
   
-  // 跳转到管理页面
-  goToAdmin() {
-    console.log('从首页跳转到管理页面')
-    wx.navigateTo({
-      url: '/pages/admin/admin',
-      success: () => {
-        console.log('跳转成功')
-      },
-      fail: (err) => {
-        console.error('跳转失败:', err)
-        wx.showModal({
-          title: '跳转失败',
-          content: err.errMsg,
-          showCancel: false
-        })
-      }
-    })
-  },
   
-  // 跳转到批量导入页面
-  goToImport() {
-    console.log('跳转到批量导入页面')
-    wx.navigateTo({
-      url: '/pages/import/import',
-      success: () => {
-        console.log('跳转成功')
-      },
-      fail: (err) => {
-        console.error('跳转失败:', err)
-        wx.showModal({
-          title: '跳转失败',
-          content: err.errMsg,
-          showCancel: false
-        })
-      }
-    })
-  },
   
-  // 跳转到平假名学习
-  goToHiragana() {
+  // 跳转到假名对照学习
+  goToKanaMerged() {
     wx.navigateTo({
-      url: '/pages/kana-study/kana-study?type=hiragana'
-    })
-  },
-  
-  // 跳转到片假名学习
-  goToKatakana() {
-    wx.navigateTo({
-      url: '/pages/kana-study/kana-study?type=katakana'
+      url: '/pages/kana-merged/kana-merged'
     })
   },
   
@@ -196,13 +154,14 @@ Page({
       url: '/pages/japanese-parser/japanese-parser'
     })
   },
-
-  // 跳转到AI测试页面
-  goToAITest() {
+  
+  // 跳转到解析复习
+  goToParserReview() {
     wx.navigateTo({
-      url: '/pages/ai-test/ai-test'
+      url: '/pages/parser-review/parser-review'
     })
   },
+
 
   // 跳转到语音对话页面
   goToVoiceDialogue() {

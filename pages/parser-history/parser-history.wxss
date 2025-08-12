@@ -1,0 +1,215 @@
+/* pages/parser-history/parser-history.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 筛选栏 */
+.filter-bar {
+  display: flex;
+  background-color: #fff;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.filter-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 32rpx;
+  transition: all 0.3s;
+}
+
+.filter-item.active {
+  background-color: #4a90e2;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 词汇提取按钮 */
+.vocab-extract-bar {
+  background-color: #fff;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.btn-extract-vocab {
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.extract-icon {
+  font-size: 32rpx;
+}
+
+/* 历史列表 */
+.history-list {
+  padding: 20rpx;
+}
+
+.history-item {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.item-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.item-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  padding: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.action-btn:active {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.action-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.item-content {
+  padding: 16rpx 0;
+}
+
+.item-preview {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.info-tag {
+  font-size: 22rpx;
+  color: #4a90e2;
+  padding: 4rpx 12rpx;
+  background-color: rgba(74, 144, 226, 0.1);
+  border-radius: 16rpx;
+}
+
+.info-count {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+}
+
+.empty-image {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 32rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.empty-button {
+  background-color: #4a90e2;
+  color: #fff;
+  padding: 20rpx 60rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+/* 加载状态 */
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 32rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 图标样式 */
+.action-icon[src*="star"] {
+  filter: none;
+}
+
+.action-icon[src*="star-filled"] {
+  filter: none;
+}
+
+.action-icon[src*="delete"] {
+  filter: none;
+  opacity: 0.7;
+}
+
+.action-icon[src*="delete"]:active {
+  opacity: 1;
+  transform: scale(0.95);
+}
+
+/* 删除按钮文本样式 */
+.delete-btn {
+  background-color: #ff4444;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.delete-btn:active {
+  background-color: #dd3333;
+}
+
+.delete-text {
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 500;
+}

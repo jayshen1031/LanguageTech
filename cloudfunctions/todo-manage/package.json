@@ -1,0 +1,7 @@
+{
+  "name": "todo-manage",
+  "version": "1.0.0",
+  "description": "Todo list management cloud function",
+  "main": "index.js",
+  "dependencies": {}
+}

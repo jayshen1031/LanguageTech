@@ -1,0 +1,429 @@
+/* 复习页面样式 */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fb;
+}
+
+/* 顶部导航 */
+.header {
+  background: #667eea;
+  padding: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.back-btn {
+  font-size: 40rpx;
+  color: #fff;
+  margin-right: 20rpx;
+  padding: 10rpx;
+}
+
+.header-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.mode-btn {
+  font-size: 28rpx;
+  color: #fff;
+  padding: 10rpx 20rpx;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20rpx;
+}
+
+/* 进度条 */
+.progress-bar {
+  background: #fff;
+  padding: 20rpx;
+  flex-shrink: 0;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.progress-text {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.progress-track {
+  height: 8rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #667eea;
+  transition: width 0.3s ease;
+}
+
+/* 加载和空状态 */
+.loading-state,
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-text {
+  font-size: 32rpx;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.3;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.empty-subtitle {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 复习内容 */
+.review-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx;
+}
+
+/* 句子卡片 */
+.sentence-card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.08);
+  flex: 1;
+}
+
+/* 原始内容提示 */
+.original-source {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20rpx;
+  margin-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.source-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.view-source-btn {
+  font-size: 24rpx;
+  color: #667eea;
+  padding: 4rpx 16rpx;
+  border: 1rpx solid #667eea;
+  border-radius: 20rpx;
+}
+
+.sentence-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30rpx;
+}
+
+.japanese-text {
+  font-size: 40rpx;
+  color: #1a1a1a;
+  font-weight: 500;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.sentence-actions {
+  margin-left: 20rpx;
+}
+
+.action-btn {
+  font-size: 32rpx;
+  padding: 10rpx;
+}
+
+.sentence-romaji {
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  background: #f8f9fb;
+  border-radius: 8rpx;
+}
+
+.romaji-text {
+  font-size: 28rpx;
+  color: #666;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.sentence-translation {
+  margin-bottom: 30rpx;
+  padding: 20rpx;
+  background: #e8f4fd;
+  border-radius: 8rpx;
+}
+
+.translation-text {
+  font-size: 32rpx;
+  color: #2196f3;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* 答案详情 */
+.answer-details {
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 30rpx;
+}
+
+.detail-section {
+  margin-bottom: 30rpx;
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: #666;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.detail-content {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.8;
+}
+
+.grammar-content {
+  white-space: pre-wrap;
+}
+
+.vocabulary-list {
+  background: #f8f9fb;
+  padding: 20rpx;
+  border-radius: 8rpx;
+}
+
+.vocab-item {
+  margin-bottom: 12rpx;
+}
+
+.vocab-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  margin-bottom: 30rpx;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 88rpx;
+  background: #667eea !important;
+  color: #fff !important;
+  font-size: 32rpx;
+  border-radius: 12rpx;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.btn-primary::after {
+  display: none;
+}
+
+.mastery-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn-difficult,
+.btn-easy {
+  flex: 1;
+  height: 88rpx;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.btn-difficult {
+  background: #ff6b6b !important;
+  color: #fff !important;
+}
+
+.btn-easy {
+  background: #51cf66 !important;
+  color: #fff !important;
+}
+
+.btn-difficult::after,
+.btn-easy::after {
+  display: none;
+}
+
+/* 导航按钮 */
+.nav-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.btn-nav,
+.btn-nav-primary {
+  height: 80rpx;
+  font-size: 28rpx;
+  border-radius: 10rpx;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.btn-nav {
+  flex: 1;
+  background: #f5f6f8 !important;
+  color: #666 !important;
+}
+
+.btn-nav.disabled {
+  background: #f0f0f0 !important;
+  color: #ccc !important;
+}
+
+.btn-nav-primary {
+  flex: 2;
+  background: #667eea !important;
+  color: #fff !important;
+}
+
+.btn-nav::after,
+.btn-nav-primary::after {
+  display: none;
+}
+
+/* 底部工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  padding: 20rpx 0;
+}
+
+.tool-btn {
+  font-size: 26rpx;
+  color: #666;
+  padding: 10rpx 20rpx;
+  background: #f8f9fb;
+  border-radius: 20rpx;
+}
+
+/* 模式选择弹窗 */
+.mode-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.mode-container {
+  width: 85%;
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+.mode-header {
+  background: #667eea;
+  padding: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12rpx 12rpx 0 0;
+}
+
+.mode-title {
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.close-btn {
+  font-size: 40rpx;
+  color: #fff;
+  padding: 10rpx;
+  line-height: 1;
+}
+
+.mode-list {
+  padding: 20rpx;
+}
+
+.mode-item {
+  padding: 30rpx 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+  border: 2rpx solid #f0f0f0;
+}
+
+.mode-item.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.mode-name {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.mode-desc {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.4;
+}

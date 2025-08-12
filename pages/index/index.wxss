@@ -298,6 +298,7 @@
   border-right: none;
 }
 
+
 .feature-card:active {
   background: #f8f9fa;
   transform: scale(0.98);
@@ -355,6 +356,13 @@
   font-weight: bold;
 }
 
+.feature-icon.kana-merged {
+  background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
 .feature-icon.grammar {
   background: #f3e5f5;
   color: #9c27b0;
@@ -388,6 +396,10 @@
 .feature-icon.parser {
   background: #e0f2f1;
   color: #00897b;
+}
+
+.feature-icon.grammar-lib {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
 }
 
 .feature-icon.more {

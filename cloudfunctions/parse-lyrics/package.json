@@ -1,0 +1,7 @@
+{
+  "name": "parse-lyrics",
+  "version": "1.0.0",
+  "description": "Parse Japanese lyrics",
+  "main": "index.js",
+  "dependencies": {}
+}

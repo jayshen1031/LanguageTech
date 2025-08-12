@@ -1,0 +1,105 @@
+<!-- pages/parser-detail/parser-detail.wxml -->
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 详情内容 -->
+  <view wx:else class="detail-content">
+    <!-- 头部信息 -->
+    <view class="header-info">
+      <view class="input-method-tag">
+        {{historyItem.inputMethod === 'image' ? '图片识别' : '文本输入'}}
+      </view>
+      <view class="create-time">{{historyItem.displayTime || historyItem.createTime}}</view>
+    </view>
+
+    <!-- 原始输入（如果是文本） -->
+    <view wx:if="{{historyItem.inputMethod === 'text' && historyItem.inputText}}" class="original-input">
+      <view class="section-title">原始输入</view>
+      <view class="input-text">{{historyItem.inputText}}</view>
+    </view>
+
+    <!-- 原始图片（如果是图片） -->
+    <view wx:if="{{historyItem.inputMethod === 'image' && historyItem.imageUrl}}" class="original-input">
+      <view class="section-title">原始图片</view>
+      <image 
+        src="{{historyItem.imageUrl}}" 
+        mode="widthFix" 
+        class="original-image"
+        bindtap="previewImage"
+        data-url="{{historyItem.imageUrl}}"
+      ></image>
+    </view>
+
+    <!-- 解析结果 -->
+    <view class="analysis-results">
+      <view class="section-header">
+        <text class="section-title">解析结果 ({{sentences.length}}个句子)</text>
+        <text class="copy-all-btn" bindtap="copyAllContent">复制全部</text>
+      </view>
+
+      <!-- 句子列表 -->
+      <view wx:for="{{sentences}}" wx:key="index" class="sentence-item">
+        <view class="sentence-header">
+          <text class="sentence-number">句子 {{index + 1}}</text>
+        </view>
+
+        <!-- 原文 -->
+        <view class="result-row">
+          <text class="label">原文：</text>
+          <text class="value japanese-text">{{item.originalText}}</text>
+          <text class="copy-btn" bindtap="copyContent" data-text="{{item.originalText}}">复制</text>
+        </view>
+
+        <!-- 罗马音 -->
+        <view class="result-row" wx:if="{{item.romaji}}">
+          <text class="label">罗马音：</text>
+          <text class="value romaji-text">{{item.romaji}}</text>
+        </view>
+
+        <!-- 翻译 -->
+        <view class="result-row">
+          <text class="label">翻译：</text>
+          <text class="value">{{item.translation}}</text>
+        </view>
+
+        <!-- 句型结构 -->
+        <view class="result-row" wx:if="{{item.structure}}">
+          <text class="label">句型：</text>
+          <text class="value">{{item.structure}}</text>
+        </view>
+
+        <!-- 详细分析 -->
+        <view wx:if="{{item.analysis}}" class="analysis-section">
+          <text class="sub-label">详细分析：</text>
+          <text class="analysis-text">{{item.analysis}}</text>
+        </view>
+
+        <!-- 语法要点 -->
+        <view wx:if="{{item.grammar}}" class="grammar-section">
+          <text class="sub-label">语法要点：</text>
+          <text class="grammar-text">{{item.grammar}}</text>
+        </view>
+
+        <!-- 词汇列表 -->
+        <view wx:if="{{item.vocabulary && item.vocabulary.length > 0}}" class="vocabulary-section">
+          <text class="sub-label">词汇：</text>
+          <view class="vocabulary-list">
+            <view wx:for="{{item.vocabulary}}" wx:for-item="word" wx:key="japanese" class="vocabulary-item">
+              <text class="word-japanese">{{word.japanese}}</text>
+              <text class="word-romaji">{{word.romaji}}</text>
+              <text class="word-chinese">{{word.chinese}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部操作栏 -->
+    <view class="bottom-bar">
+      <button class="btn-back" bindtap="onBack">返回列表</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,12 @@
+{
+  "name": "clear-n2-vocabulary",
+  "version": "1.0.0",
+  "description": "清空N2词汇数据库",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

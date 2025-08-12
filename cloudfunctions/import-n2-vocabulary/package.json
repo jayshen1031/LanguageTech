@@ -1,0 +1,9 @@
+{
+  "name": "import-n2-vocabulary",
+  "version": "1.0.0",
+  "description": "Import and manage N2 vocabulary",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

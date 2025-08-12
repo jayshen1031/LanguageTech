@@ -10,13 +10,31 @@
     </view>
   </view>
 
-  <!-- 功能菜单 -->
-  <view class="menu-section">
-    <view class="menu-btn admin-btn" bindtap="goToAdmin">
-      <text>🔧 词汇管理</text>
+  <!-- 缓存管理 -->
+  <view class="cache-section">
+    <view class="section-title">缓存管理</view>
+    <view class="cache-info">
+      <view class="cache-item">
+        <text class="cache-label">音频缓存文件：</text>
+        <text class="cache-value">{{cacheStats.fileCount}} 个</text>
+      </view>
+      <view class="cache-item">
+        <text class="cache-label">缓存大小：</text>
+        <text class="cache-value">{{cacheStats.totalSizeMB}} MB</text>
+      </view>
+      <button class="clear-cache-btn" bindtap="clearAudioCache">清理音频缓存</button>
     </view>
   </view>
-
+  
+  <!-- 管理功能 -->
+  <view class="admin-section">
+    <view class="section-title">管理功能</view>
+    <navigator url="/pages/todo-manage/todo-manage" class="admin-item">
+      <text class="admin-label">项目待办管理</text>
+      <text class="admin-arrow">›</text>
+    </navigator>
+  </view>
+  
   <!-- 其他功能 -->
   <view class="other-section">
     <text class="tips">更多功能开发中...</text>

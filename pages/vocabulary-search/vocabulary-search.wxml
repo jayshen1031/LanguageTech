@@ -1,0 +1,168 @@
+<!-- pages/vocabulary-search/vocabulary-search.wxml -->
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrapper">
+      <input 
+        class="search-input" 
+        placeholder="搜索日语、假名或中文含义"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        bindconfirm="onSearch"
+      />
+      <view wx:if="{{keyword}}" class="clear-btn" bindtap="onClearSearch">
+        <text class="iconfont icon-close"></text>
+      </view>
+    </view>
+    <button class="search-btn" bindtap="onSearch">搜索</button>
+    <button class="filter-btn" bindtap="toggleFilters">
+      筛选 {{showFilters ? '▲' : '▼'}}
+    </button>
+  </view>
+
+  <!-- 筛选器 -->
+  <view wx:if="{{showFilters}}" class="filters">
+    <!-- 分类选择 -->
+    <view class="filter-group">
+      <text class="filter-label">分类：</text>
+      <picker mode="selector" range="{{categories}}" range-key="label" bindchange="onCategoryChange">
+        <view class="picker">
+          {{selectedCategory ? categories[selectedCategory].label : '全部分类'}}
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 词性选择 -->
+    <view class="filter-group">
+      <text class="filter-label">词性：</text>
+      <picker mode="selector" range="{{partOfSpeechOptions}}" range-key="label" value="{{selectedPOS}}" bindchange="onPOSChange">
+        <view class="picker">
+          {{partOfSpeechOptions[selectedPOS || 0].label}}
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 排序选择 -->
+    <view class="filter-group">
+      <text class="filter-label">排序：</text>
+      <picker mode="selector" range="{{sortOptions}}" range-key="label" bindchange="onSortChange">
+        <view class="picker">
+          {{selectedSortLabel}}
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view wx:if="{{stats}}" class="stats-bar">
+    <text class="stats-text">共 {{total}} 个词汇</text>
+    <text class="stats-text">当前显示 {{vocabularyList.length}} 个</text>
+  </view>
+
+  <!-- 词汇列表 -->
+  <scroll-view class="vocabulary-list" scroll-y enable-back-to-top>
+    <view wx:for="{{vocabularyList}}" wx:key="_id" class="vocabulary-item">
+      <!-- 基本信息 -->
+      <view class="item-header" bindtap="toggleDetail" data-index="{{index}}">
+        <view class="item-main">
+          <text class="word">{{item.word}}</text>
+          <text class="reading">{{item.reading}}</text>
+        </view>
+        <view class="item-tags">
+          <text wx:for="{{item.partOfSpeech}}" wx:key="*this" class="tag pos-tag">
+            {{item}}
+          </text>
+          <text wx:if="{{item.frequency >= 4}}" class="tag freq-tag">高频</text>
+        </view>
+      </view>
+
+      <!-- 含义 -->
+      <view class="item-meanings">
+        <text wx:for="{{item.meanings}}" wx:key="*this" class="meaning">
+          {{index + 1}}. {{item}}
+        </text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="item-actions">
+        <button class="action-btn play-btn" bindtap="playAudio" data-text="{{item.word}}">
+          <text class="iconfont icon-sound"></text> 发音
+        </button>
+        
+        <button 
+          wx:if="{{!item.isInWordbook}}"
+          class="action-btn add-btn" 
+          bindtap="addToWordbook" 
+          data-item="{{item}}"
+        >
+          <text class="iconfont icon-add"></text> 加入生词本
+        </button>
+        
+        <button 
+          wx:else
+          class="action-btn remove-btn" 
+          bindtap="removeFromWordbook" 
+          data-item="{{item}}"
+        >
+          <text class="iconfont icon-check"></text> 已在生词本
+        </button>
+      </view>
+
+      <!-- 详细信息（展开时显示） -->
+      <view wx:if="{{item.showDetail}}" class="item-detail">
+        <!-- 例句 -->
+        <view wx:if="{{item.examples && item.examples.length > 0}}" class="examples">
+          <text class="detail-label">例句：</text>
+          <view wx:for="{{item.examples}}" wx:key="*this" class="example">
+            <text class="example-text">{{item}}</text>
+            <button class="play-example-btn" bindtap="playAudio" data-text="{{item}}">
+              <text class="iconfont icon-sound"></text>
+            </button>
+          </view>
+        </view>
+
+        <!-- 标签 -->
+        <view wx:if="{{item.tags && item.tags.length > 0}}" class="tags">
+          <text class="detail-label">标签：</text>
+          <view class="tag-list">
+            <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
+          </view>
+        </view>
+
+        <!-- 其他信息 -->
+        <view class="meta-info">
+          <text class="meta-item">级别：{{item.level}}</text>
+          <text class="meta-item">分类：{{getCategoryLabel(item.category)}}</text>
+          <text class="meta-item">频率：{{item.frequency}}/5</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view wx:if="{{!hasMore && vocabularyList.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && vocabularyList.length === 0}}" class="empty">
+      <image src="/images/empty.png" class="empty-image"></image>
+      <text class="empty-text">没有找到相关词汇</text>
+      <text class="empty-hint">试试其他关键词或调整筛选条件</text>
+    </view>
+  </scroll-view>
+
+  <!-- 批量操作栏 -->
+  <view class="batch-actions" wx:if="{{false}}">
+    <button class="batch-btn" bindtap="addToLearningPlan">
+      添加到学习计划
+    </button>
+  </view>
+</view>

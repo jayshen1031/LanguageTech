@@ -1,0 +1,200 @@
+<!-- pages/learning-plan/learning-plan.wxml -->
+<view class="container">
+  <!-- 学习进度卡片 -->
+  <view class="progress-card">
+    <view class="progress-header">
+      <text class="progress-title">学习进度</text>
+      <text class="progress-subtitle">JLPT N2 词汇系统</text>
+    </view>
+    
+    <view class="progress-stats">
+      <view class="stat-item">
+        <text class="stat-value">{{progress.learnedWords}}</text>
+        <text class="stat-label">已学习</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{progress.masteredWords}}</text>
+        <text class="stat-label">已掌握</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{progress.totalWords}}</text>
+        <text class="stat-label">总词汇</text>
+      </view>
+    </view>
+    
+    <!-- 进度条 -->
+    <view class="progress-bar-wrapper">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progress.learnedWords / progress.totalWords * 100}}%"></view>
+      </view>
+      <text class="progress-percent">{{progress.progressPercent}}%</text>
+    </view>
+    
+    <!-- 连续学习 -->
+    <view class="streak-info">
+      <text class="streak-icon">🔥</text>
+      <text class="streak-text">连续学习 {{progress.consecutiveDays}} 天</text>
+    </view>
+  </view>
+
+  <!-- 今日任务 -->
+  <view class="today-card">
+    <view class="card-header">
+      <text class="card-title">今日任务</text>
+      <text class="card-date">{{todayDate}}</text>
+    </view>
+    
+    <view class="task-summary">
+      <view class="task-item">
+        <view class="task-icon new-icon">新</view>
+        <view class="task-info">
+          <text class="task-name">新词学习</text>
+          <text class="task-progress">{{progress.todayNewWords}} / {{planConfig.dailyNewWords}}</text>
+        </view>
+        <view class="task-status {{progress.todayNewWords >= planConfig.dailyNewWords ? 'completed' : ''}}">
+          {{progress.todayNewWords >= planConfig.dailyNewWords ? '✓' : progress.todayNewWords + '/' + planConfig.dailyNewWords}}
+        </view>
+      </view>
+      
+      <view class="task-item">
+        <view class="task-icon review-icon">复</view>
+        <view class="task-info">
+          <text class="task-name">词汇复习</text>
+          <text class="task-progress">{{progress.todayReviewWords}} / {{planConfig.dailyReviewWords}}</text>
+        </view>
+        <view class="task-status {{progress.todayReviewWords >= planConfig.dailyReviewWords ? 'completed' : ''}}">
+          {{progress.todayReviewWords >= planConfig.dailyReviewWords ? '✓' : progress.todayReviewWords + '/' + planConfig.dailyReviewWords}}
+        </view>
+      </view>
+    </view>
+    
+    <button class="start-btn {{todayTasks.completed ? 'completed-btn' : ''}}" bindtap="startLearning">
+      {{todayTasks.completed ? '今日已完成 ✓' : '开始学习'}}
+    </button>
+  </view>
+
+  <!-- 学习计划配置 -->
+  <view class="config-card">
+    <view class="card-header" bindtap="toggleConfig">
+      <text class="card-title">学习计划设置</text>
+      <text class="toggle-icon">{{showConfig ? '▲' : '▼'}}</text>
+    </view>
+    
+    <view wx:if="{{showConfig}}" class="config-content">
+      <!-- 难度选择 -->
+      <view class="config-item">
+        <text class="config-label">学习难度</text>
+        <view class="difficulty-options">
+          <view wx:for="{{difficultyOptions}}" wx:key="value" 
+                class="difficulty-option {{planConfig.difficulty === item.value ? 'active' : ''}}"
+                bindtap="onDifficultyChange" data-value="{{item.value}}">
+            <text class="difficulty-name">{{item.label}}</text>
+            <text class="difficulty-desc">每日{{item.newWords}}新词</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 每日新词数 -->
+      <view class="config-item">
+        <text class="config-label">每日新词数量</text>
+        <view class="config-control">
+          <slider value="{{planConfig.dailyNewWords}}" 
+                  min="1" max="50" step="1"
+                  bindchange="onDailyNewWordsChange"
+                  block-size="20" />
+          <text class="config-value">{{planConfig.dailyNewWords}} 个</text>
+        </view>
+      </view>
+      
+      <!-- 每日复习数 -->
+      <view class="config-item">
+        <text class="config-label">每日复习数量</text>
+        <view class="config-control">
+          <slider value="{{planConfig.dailyReviewWords}}" 
+                  min="5" max="100" step="5"
+                  bindchange="onDailyReviewWordsChange"
+                  block-size="20" />
+          <text class="config-value">{{planConfig.dailyReviewWords}} 个</text>
+        </view>
+      </view>
+      
+      <!-- 学习模式 -->
+      <view class="config-item">
+        <text class="config-label">学习模式</text>
+        <view class="mode-options">
+          <view wx:for="{{studyModeOptions}}" wx:key="value"
+                class="mode-option {{planConfig.studyMode === item.value ? 'active' : ''}}"
+                bindtap="onStudyModeChange" data-value="{{item.value}}">
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+      
+      <!-- 重点分类 -->
+      <view class="config-item">
+        <text class="config-label">重点学习分类</text>
+        <view class="category-list">
+          <view wx:for="{{categories}}" wx:key="value"
+                class="category-tag {{item.selected ? 'selected' : ''}}"
+                bindtap="onCategorySelect" data-value="{{item.value}}">
+            {{item.label}} ({{item.count}})
+          </view>
+        </view>
+      </view>
+      
+      <!-- 学习提醒 -->
+      <view class="config-item">
+        <text class="config-label">学习提醒</text>
+        <view class="reminder-setting">
+          <switch checked="{{planConfig.enableReminder}}" 
+                  bindchange="onReminderChange" />
+          <picker wx:if="{{planConfig.enableReminder}}" 
+                  mode="time" value="{{planConfig.studyTime}}"
+                  bindchange="onStudyTimeChange">
+            <view class="time-picker">
+              <text>每日 {{planConfig.studyTime}}</text>
+              <text class="arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+      
+      <!-- 保存按钮 -->
+      <button class="save-config-btn" bindtap="saveConfig">保存设置</button>
+    </view>
+  </view>
+
+  <!-- 快捷操作 -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="viewVocabulary">
+      <view class="action-icon">📚</view>
+      <text class="action-name">词汇库</text>
+    </view>
+    <view class="action-item" bindtap="viewHistory">
+      <view class="action-icon">📊</view>
+      <text class="action-name">学习记录</text>
+    </view>
+    <view class="action-item" bindtap="startLearning">
+      <view class="action-icon">🎯</view>
+      <text class="action-name">快速学习</text>
+    </view>
+    <view class="action-item" open-type="share">
+      <view class="action-icon">📤</view>
+      <text class="action-name">分享</text>
+    </view>
+  </view>
+
+  <!-- 今日词汇预览 -->
+  <view wx:if="{{todayTasks.newWords.length > 0}}" class="words-preview">
+    <view class="preview-header">
+      <text class="preview-title">今日新词预览</text>
+      <text class="preview-count">共 {{todayTasks.newWords.length}} 个</text>
+    </view>
+    <scroll-view class="preview-list" scroll-x>
+      <view wx:for="{{todayTasks.newWords}}" wx:key="_id" class="preview-item">
+        <text class="preview-word">{{item.word}}</text>
+        <text class="preview-reading">{{item.reading}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

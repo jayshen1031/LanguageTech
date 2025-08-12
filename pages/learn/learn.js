@@ -14,9 +14,11 @@ Page({
     wordList: [],
     currentIndex: 0,
     currentWord: {},
-    showExample: false,
+    showExample: true,
     inWordbook: false,
     showComplete: false,
+    showSetup: true, // 显示设置界面
+    selectedCount: 10, // 默认学习数量
     masteredCount: 0,
     fuzzyCount: 0,
     forgotCount: 0,
@@ -24,6 +26,10 @@ Page({
     mcpAvailable: false, // MCP服务是否可用
     isPlaying: false // 是否正在播放音频
   },
+  
+  // 页面实例属性
+  timers: [], // 存储所有定时器
+  isPageUnloaded: false, // 页面是否已卸载
 
   onLoad() {
     // 检查MCP服务（可选）
@@ -33,11 +39,23 @@ Page({
     this.setData({ mcpAvailable: false })
     console.log('⚠️ 跳过MCP服务，使用备用方案')
     
-    // 加载今日单词
-    this.loadTodayWords()
+    // 不立即加载单词，等待用户选择数量
+    // this.loadTodayWords()
     
     // 初始化音频上下文
     this.initAudioContext()
+  },
+
+  // 选择学习数量
+  selectWordCount(e) {
+    const count = parseInt(e.currentTarget.dataset.count)
+    this.setData({
+      selectedCount: count,
+      showSetup: false
+    })
+    
+    // 加载指定数量的单词
+    this.loadTodayWords(count)
   },
   
   // 初始化音频上下文
@@ -67,8 +85,22 @@ Page({
   onUnload() {
     // 页面卸载时销毁音频上下文
     if (this.innerAudioContext) {
-      this.innerAudioContext.destroy()
+      try {
+        this.innerAudioContext.stop()
+        this.innerAudioContext.destroy()
+      } catch (e) {
+        console.warn('销毁音频上下文失败:', e)
+      }
     }
+    
+    // 清理所有定时器
+    if (this.timers) {
+      this.timers.forEach(timer => clearTimeout(timer))
+      this.timers = []
+    }
+    
+    // 标记页面已卸载
+    this.isPageUnloaded = true
   },
   
   // 检查MCP服务是否可用
@@ -106,7 +138,7 @@ Page({
     }
   },
 
-  async loadTodayWords() {
+  async loadTodayWords(count = 10) {
     wx.showLoading({
       title: '加载词汇中...'
     })
@@ -122,14 +154,12 @@ Page({
         wx.showModal({
           title: '词汇库为空',
           content: '请选择导入方式',
-          confirmText: '批量导入',
+          confirmText: '快速初始化',
           cancelText: '快速初始化',
           success: (res) => {
             if (res.confirm) {
-              // 跳转到批量导入页面
-              wx.navigateTo({
-                url: '/pages/import/import'
-              })
+              // 使用快速初始化
+              this.initVocabulary()
             } else {
               // 使用快速初始化
               this.initVocabulary()
@@ -139,17 +169,47 @@ Page({
         return
       }
       
-      // 从云数据库获取N2词汇
-      const res = await db.collection('n2_vocabulary')
+      // 优先获取最近添加的解析词汇（取一半）
+      const historyCount = Math.floor(count / 2)
+      let res = await db.collection('n2_vocabulary')
         .where({
-          level: 'N2'
+          source: 'history'
         })
-        .orderBy('random', 'asc') // 使用随机排序字段
-        .limit(10)
+        .orderBy('createTime', 'desc')
+        .limit(historyCount)
         .get()
+      
+      const historyWords = res.data || []
+      
+      // 如果解析词汇不足，补充其他词汇
+      if (historyWords.length < count) {
+        const otherRes = await db.collection('n2_vocabulary')
+          .where({
+            source: db.command.neq('history')
+          })
+          .orderBy('random', 'asc')
+          .limit(count - historyWords.length)
+          .get()
+        
+        res.data = [...historyWords, ...(otherRes.data || [])]
+      } else {
+        res.data = historyWords.slice(0, count)
+      }
       
       if (res.data && res.data.length > 0) {
         const wordList = res.data
+        
+        // 调试：输出词汇数据结构
+        console.log('📚 加载的词汇列表：', wordList)
+        if (wordList[0]) {
+          console.log('📖 当前词汇详情：', wordList[0])
+          console.log('🔍 语法信息：', {
+            grammar: wordList[0].grammar,
+            analysis: wordList[0].analysis,
+            structure: wordList[0].structure,
+            examples: wordList[0].examples
+          })
+        }
         
         this.setData({
           wordList,
@@ -162,9 +222,25 @@ Page({
         
         console.log(`从云数据库加载了${wordList.length}个N2词汇`)
       } else {
-        // 如果云数据库没有数据，使用默认数据
-        console.log('云数据库暂无数据，使用默认词汇')
-        this.loadDefaultWords()
+        // 如果云数据库没有数据，提示导入
+        console.log('云数据库暂无数据')
+        wx.showModal({
+          title: '词汇库为空',
+          content: '当前没有N2词汇数据，是否立即导入？',
+          confirmText: '批量导入',
+          cancelText: '使用默认',
+          success: (res) => {
+            if (res.confirm) {
+              // 跳转到导入页面
+              wx.navigateTo({
+                url: '/pages/admin/import-n2'
+              })
+            } else {
+              // 使用默认词汇
+              this.loadDefaultWords()
+            }
+          }
+        })
       }
       
     } catch (error) {
@@ -202,9 +278,12 @@ Page({
             title: `成功导入${res.result.total}个词汇`,
             icon: 'success'
           })
-          setTimeout(() => {
-            this.loadTodayWords()
+          const timer = setTimeout(() => {
+            if (!this.isPageUnloaded) {
+              this.loadTodayWords()
+            }
           }, 1500)
+          this.timers.push(timer)
           return
         }
       } catch (cloudError) {
@@ -387,9 +466,12 @@ Page({
         icon: 'success'
       })
       
-      setTimeout(() => {
-        this.loadTodayWords()
+      const timer = setTimeout(() => {
+        if (!this.isPageUnloaded) {
+          this.loadTodayWords()
+        }
       }, 1500)
+      this.timers.push(timer)
     } else {
       throw new Error('没有成功导入任何词汇')
     }
@@ -518,13 +600,13 @@ Page({
     })
     
     try {
-      // 方案1: 尝试使用Google TTS（需要在小程序后台配置域名）
-      const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(word.word)}`
-      console.log('尝试Google TTS:', googleUrl)
+      // 方案1: 尝试使用百度TTS（国内访问更快）
+      const baiduUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(word.word)}&spd=3&source=web`
+      console.log('尝试百度TTS:', baiduUrl)
       
       // 使用全局音频上下文播放
       if (this.innerAudioContext) {
-        this.innerAudioContext.src = googleUrl
+        this.innerAudioContext.src = baiduUrl
         this.innerAudioContext.play()
         return
       }
@@ -615,9 +697,12 @@ Page({
     
     // 逐字震动
     word.kana.split('').forEach((char, index) => {
-      setTimeout(() => {
-        wx.vibrateShort({ type: index === 0 ? 'heavy' : 'light' })
+      const timer = setTimeout(() => {
+        if (!this.isPageUnloaded) {
+          wx.vibrateShort({ type: index === 0 ? 'heavy' : 'light' })
+        }
       }, index * 300)
+      this.timers.push(timer)
     })
   },
   
@@ -703,27 +788,40 @@ Page({
   
   // 播放音频文件
   playAudioFile(src) {
+    if (this.isPageUnloaded) return
+    
     const innerAudioContext = wx.createInnerAudioContext()
     innerAudioContext.src = src
     
     innerAudioContext.onPlay(() => {
       console.log('开始播放')
-      wx.showToast({
-        title: '播放中',
-        icon: 'none',
-        duration: 1500
-      })
+      if (!this.isPageUnloaded) {
+        wx.showToast({
+          title: '播放中',
+          icon: 'none',
+          duration: 1500
+        })
+      }
     })
     
     innerAudioContext.onError((res) => {
       console.error('播放错误:', res)
-      this.showReadingInfo()
+      if (!this.isPageUnloaded) {
+        this.showReadingInfo()
+      }
+      try {
+        innerAudioContext.destroy()
+      } catch (e) {}
     })
     
     innerAudioContext.onEnded(() => {
       console.log('播放结束')
-      innerAudioContext.destroy()
-      this.setData({ isPlaying: false })
+      try {
+        innerAudioContext.destroy()
+      } catch (e) {}
+      if (!this.isPageUnloaded) {
+        this.setData({ isPlaying: false })
+      }
     })
     
     innerAudioContext.play()
@@ -841,9 +939,12 @@ Page({
     // 或者使用震动模拟节奏
     const pattern = [100, 100, 100, 200, 200] // 震动模式
     pattern.forEach((duration, index) => {
-      setTimeout(() => {
-        wx.vibrateShort({ type: index % 2 === 0 ? 'heavy' : 'light' })
+      const timer = setTimeout(() => {
+        if (!this.isPageUnloaded) {
+          wx.vibrateShort({ type: index % 2 === 0 ? 'heavy' : 'light' })
+        }
       }, duration * index)
+      this.timers.push(timer)
     })
   },
   
@@ -896,15 +997,15 @@ Page({
     })
     
     try {
-      // 先尝试直接使用Google TTS（开发测试）
+      // 先尝试直接使用百度TTS（国内访问快）
       // 注意：需要在小程序后台配置域名
-      const googleTTSUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(word.word)}`
+      const baiduTTSUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(word.word)}&spd=3&source=web`
       
-      console.log('尝试Google TTS:', googleTTSUrl)
+      console.log('尝试百度TTS:', baiduTTSUrl)
       wx.hideLoading()
       
       // 直接播放
-      this.playTTSAudio(googleTTSUrl, word)
+      this.playTTSAudio(baiduTTSUrl, word)
       return
       
       // 备用方案：调用云函数获取TTS
@@ -1006,6 +1107,38 @@ Page({
     }
   },
 
+  // 上一个单词
+  prevWord() {
+    const { currentIndex, wordList } = this.data
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1
+      const prevWord = wordList[prevIndex]
+      
+      this.setData({
+        currentIndex: prevIndex,
+        currentWord: prevWord,
+        showExample: true,
+        inWordbook: false
+      })
+    }
+  },
+
+  // 下一个单词
+  nextWord() {
+    const { currentIndex, wordList } = this.data
+    if (currentIndex < wordList.length - 1) {
+      const nextIndex = currentIndex + 1
+      const nextWord = wordList[nextIndex]
+      
+      this.setData({
+        currentIndex: nextIndex,
+        currentWord: nextWord,
+        showExample: true,
+        inWordbook: false
+      })
+    }
+  },
+
   // 标记掌握状态
   markStatus(e) {
     const status = e.currentTarget.dataset.status
@@ -1014,22 +1147,27 @@ Page({
     // 记录当前单词的学习状态
     learningRecord[currentWord.id] = status
     
+    // 更新记录
+    this.setData({ learningRecord })
+    
+    // 显示反馈
+    wx.showToast({
+      title: status === 'mastered' ? '已掌握' : status === 'fuzzy' ? '需复习' : '需加强',
+      icon: 'none',
+      duration: 1000
+    })
+    
     // 判断是否是最后一个单词
     if (currentIndex < this.data.wordList.length - 1) {
-      // 进入下一个单词
-      const nextIndex = currentIndex + 1
-      const nextWord = this.data.wordList[nextIndex]
-      
-      this.setData({
-        currentIndex: nextIndex,
-        currentWord: nextWord,
-        showExample: false,
-        inWordbook: false,
-        learningRecord
-      })
+      // 延迟进入下一个单词
+      setTimeout(() => {
+        this.nextWord()
+      }, 800)
     } else {
       // 学习完成，统计结果
-      this.showCompleteResult()
+      setTimeout(() => {
+        this.showCompleteResult()
+      }, 800)
     }
   },
 
@@ -1057,58 +1195,7 @@ Page({
     // TODO: 保存学习记录到数据库
   },
 
-  // 手动测试MCP连接
-  async testMCPConnection() {
-    console.log('🧪 === 手动测试MCP连接开始 ===')
-    
-    try {
-      // 第一步：测试健康检查
-      console.log('🧪 步骤1: 测试健康检查')
-      const healthResult = await audioMCP.checkHealth()
-      console.log('🧪 健康检查结果:', healthResult)
-      
-      if (!healthResult) {
-        wx.showModal({
-          title: 'MCP连接测试',
-          content: '健康检查失败，请查看控制台日志',
-          showCancel: false
-        })
-        return
-      }
-      
-      // 第二步：测试音频生成
-      console.log('🧪 步骤2: 测试音频生成')
-      const audioResult = await audioMCP.generateAudio('食べる', 'ja')
-      console.log('🧪 音频生成结果:', audioResult)
-      
-      // 第三步：更新页面状态
-      console.log('🧪 步骤3: 更新MCP状态')
-      this.setData({ mcpAvailable: true })
-      
-      wx.showModal({
-        title: 'MCP连接测试成功',
-        content: `健康检查: ✅\n音频生成: ${typeof audioResult === 'string' ? '✅' : '⚠️'}\n状态已更新`,
-        showCancel: false
-      })
-      
-    } catch (err) {
-      console.error('🧪 MCP连接测试异常:', err)
-      wx.showModal({
-        title: 'MCP连接测试失败',
-        content: `错误: ${err.message}`,
-        showCancel: false
-      })
-    }
-    
-    console.log('🧪 === 手动测试MCP连接结束 ===')
-  },
   
-  // 跳转到AI测试页面
-  goToAITest() {
-    wx.navigateTo({
-      url: '/pages/ai-test/ai-test'
-    })
-  },
   
   // 返回首页
   goBack() {
