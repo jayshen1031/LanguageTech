@@ -102,8 +102,8 @@
           "scene": null
         },
         {
-          "name": "AI语法讲解",
-          "pathName": "pages/ai-grammar/ai-grammar",
+          "name": "日语解析",
+          "pathName": "pages/japanese-parser/japanese-parser",
           "query": "",
           "scene": null
         }
