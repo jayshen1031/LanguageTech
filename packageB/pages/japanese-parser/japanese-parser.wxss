@@ -177,6 +177,28 @@
   border-radius: 8rpx;
 }
 
+/* 用户输入的标题 */
+.user-title {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.title-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 10rpx;
+}
+
+.title-text {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: bold;
+}
+
 /* 文章标题 */
 .article-title-container {
   padding: 20rpx 30rpx;

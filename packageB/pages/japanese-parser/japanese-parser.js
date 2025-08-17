@@ -5,6 +5,7 @@ Page({
   data: {
     inputText: '', // 输入的文本
     imageUrl: '', // 上传的图片
+    userInputTitle: '', // 用户输入的标题（图片模式必填）
     isAnalyzing: false, // 是否正在分析
     analysisResult: [], // 解析结果
     showResult: false, // 是否显示结果
@@ -20,13 +21,9 @@ Page({
 
   // 生成友好的标题摘要
   generateTitle(data) {
-    // 如果是图片模式且有AI生成的标题，优先使用
-    if (data.inputMethod === 'image' && this.data.articleTitle) {
-      return this.data.articleTitle
-    }
-    
+    // 如果是图片模式，优先使用用户输入的标题，其次是AI生成的标题
     if (data.inputMethod === 'image') {
-      return '图片解析'
+      return this.data.userInputTitle || this.data.articleTitle || '图片解析'
     }
     
     if (!data.analysisResult || data.analysisResult.length === 0) {
@@ -76,15 +73,49 @@ Page({
       sourceType: ['album', 'camera'],
       success: (res) => {
         const tempFilePath = res.tempFilePaths[0]
-        this.setData({
-          imageUrl: tempFilePath,
-          inputText: '' // 清空文本，因为混元AI会直接识别图片
-        })
         
-        wx.showToast({
-          title: '图片已选择',
-          icon: 'success',
-          duration: 1500
+        // 要求用户输入标题
+        wx.showModal({
+          title: '请输入文章标题',
+          editable: true,
+          placeholderText: '请输入标题（必填，10字以内）',
+          success: (modalRes) => {
+            if (modalRes.confirm) {
+              const userTitle = modalRes.content?.trim() || ''
+              if (!userTitle) {
+                wx.showToast({
+                  title: '标题不能为空',
+                  icon: 'none'
+                })
+                return
+              }
+              if (userTitle.length > 10) {
+                wx.showToast({
+                  title: '标题不能超过10字',
+                  icon: 'none'
+                })
+                return
+              }
+              
+              this.setData({
+                imageUrl: tempFilePath,
+                inputText: '', // 清空文本
+                userInputTitle: userTitle // 保存用户输入的标题
+              })
+              
+              wx.showToast({
+                title: '图片已选择',
+                icon: 'success',
+                duration: 1500
+              })
+            } else {
+              // 用户取消，清除选择的图片
+              wx.showToast({
+                title: '已取消',
+                icon: 'none'
+              })
+            }
+          }
         })
       }
     })
@@ -207,7 +238,8 @@ Page({
           name: 'azure-gpt4o',
           data: {
             action: 'grammar',
-            imageUrl: uploadRes.fileID
+            imageUrl: uploadRes.fileID,
+            userTitle: this.data.userInputTitle // 传递用户输入的标题
           }
         })
         
@@ -339,9 +371,10 @@ Page({
       console.log('解析后的结果:', analysisResult)
       console.log('文章标题:', articleTitle)
       
-      // 如果是图片模式，保存标题
-      if (inputMethod === 'image' && articleTitle) {
-        this.setData({ articleTitle });
+      // 如果是图片模式，优先使用用户输入的标题
+      if (inputMethod === 'image') {
+        const finalTitle = this.data.userInputTitle || articleTitle || '图片解析';
+        this.setData({ articleTitle: finalTitle });
       }
       
       // 如果解析结果为空，显示原始结果
@@ -993,6 +1026,9 @@ Page({
     this.setData({
       inputText: '',
       imageUrl: '',
+      userInputTitle: '',
+      articleTitle: '',
+      extractedImageText: '',
       analysisResult: [],
       showResult: false
     })

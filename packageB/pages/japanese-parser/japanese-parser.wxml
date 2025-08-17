@@ -55,6 +55,12 @@
           </view>
         </view>
         
+        <!-- 显示用户输入的标题 -->
+        <view wx:if="{{userInputTitle && inputMethod === 'image'}}" class="user-title">
+          <text class="title-label">标题：</text>
+          <text class="title-text">{{userInputTitle}}</text>
+        </view>
+        
         <!-- 图片模式提示 -->
         <view wx:if="{{imageUrl && inputMethod === 'image'}}" class="image-tip">
           <text class="tip-text">点击"开始解析"，Azure GPT-4o 将直接识别并分析图片中的日语内容</text>
