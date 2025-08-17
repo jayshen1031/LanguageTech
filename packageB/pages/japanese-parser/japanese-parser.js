@@ -1112,8 +1112,18 @@ Page({
       
       delete saveData.analysisResult // 避免重复存储
       
-      console.log('准备保存的数据:', saveData)
-      console.log('数据大小:', JSON.stringify(saveData).length, '字节')
+      // 检查数据大小（单条记录不能超过1MB）
+      const dataSize = JSON.stringify(saveData).length
+      console.log('准备保存的数据大小:', dataSize, '字节')
+      
+      if (dataSize > 1024 * 1024) {
+        wx.showModal({
+          title: '数据过大',
+          content: '解析内容过多，单条记录超过1MB限制。建议分段解析。',
+          showCancel: false
+        })
+        return
+      }
       
       const res = await this.db.collection('japanese_parser_history').add({
         data: saveData
@@ -1143,9 +1153,39 @@ Page({
       console.error('错误代码:', error.errCode)
       console.error('错误信息:', error.errMsg)
       
+      // 根据错误类型提供具体提示
+      let errorMessage = '云端保存失败，'
+      
+      if (error.errCode === -502001) {
+        errorMessage += '数据库连接失败'
+      } else if (error.errCode === -502002) {
+        errorMessage += '网络超时'
+      } else if (error.errCode === -502003) {
+        errorMessage += '权限不足'
+      } else if (error.errCode === -502005) {
+        errorMessage += '数据格式错误'
+      } else if (error.errMsg && error.errMsg.includes('limit exceeded')) {
+        errorMessage += '数据量超限'
+      } else if (error.errMsg && error.errMsg.includes('network')) {
+        errorMessage += '网络连接异常'
+      } else {
+        errorMessage += '未知错误'
+      }
+      
+      // 显示错误提示
+      wx.showToast({
+        title: errorMessage,
+        icon: 'none',
+        duration: 2000
+      })
+      
       // 所有错误情况都尝试使用本地存储
       console.log('使用本地存储作为备选方案')
-      this.saveToLocalStorage(data)
+      
+      // 延迟执行本地存储，避免toast重叠
+      setTimeout(() => {
+        this.saveToLocalStorage(data)
+      }, 500)
     }
   },
 
@@ -1199,8 +1239,42 @@ Page({
   // 本地存储备选方案
   saveToLocalStorage(data) {
     try {
+      // 检查本地存储空间
+      const storageInfo = wx.getStorageInfoSync()
+      const usedMB = (storageInfo.currentSize / 1024).toFixed(2)
+      const limitMB = (storageInfo.limitSize / 1024).toFixed(2)
+      
+      console.log('本地存储信息:', {
+        currentSize: storageInfo.currentSize,
+        limitSize: storageInfo.limitSize,
+        keys: storageInfo.keys.length,
+        usedMB,
+        limitMB
+      })
+      
+      // 如果存储空间超过8MB（留2MB余量），清理旧数据
+      if (storageInfo.currentSize > 8 * 1024) {
+        console.log('本地存储空间不足，清理旧数据')
+        
+        // 提示用户正在清理
+        wx.showToast({
+          title: `存储空间不足(${usedMB}/${limitMB}MB)，正在清理...`,
+          icon: 'loading',
+          duration: 1500
+        })
+        
+        this.cleanOldLocalStorage()
+      }
+      
       // 获取现有本地历史记录
       const localHistory = wx.getStorageSync('parser_history') || []
+      
+      // 限制本地存储最多100条记录
+      if (localHistory.length >= 100) {
+        console.log('本地记录数超限，删除最旧的记录')
+        // 删除最旧的10条
+        localHistory.splice(0, 10)
+      }
       
       // 检查本地是否已存在重复记录
       const isDuplicate = localHistory.some(item => {
@@ -1256,18 +1330,39 @@ Page({
       // 保存到本地
       wx.setStorageSync('parser_history', localHistory)
       
-      wx.showToast({
-        title: '已保存到本地',
-        icon: 'success',
-        duration: 1500
+      // 显示详细的保存状态
+      wx.showModal({
+        title: '保存成功',
+        content: '由于云端连接失败，已将解析结果保存到本地缓存。下次联网时会自动同步到云端。',
+        confirmText: '查看历史',
+        cancelText: '知道了',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转到历史页面
+            wx.switchTab({
+              url: '/pages/parser-history/parser-history'
+            })
+          }
+        }
       })
       
       // 历史记录功能已移至独立页面
     } catch (error) {
       console.error('本地存储失败:', error)
+      
+      let errorMessage = '本地保存失败：'
+      if (error.errMsg && error.errMsg.includes('exceed')) {
+        errorMessage = '存储空间不足，请清理缓存'
+      } else if (error.errMsg && error.errMsg.includes('fail')) {
+        errorMessage = '存储权限异常'
+      } else {
+        errorMessage = '保存失败，请重试'
+      }
+      
       wx.showToast({
-        title: '保存失败',
-        icon: 'none'
+        title: errorMessage,
+        icon: 'none',
+        duration: 2000
       })
     }
   },
@@ -1281,6 +1376,36 @@ Page({
 
 
 
+  // 清理旧的本地存储
+  cleanOldLocalStorage() {
+    try {
+      const storageInfo = wx.getStorageInfoSync()
+      const keys = storageInfo.keys
+      
+      // 清理一些不重要的缓存
+      const cacheKeys = keys.filter(key => 
+        key.includes('cache') || 
+        key.includes('temp') || 
+        key.includes('logs')
+      )
+      
+      cacheKeys.forEach(key => {
+        wx.removeStorageSync(key)
+      })
+      
+      // 如果还是不够，删除最旧的解析记录
+      const localHistory = wx.getStorageSync('parser_history') || []
+      if (localHistory.length > 50) {
+        // 只保留最新的50条
+        const newHistory = localHistory.slice(-50)
+        wx.setStorageSync('parser_history', newHistory)
+        console.log(`清理本地历史记录，从${localHistory.length}条减少到${newHistory.length}条`)
+      }
+    } catch (error) {
+      console.error('清理本地存储失败:', error)
+    }
+  },
+  
   // 进入复习模式
   enterReviewMode() {
     // 跳转到复习页面，传递收藏的解析记录

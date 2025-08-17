@@ -8,11 +8,13 @@ Page({
     hasMore: true,
     page: 0,
     pageSize: 20,
-    filterType: 'all' // all, favorite, recent
+    filterType: 'all', // all, favorite, recent
+    storageInfo: null // 存储信息
   },
 
   onLoad() {
     this.loadHistory()
+    this.updateStorageInfo()
   },
 
   // 页面显示时刷新
@@ -24,6 +26,7 @@ Page({
       hasMore: true
     })
     this.loadHistory()
+    this.updateStorageInfo()
   },
 
   // 下拉刷新
@@ -562,6 +565,26 @@ Page({
         }
       }
     })
+  },
+
+  // 更新存储信息
+  updateStorageInfo() {
+    try {
+      const info = wx.getStorageInfoSync()
+      const localHistory = wx.getStorageSync('parser_history') || []
+      
+      this.setData({
+        storageInfo: {
+          usedMB: (info.currentSize / 1024).toFixed(2),
+          limitMB: (info.limitSize / 1024).toFixed(2),
+          percent: Math.round((info.currentSize / info.limitSize) * 100),
+          localCount: localHistory.length,
+          keys: info.keys.length
+        }
+      })
+    } catch (error) {
+      console.error('获取存储信息失败:', error)
+    }
   },
 
   // 提取所有历史词汇
