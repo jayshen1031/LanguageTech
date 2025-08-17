@@ -148,17 +148,20 @@
         </view>
 
         <!-- 语法要点 -->
-        <view wx:if="{{sentence.grammar}}" class="grammar-section mastery-level-{{masteryLevels['s' + sIndex + '_grammar'] || 0}}">
-          <view class="grammar-header">
-            <text class="sub-label">语法要点：</text>
-            <text class="mastery-btn mini" bindtap="setMasteryLevel" 
-                  data-type="grammar" data-id="s{{sIndex}}">
-              {{masteryLevels['s' + sIndex + '_grammar'] == 3 ? '✅' : 
-                masteryLevels['s' + sIndex + '_grammar'] == 2 ? '📖' : 
-                masteryLevels['s' + sIndex + '_grammar'] == 1 ? '❌' : '⭕'}}
-            </text>
+        <view wx:if="{{sentence.grammar}}" class="grammar-section">
+          <text class="sub-label">语法要点：</text>
+          <view class="grammar-list">
+            <view wx:for="{{sentence.grammarPoints || [sentence.grammar]}}" wx:for-item="grammarPoint" wx:for-index="gIndex" wx:key="index"
+                  class="grammar-item mastery-level-{{masteryLevels['s' + sIndex + '_grammar_' + gIndex] || 0}}">
+              <text class="grammar-text">{{grammarPoint}}</text>
+              <text class="mastery-btn mini" bindtap="setMasteryLevel" 
+                    data-type="grammar_{{gIndex}}" data-id="s{{sIndex}}">
+                {{masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 3 ? '✅' : 
+                  masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 2 ? '📖' : 
+                  masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 1 ? '❌' : '⭕'}}
+              </text>
+            </view>
           </view>
-          <text class="grammar-text">{{sentence.grammar}}</text>
         </view>
 
         <!-- 词汇列表 -->

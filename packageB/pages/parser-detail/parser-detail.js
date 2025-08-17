@@ -20,9 +20,10 @@ Page({
     const historyItem = app.globalData.currentHistoryItem
     
     if (historyItem) {
+      const processedSentences = this.preprocessSentences(historyItem.sentences || [])
       this.setData({
         historyItem,
-        sentences: historyItem.sentences || [],
+        sentences: processedSentences,
         loading: false
       })
       this.loadMasteryLevels(historyItem._id)
@@ -49,9 +50,10 @@ Page({
       .get()
       .then(res => {
         const historyItem = res.data
+        const processedSentences = this.preprocessSentences(historyItem.sentences || [])
         this.setData({
           historyItem,
-          sentences: historyItem.sentences || [],
+          sentences: processedSentences,
           loading: false
         })
         this.loadMasteryLevels(id)
@@ -208,11 +210,14 @@ Page({
         })
       }
       
-      // 语法统计
+      // 语法统计 - 拆分成独立的语法点
       if (sentence.grammar) {
-        stats.grammar.total++
-        const grammarLevel = masteryLevels[`s${index}_grammar`] || 0
-        this.updateStatCount(stats.grammar, grammarLevel)
+        const grammarPoints = this.parseGrammarPoints(sentence.grammar)
+        grammarPoints.forEach((_, grammarIndex) => {
+          stats.grammar.total++
+          const grammarLevel = masteryLevels[`s${index}_grammar_${grammarIndex}`] || 0
+          this.updateStatCount(stats.grammar, grammarLevel)
+        })
       }
     })
     
@@ -245,6 +250,52 @@ Page({
     this.setData({
       showMasteryReport: !this.data.showMasteryReport
     })
+  },
+
+  // 预处理句子数据 - 拆分语法点
+  preprocessSentences(sentences) {
+    return sentences.map(sentence => {
+      if (sentence.grammar) {
+        sentence.grammarPoints = this.parseGrammarPoints(sentence.grammar)
+      }
+      return sentence
+    })
+  },
+
+  // 解析语法点 - 把语法文本拆分成独立的语法点
+  parseGrammarPoints(grammarText) {
+    if (!grammarText) return []
+    
+    // 按照常见的分隔符拆分语法点
+    // 支持的分隔符：• 、换行、数字编号等
+    let points = []
+    
+    // 先按换行分割
+    const lines = grammarText.split('\n').filter(line => line.trim())
+    
+    lines.forEach(line => {
+      // 按 • 分割
+      if (line.includes('•')) {
+        const bulletPoints = line.split('•').filter(p => p.trim())
+        points.push(...bulletPoints.map(p => p.trim()))
+      }
+      // 按数字编号分割 (1. 2. 3. 等)
+      else if (/^\d+\./.test(line.trim())) {
+        points.push(line.trim())
+      }
+      // 按中文顿号分割
+      else if (line.includes('、')) {
+        const commaPoints = line.split('、').filter(p => p.trim())
+        points.push(...commaPoints.map(p => p.trim()))
+      }
+      // 整行作为一个语法点
+      else {
+        points.push(line.trim())
+      }
+    })
+    
+    // 过滤掉过短的语法点（少于3个字符的）
+    return points.filter(point => point.length >= 3)
   },
 
   // 预览图片

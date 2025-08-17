@@ -385,3 +385,22 @@
   padding: 12rpx;
   margin: 8rpx 0;
 }
+
+/* 语法列表样式 */
+.grammar-list {
+  margin-top: 8rpx;
+}
+
+.grammar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx;
+  margin: 8rpx 0;
+  border-radius: 8rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.grammar-item:last-child {
+  border-bottom: none;
+}
