@@ -1113,12 +1113,14 @@ Page({
       delete saveData.analysisResult // 避免重复存储
       
       console.log('准备保存的数据:', saveData)
+      console.log('数据大小:', JSON.stringify(saveData).length, '字节')
       
       const res = await this.db.collection('japanese_parser_history').add({
         data: saveData
       })
       
-      console.log('解析结果保存成功:', res._id)
+      console.log('云数据库保存成功:', res)
+      console.log('保存的记录ID:', res._id)
       
       wx.showToast({
         title: '已保存到历史',
@@ -1126,21 +1128,24 @@ Page({
         duration: 1500
       })
       
-      // 历史记录功能已移至独立页面
-    } catch (error) {
-      console.error('保存解析结果失败:', error)
+      // 保存成功后，延迟刷新历史页面（如果存在）
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        const historyPage = pages.find(page => page.route === 'pages/parser-history/parser-history')
+        if (historyPage) {
+          console.log('刷新历史页面')
+          historyPage.loadHistory()
+        }
+      }, 500)
       
-      if (error.errCode === -502005) {
-        // 集合不存在，使用本地存储作为备选
-        console.log('云数据库集合不存在，使用本地存储')
-        this.saveToLocalStorage(data)
-      } else {
-        wx.showToast({
-          title: '保存失败: ' + (error.message || '未知错误'),
-          icon: 'none',
-          duration: 3000
-        })
-      }
+    } catch (error) {
+      console.error('云数据库保存失败:', error)
+      console.error('错误代码:', error.errCode)
+      console.error('错误信息:', error.errMsg)
+      
+      // 所有错误情况都尝试使用本地存储
+      console.log('使用本地存储作为备选方案')
+      this.saveToLocalStorage(data)
     }
   },
 

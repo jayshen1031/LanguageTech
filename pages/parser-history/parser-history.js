@@ -15,6 +15,17 @@ Page({
     this.loadHistory()
   },
 
+  // 页面显示时刷新
+  onShow() {
+    // 每次显示页面时重新加载，确保能看到最新的解析记录
+    this.setData({
+      historyList: [],
+      page: 0,
+      hasMore: true
+    })
+    this.loadHistory()
+  },
+
   // 下拉刷新
   onPullDownRefresh() {
     this.setData({
