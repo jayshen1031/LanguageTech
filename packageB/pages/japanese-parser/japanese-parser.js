@@ -4,12 +4,15 @@ const { azureGPT4o } = require('../../../utils/ai')
 Page({
   data: {
     inputText: '', // 输入的文本
-    imageUrl: '', // 上传的图片
+    imageUrl: '', // 上传的图片（本地临时路径）
+    cloudImageUrl: '', // 图片在云存储中的URL（永久保存用）
     userInputTitle: '', // 用户输入的标题（图片模式必填）
     isAnalyzing: false, // 是否正在分析
     analysisResult: [], // 解析结果
     showResult: false, // 是否显示结果
     inputMethod: 'text', // 输入方式：text或image
+    extractedImageText: '', // 从图片中提取的文本
+    articleTitle: '', // AI生成的文章标题
     // 历史记录相关功能已移至独立页面
   },
 
@@ -169,10 +172,10 @@ Page({
       })
       
       if (res.result.success) {
-        // 删除临时文件
-        wx.cloud.deleteFile({
-          fileList: [uploadRes.fileID]
-        })
+        // 不删除云存储文件，需要永久保存
+        // wx.cloud.deleteFile({
+        //   fileList: [uploadRes.fileID]
+        // })
         
         return res.result.data.text || ''
       } else {
@@ -229,9 +232,16 @@ Page({
         
         // 上传图片到云存储
         const uploadRes = await wx.cloud.uploadFile({
-          cloudPath: `japanese-parser/temp_${Date.now()}.jpg`,
+          cloudPath: `japanese-parser/image_${Date.now()}.jpg`,
           filePath: imageUrl
         })
+        
+        // 保存云存储的文件ID，用于永久保存
+        this.setData({
+          cloudImageUrl: uploadRes.fileID
+        })
+        
+        console.log('图片已上传到云存储:', uploadRes.fileID)
         
         // 调用Azure GPT-4o的grammar接口（支持图片识别）
         const res = await wx.cloud.callFunction({
@@ -245,10 +255,10 @@ Page({
         
         wx.hideLoading()
         
-        // 删除临时文件
-        wx.cloud.deleteFile({
-          fileList: [uploadRes.fileID]
-        })
+        // 不删除云存储文件，需要永久保存
+        // wx.cloud.deleteFile({
+        //   fileList: [uploadRes.fileID]
+        // })
         
         if (res.result.success) {
           result = res.result.data.analysis
@@ -408,7 +418,7 @@ Page({
         const autoSaveData = {
           inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || this.data.userInputTitle || '图片识别'),
           inputMethod,
-          imageUrl: inputMethod === 'image' ? this.data.imageUrl : '',
+          imageUrl: inputMethod === 'image' ? (this.data.cloudImageUrl || this.data.imageUrl) : '',  // 优先使用云存储URL
           extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
           articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : '',
           analysisResult
@@ -1035,6 +1045,7 @@ Page({
     this.setData({
       inputText: '',
       imageUrl: '',
+      cloudImageUrl: '', // 清空云存储URL
       userInputTitle: '',
       articleTitle: '',
       extractedImageText: '',
@@ -1072,7 +1083,7 @@ Page({
           const saveData = {
             inputText: inputMethod === 'text' ? inputText : (extractedImageText || articleTitle || '图片识别'),
             inputMethod,
-            imageUrl: inputMethod === 'image' ? imageUrl : '',
+            imageUrl: inputMethod === 'image' ? (this.data.cloudImageUrl || imageUrl) : '',  // 优先使用云存储URL
             extractedText: inputMethod === 'image' ? extractedImageText : '',
             articleTitle: inputMethod === 'image' ? articleTitle : '',
             analysisResult
