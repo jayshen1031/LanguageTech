@@ -192,7 +192,7 @@ Page({
     const stats = {
       sentence: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 },
       word: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 },
-      grammar: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 }
+      analysis: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 }
     }
     
     sentences.forEach((sentence, index) => {
@@ -210,13 +210,13 @@ Page({
         })
       }
       
-      // 语法统计 - 拆分成独立的语法点
-      if (sentence.grammar) {
-        const grammarPoints = this.parseGrammarPoints(sentence.grammar)
-        grammarPoints.forEach((_, grammarIndex) => {
-          stats.grammar.total++
-          const grammarLevel = masteryLevels[`s${index}_grammar_${grammarIndex}`] || 0
-          this.updateStatCount(stats.grammar, grammarLevel)
+      // 分析统计 - 拆分成独立的分析点
+      if (sentence.analysis) {
+        const analysisPoints = this.parseAnalysisPoints(sentence.analysis)
+        analysisPoints.forEach((_, analysisIndex) => {
+          stats.analysis.total++
+          const analysisLevel = masteryLevels[`s${index}_analysis_${analysisIndex}`] || 0
+          this.updateStatCount(stats.analysis, analysisLevel)
         })
       }
     })
@@ -252,26 +252,26 @@ Page({
     })
   },
 
-  // 预处理句子数据 - 拆分语法点
+  // 预处理句子数据 - 拆分分析点
   preprocessSentences(sentences) {
     return sentences.map(sentence => {
-      if (sentence.grammar) {
-        sentence.grammarPoints = this.parseGrammarPoints(sentence.grammar)
+      if (sentence.analysis) {
+        sentence.analysisPoints = this.parseAnalysisPoints(sentence.analysis)
       }
       return sentence
     })
   },
 
-  // 解析语法点 - 把语法文本拆分成独立的语法点
-  parseGrammarPoints(grammarText) {
-    if (!grammarText) return []
+  // 解析分析点 - 把句子结构分析文本拆分成独立的分析点
+  parseAnalysisPoints(analysisText) {
+    if (!analysisText) return []
     
-    // 按照常见的分隔符拆分语法点
+    // 按照常见的分隔符拆分分析点
     // 支持的分隔符：• 、换行、数字编号等
     let points = []
     
     // 先按换行分割
-    const lines = grammarText.split('\n').filter(line => line.trim())
+    const lines = analysisText.split('\n').filter(line => line.trim())
     
     lines.forEach(line => {
       // 按 • 分割
@@ -288,13 +288,13 @@ Page({
         const commaPoints = line.split('、').filter(p => p.trim())
         points.push(...commaPoints.map(p => p.trim()))
       }
-      // 整行作为一个语法点
+      // 整行作为一个分析点
       else {
         points.push(line.trim())
       }
     })
     
-    // 过滤掉过短的语法点（少于3个字符的）
+    // 过滤掉过短的分析点（少于3个字符的）
     return points.filter(point => point.length >= 3)
   },
 

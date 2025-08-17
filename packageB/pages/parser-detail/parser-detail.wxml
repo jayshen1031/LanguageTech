@@ -76,20 +76,20 @@
         </view>
       </view>
       
-      <!-- 语法掌握度 -->
+      <!-- 语法分析掌握度 -->
       <view class="stat-item">
-        <text class="stat-label">语法 ({{masteryStats.grammar.total}}个)</text>
+        <text class="stat-label">语法分析 ({{masteryStats.analysis.total}}个)</text>
         <view class="stat-bar">
-          <view class="bar-segment unseen" style="width: {{masteryStats.grammar.unseenPercent}}%"></view>
-          <view class="bar-segment unfamiliar" style="width: {{masteryStats.grammar.unfamiliarPercent}}%"></view>
-          <view class="bar-segment partial" style="width: {{masteryStats.grammar.partialPercent}}%"></view>
-          <view class="bar-segment mastered" style="width: {{masteryStats.grammar.masteredPercent}}%"></view>
+          <view class="bar-segment unseen" style="width: {{masteryStats.analysis.unseenPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{masteryStats.analysis.unfamiliarPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{masteryStats.analysis.partialPercent}}%"></view>
+          <view class="bar-segment mastered" style="width: {{masteryStats.analysis.masteredPercent}}%"></view>
         </view>
         <view class="stat-legend">
-          <text class="legend-item unseen">未看 {{masteryStats.grammar.unseen}}</text>
-          <text class="legend-item unfamiliar">未掌握 {{masteryStats.grammar.unfamiliar}}</text>
-          <text class="legend-item partial">略懂 {{masteryStats.grammar.partial}}</text>
-          <text class="legend-item mastered">掌握 {{masteryStats.grammar.mastered}}</text>
+          <text class="legend-item unseen">未看 {{masteryStats.analysis.unseen}}</text>
+          <text class="legend-item unfamiliar">未掌握 {{masteryStats.analysis.unfamiliar}}</text>
+          <text class="legend-item partial">略懂 {{masteryStats.analysis.partial}}</text>
+          <text class="legend-item mastered">掌握 {{masteryStats.analysis.mastered}}</text>
         </view>
       </view>
     </view>
@@ -141,24 +141,18 @@
           <text class="value">{{sentence.structure}}</text>
         </view>
 
-        <!-- 句子结构分析 -->
+        <!-- 句子结构分析（包含语法点） -->
         <view wx:if="{{sentence.analysis}}" class="analysis-section">
           <text class="sub-label">句子结构分析：</text>
-          <text class="analysis-text">{{sentence.analysis}}</text>
-        </view>
-
-        <!-- 语法要点 -->
-        <view wx:if="{{sentence.grammar}}" class="grammar-section">
-          <text class="sub-label">语法要点：</text>
-          <view class="grammar-list">
-            <view wx:for="{{sentence.grammarPoints || [sentence.grammar]}}" wx:for-item="grammarPoint" wx:for-index="gIndex" wx:key="index"
-                  class="grammar-item mastery-level-{{masteryLevels['s' + sIndex + '_grammar_' + gIndex] || 0}}">
-              <text class="grammar-text">{{grammarPoint}}</text>
+          <view class="analysis-list">
+            <view wx:for="{{sentence.analysisPoints || [sentence.analysis]}}" wx:for-item="analysisPoint" wx:for-index="aIndex" wx:key="index"
+                  class="analysis-item mastery-level-{{masteryLevels['s' + sIndex + '_analysis_' + aIndex] || 0}}">
+              <text class="analysis-text">{{analysisPoint}}</text>
               <text class="mastery-btn mini" bindtap="setMasteryLevel" 
-                    data-type="grammar_{{gIndex}}" data-id="s{{sIndex}}">
-                {{masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 3 ? '✅' : 
-                  masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 2 ? '📖' : 
-                  masteryLevels['s' + sIndex + '_grammar_' + gIndex] == 1 ? '❌' : '⭕'}}
+                    data-type="analysis_{{aIndex}}" data-id="s{{sIndex}}">
+                {{masteryLevels['s' + sIndex + '_analysis_' + aIndex] == 3 ? '✅' : 
+                  masteryLevels['s' + sIndex + '_analysis_' + aIndex] == 2 ? '📖' : 
+                  masteryLevels['s' + sIndex + '_analysis_' + aIndex] == 1 ? '❌' : '⭕'}}
               </text>
             </view>
           </view>

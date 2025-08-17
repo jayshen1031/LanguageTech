@@ -404,3 +404,22 @@
 .grammar-item:last-child {
   border-bottom: none;
 }
+
+/* 分析列表样式 */
+.analysis-list {
+  margin-top: 8rpx;
+}
+
+.analysis-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx;
+  margin: 8rpx 0;
+  border-radius: 8rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.analysis-item:last-child {
+  border-bottom: none;
+}
