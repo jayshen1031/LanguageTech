@@ -177,6 +177,22 @@
   border-radius: 8rpx;
 }
 
+/* 文章标题 */
+.article-title-container {
+  padding: 20rpx 30rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: -30rpx -30rpx 20rpx -30rpx;
+  border-radius: 16rpx 16rpx 0 0;
+}
+
+.article-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  display: block;
+}
+
 /* 复习入口 */
 .review-entry {
   margin-top: 20rpx;

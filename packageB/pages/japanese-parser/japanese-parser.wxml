@@ -88,6 +88,11 @@
         <text class="copy-btn" bindtap="copyResult">复制全部</text>
       </view>
     </view>
+    
+    <!-- 文章标题（仅图片模式） -->
+    <view wx:if="{{articleTitle && inputMethod === 'image'}}" class="article-title-container">
+      <text class="article-title">{{articleTitle}}</text>
+    </view>
 
     <!-- 平铺展示解析结果 -->
     <view class="result-content">

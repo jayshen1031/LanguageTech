@@ -20,6 +20,11 @@ Page({
 
   // 生成友好的标题摘要
   generateTitle(data) {
+    // 如果是图片模式且有AI生成的标题，优先使用
+    if (data.inputMethod === 'image' && this.data.articleTitle) {
+      return this.data.articleTitle
+    }
+    
     if (data.inputMethod === 'image') {
       return '图片解析'
     }
@@ -321,10 +326,23 @@ Page({
       // 根据输入类型解析响应
       // 对于图片模式，默认使用句子解析；对于文本模式，检测输入类型
       const inputType = inputMethod === 'image' ? 'sentence' : this.detectInputType(inputText);
-      const analysisResult = inputType === 'word' || inputType === 'wordlist' 
-        ? this.parseWordResponse(result) 
-        : this.parseSentenceResponse(result);
+      let analysisResult, articleTitle = '';
+      
+      if (inputType === 'word' || inputType === 'wordlist') {
+        analysisResult = this.parseWordResponse(result);
+      } else {
+        const parseResult = this.parseSentenceResponse(result);
+        analysisResult = parseResult.sentences;
+        articleTitle = parseResult.title;
+      }
+      
       console.log('解析后的结果:', analysisResult)
+      console.log('文章标题:', articleTitle)
+      
+      // 如果是图片模式，保存标题
+      if (inputMethod === 'image' && articleTitle) {
+        this.setData({ articleTitle });
+      }
       
       // 如果解析结果为空，显示原始结果
       if (!analysisResult || analysisResult.length === 0) {
@@ -631,7 +649,15 @@ Page({
     // 如果响应为空，返回空数组
     if (!response || typeof response !== 'string') {
       console.error('AI响应为空或格式错误:', response)
-      return []
+      return { title: '', sentences: [] }
+    }
+    
+    // 首先提取文章标题
+    let title = ''
+    const titleMatch = response.match(/【文章标题】\s*(.+?)(?:\n|$)/)
+    if (titleMatch) {
+      title = titleMatch[1].trim()
+      console.log('提取到标题:', title)
     }
     
     // 将AI返回的文本按句子分割并结构化
@@ -731,7 +757,7 @@ Page({
       sentences.push(...additionalSentences)
     }
     
-    return sentences
+    return { title, sentences }
   },
   
   // 提取第一行日文
