@@ -245,3 +245,143 @@
   align-items: center;
   justify-content: center;
 }
+
+/* 掌握度报告 */
+.mastery-report-toggle {
+  background-color: #fff;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.report-btn {
+  font-size: 30rpx;
+  color: #4a90e2;
+  font-weight: 500;
+}
+
+.mastery-report {
+  background-color: #fff;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.report-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.stat-item {
+  margin-bottom: 24rpx;
+}
+
+.stat-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.stat-bar {
+  height: 20rpx;
+  background-color: #f0f0f0;
+  border-radius: 10rpx;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 8rpx;
+}
+
+.bar-segment {
+  height: 100%;
+}
+
+.bar-segment.unseen { background-color: #e0e0e0; }
+.bar-segment.unfamiliar { background-color: #ff9800; }
+.bar-segment.partial { background-color: #2196f3; }
+.bar-segment.mastered { background-color: #4caf50; }
+
+.stat-legend {
+  display: flex;
+  justify-content: space-around;
+  font-size: 22rpx;
+}
+
+.legend-item {
+  color: #666;
+}
+
+.legend-item.unseen { color: #999; }
+.legend-item.unfamiliar { color: #ff9800; }
+.legend-item.partial { color: #2196f3; }
+.legend-item.mastered { color: #4caf50; }
+
+/* 掌握程度按钮 */
+.sentence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.mastery-buttons {
+  display: flex;
+  gap: 8rpx;
+}
+
+.mastery-btn {
+  font-size: 24rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 16rpx;
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.mastery-btn.mini {
+  font-size: 20rpx;
+  padding: 4rpx 8rpx;
+  margin-left: 8rpx;
+}
+
+.grammar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 掌握程度背景色 */
+.mastery-level-0 { /* 未看 - 灰色 */
+  background-color: rgba(224, 224, 224, 0.3);
+}
+
+.mastery-level-1 { /* 未掌握 - 橙色 */
+  background-color: rgba(255, 152, 0, 0.2);
+}
+
+.mastery-level-2 { /* 略懂 - 蓝色 */
+  background-color: rgba(33, 150, 243, 0.2);
+}
+
+.mastery-level-3 { /* 掌握 - 绿色 */
+  background-color: rgba(76, 175, 80, 0.2);
+}
+
+/* 句子项背景色调整 */
+.sentence-item {
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.grammar-section, .vocabulary-item {
+  border-radius: 8rpx;
+  padding: 12rpx;
+  margin: 8rpx 0;
+}

@@ -33,6 +33,67 @@
       ></image>
     </view>
 
+    <!-- 掌握度报告按钮 -->
+    <view class="mastery-report-toggle" bindtap="toggleMasteryReport">
+      <text class="report-btn">📊 掌握度报告</text>
+    </view>
+    
+    <!-- 掌握度报告面板 -->
+    <view wx:if="{{showMasteryReport && masteryStats}}" class="mastery-report">
+      <view class="report-title">学习进度统计</view>
+      
+      <!-- 句子掌握度 -->
+      <view class="stat-item">
+        <text class="stat-label">句子 ({{masteryStats.sentence.total}}个)</text>
+        <view class="stat-bar">
+          <view class="bar-segment unseen" style="width: {{masteryStats.sentence.unseenPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{masteryStats.sentence.unfamiliarPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{masteryStats.sentence.partialPercent}}%"></view>
+          <view class="bar-segment mastered" style="width: {{masteryStats.sentence.masteredPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <text class="legend-item unseen">未看 {{masteryStats.sentence.unseen}}</text>
+          <text class="legend-item unfamiliar">未掌握 {{masteryStats.sentence.unfamiliar}}</text>
+          <text class="legend-item partial">略懂 {{masteryStats.sentence.partial}}</text>
+          <text class="legend-item mastered">掌握 {{masteryStats.sentence.mastered}}</text>
+        </view>
+      </view>
+      
+      <!-- 词汇掌握度 -->
+      <view class="stat-item">
+        <text class="stat-label">词汇 ({{masteryStats.word.total}}个)</text>
+        <view class="stat-bar">
+          <view class="bar-segment unseen" style="width: {{masteryStats.word.unseenPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{masteryStats.word.unfamiliarPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{masteryStats.word.partialPercent}}%"></view>
+          <view class="bar-segment mastered" style="width: {{masteryStats.word.masteredPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <text class="legend-item unseen">未看 {{masteryStats.word.unseen}}</text>
+          <text class="legend-item unfamiliar">未掌握 {{masteryStats.word.unfamiliar}}</text>
+          <text class="legend-item partial">略懂 {{masteryStats.word.partial}}</text>
+          <text class="legend-item mastered">掌握 {{masteryStats.word.mastered}}</text>
+        </view>
+      </view>
+      
+      <!-- 语法掌握度 -->
+      <view class="stat-item">
+        <text class="stat-label">语法 ({{masteryStats.grammar.total}}个)</text>
+        <view class="stat-bar">
+          <view class="bar-segment unseen" style="width: {{masteryStats.grammar.unseenPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{masteryStats.grammar.unfamiliarPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{masteryStats.grammar.partialPercent}}%"></view>
+          <view class="bar-segment mastered" style="width: {{masteryStats.grammar.masteredPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <text class="legend-item unseen">未看 {{masteryStats.grammar.unseen}}</text>
+          <text class="legend-item unfamiliar">未掌握 {{masteryStats.grammar.unfamiliar}}</text>
+          <text class="legend-item partial">略懂 {{masteryStats.grammar.partial}}</text>
+          <text class="legend-item mastered">掌握 {{masteryStats.grammar.mastered}}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 解析结果 -->
     <view class="analysis-results">
       <view class="section-header">
@@ -41,56 +102,80 @@
       </view>
 
       <!-- 句子列表 -->
-      <view wx:for="{{sentences}}" wx:key="index" class="sentence-item">
+      <view wx:for="{{sentences}}" wx:for-item="sentence" wx:for-index="sIndex" wx:key="index" 
+            class="sentence-item mastery-level-{{masteryLevels['s' + sIndex + '_sentence'] || 0}}">
         <view class="sentence-header">
-          <text class="sentence-number">句子 {{index + 1}}</text>
+          <text class="sentence-number">句子 {{sIndex + 1}}</text>
+          <view class="mastery-buttons">
+            <text class="mastery-btn" bindtap="setMasteryLevel" 
+                  data-type="sentence" data-id="s{{sIndex}}">
+              {{masteryLevels['s' + sIndex + '_sentence'] == 3 ? '✅ 掌握' : 
+                masteryLevels['s' + sIndex + '_sentence'] == 2 ? '📖 略懂' : 
+                masteryLevels['s' + sIndex + '_sentence'] == 1 ? '❌ 未掌握' : '⭕ 未看'}}
+            </text>
+          </view>
         </view>
 
         <!-- 原文 -->
         <view class="result-row">
           <text class="label">原文：</text>
-          <text class="value japanese-text">{{item.originalText}}</text>
-          <text class="copy-btn" bindtap="copyContent" data-text="{{item.originalText}}">复制</text>
+          <text class="value japanese-text">{{sentence.originalText}}</text>
+          <text class="copy-btn" bindtap="copyContent" data-text="{{sentence.originalText}}">复制</text>
         </view>
 
         <!-- 罗马音 -->
-        <view class="result-row" wx:if="{{item.romaji}}">
+        <view class="result-row" wx:if="{{sentence.romaji}}">
           <text class="label">罗马音：</text>
-          <text class="value romaji-text">{{item.romaji}}</text>
+          <text class="value romaji-text">{{sentence.romaji}}</text>
         </view>
 
         <!-- 翻译 -->
         <view class="result-row">
           <text class="label">翻译：</text>
-          <text class="value">{{item.translation}}</text>
+          <text class="value">{{sentence.translation}}</text>
         </view>
 
         <!-- 句型结构 -->
-        <view class="result-row" wx:if="{{item.structure}}">
+        <view class="result-row" wx:if="{{sentence.structure}}">
           <text class="label">句型：</text>
-          <text class="value">{{item.structure}}</text>
+          <text class="value">{{sentence.structure}}</text>
         </view>
 
         <!-- 详细分析 -->
-        <view wx:if="{{item.analysis}}" class="analysis-section">
+        <view wx:if="{{sentence.analysis}}" class="analysis-section">
           <text class="sub-label">详细分析：</text>
-          <text class="analysis-text">{{item.analysis}}</text>
+          <text class="analysis-text">{{sentence.analysis}}</text>
         </view>
 
         <!-- 语法要点 -->
-        <view wx:if="{{item.grammar}}" class="grammar-section">
-          <text class="sub-label">语法要点：</text>
-          <text class="grammar-text">{{item.grammar}}</text>
+        <view wx:if="{{sentence.grammar}}" class="grammar-section mastery-level-{{masteryLevels['s' + sIndex + '_grammar'] || 0}}">
+          <view class="grammar-header">
+            <text class="sub-label">语法要点：</text>
+            <text class="mastery-btn mini" bindtap="setMasteryLevel" 
+                  data-type="grammar" data-id="s{{sIndex}}">
+              {{masteryLevels['s' + sIndex + '_grammar'] == 3 ? '✅' : 
+                masteryLevels['s' + sIndex + '_grammar'] == 2 ? '📖' : 
+                masteryLevels['s' + sIndex + '_grammar'] == 1 ? '❌' : '⭕'}}
+            </text>
+          </view>
+          <text class="grammar-text">{{sentence.grammar}}</text>
         </view>
 
         <!-- 词汇列表 -->
-        <view wx:if="{{item.vocabulary && item.vocabulary.length > 0}}" class="vocabulary-section">
+        <view wx:if="{{sentence.vocabulary && sentence.vocabulary.length > 0}}" class="vocabulary-section">
           <text class="sub-label">词汇：</text>
           <view class="vocabulary-list">
-            <view wx:for="{{item.vocabulary}}" wx:for-item="word" wx:key="japanese" class="vocabulary-item">
+            <view wx:for="{{sentence.vocabulary}}" wx:for-item="word" wx:for-index="wIndex" wx:key="japanese" 
+                  class="vocabulary-item mastery-level-{{masteryLevels['s' + sIndex + '_word_' + wIndex] || 0}}">
               <text class="word-japanese">{{word.japanese}}</text>
               <text class="word-romaji">{{word.romaji}}</text>
               <text class="word-chinese">{{word.chinese}}</text>
+              <text class="mastery-btn mini" bindtap="setMasteryLevel" 
+                    data-type="word_{{wIndex}}" data-id="s{{sIndex}}">
+                {{masteryLevels['s' + sIndex + '_word_' + wIndex] == 3 ? '✅' : 
+                  masteryLevels['s' + sIndex + '_word_' + wIndex] == 2 ? '📖' : 
+                  masteryLevels['s' + sIndex + '_word_' + wIndex] == 1 ? '❌' : '⭕'}}
+              </text>
             </view>
           </view>
         </view>
