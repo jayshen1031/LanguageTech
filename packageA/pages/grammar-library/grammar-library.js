@@ -1,7 +1,7 @@
 // 语法库页面 - 自由选择学习模式
-const { grammarData } = require('../../utils/grammarData')
-const { kanaToRomaji } = require('../../utils/kanaToRomaji')
-const { hunyuanAI } = require('../../utils/ai')
+const { grammarData } = require('../../../utils/grammarData')
+const { kanaToRomaji } = require('../../../utils/kanaToRomaji')
+const { hunyuanAI } = require('../../../utils/ai')
 
 Page({
   data: {
@@ -369,7 +369,7 @@ Page({
   // 播放例句音频
   async playExample(e) {
     const { text } = e.currentTarget.dataset
-    const audioMCP = require('../../utils/audioMCP')
+    const audioMCP = require('../../../utils/audioMCP')
     
     try {
       await audioMCP.playText(text, 'ja')

@@ -1,7 +1,7 @@
 // 语法学习计划页面
-const { grammarData, studyPlan, reviewIntervals } = require('../../utils/grammarData')
-const { hunyuanAI } = require('../../utils/ai')
-const { kanaToRomaji } = require('../../utils/kanaToRomaji')
+const { grammarData, studyPlan, reviewIntervals } = require('../../../utils/grammarData')
+const { hunyuanAI } = require('../../../utils/ai')
+const { kanaToRomaji } = require('../../../utils/kanaToRomaji')
 
 Page({
   data: {
@@ -399,7 +399,7 @@ Page({
   // 播放例句音频
   async playExample(e) {
     const { text } = e.currentTarget.dataset
-    const audioMCP = require('../../utils/audioMCP')
+    const audioMCP = require('../../../utils/audioMCP')
     
     try {
       await audioMCP.playText(text, 'ja')

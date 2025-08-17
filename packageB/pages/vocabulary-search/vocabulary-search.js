@@ -361,7 +361,7 @@ Page({
     const { text } = e.currentTarget.dataset;
     
     // 调用音频服务播放
-    const audioMCP = require('../../utils/audioMCP');
+    const audioMCP = require('../../../utils/audioMCP');
     audioMCP.playText(text, 'ja');
   },
 

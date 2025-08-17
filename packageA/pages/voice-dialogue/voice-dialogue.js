@@ -1,7 +1,7 @@
 // 语音对话页面
 const app = getApp()
-const voiceService = require('../../utils/voiceService.js')
-const aiService = require('../../utils/ai.js')
+const voiceService = require('../../../utils/voiceService.js')
+const aiService = require('../../../utils/ai.js')
 
 Page({
   data: {

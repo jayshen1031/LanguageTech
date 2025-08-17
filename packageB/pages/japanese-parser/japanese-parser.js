@@ -1,5 +1,5 @@
 // 日语解析工具页面
-const { azureGPT4o } = require('../../utils/ai')
+const { azureGPT4o } = require('../../../utils/ai')
 
 Page({
   data: {

@@ -1,6 +1,6 @@
 // 平假名片假名合并学习页面
-const { mergedKanaData, getMergedKana } = require('../../utils/kanaDataMerged')
-const audioMCP = require('../../utils/audioMCP')
+const { mergedKanaData, getMergedKana } = require('../../../utils/kanaDataMerged')
+const audioMCP = require('../../../utils/audioMCP')
 
 Page({
   data: {
