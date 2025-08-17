@@ -43,7 +43,7 @@
           <text class="edit-title-btn" catchtap="onEditTitle" data-index="{{index}}">✏️</text>
         </view>
         <!-- 添加标题按钮（没有标题时显示） -->
-        <view wx:elif="{{item.inputMethod === 'image' || item.inputMethod === 'text'}}" class="add-title-row">
+        <view wx:else class="add-title-row">
           <text class="add-title-btn" catchtap="onAddTitle" data-index="{{index}}">+ 添加标题</text>
         </view>
         <!-- 预览内容 -->

@@ -420,7 +420,8 @@ Page({
           inputMethod,
           imageUrl: inputMethod === 'image' ? (this.data.cloudImageUrl || this.data.imageUrl) : '',  // 优先使用云存储URL
           extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
-          articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : '',
+          articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : '',  // 两种模式都可以有标题
+          title: '',  // 初始为空，用户可以后续添加
           analysisResult
         }
         
