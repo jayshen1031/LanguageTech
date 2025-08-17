@@ -249,6 +249,114 @@ Page({
     })
   },
 
+  // 更新标题（共用函数）
+  async updateTitle(item, index, newTitle) {
+    // 更新云数据库
+    if (item._id && !item._id.startsWith('local_')) {
+      try {
+        const db = wx.cloud.database()
+        await db.collection('japanese_parser_history')
+          .doc(item._id)
+          .update({
+            data: {
+              articleTitle: newTitle,
+              title: newTitle,
+              updateTime: new Date()
+            }
+          })
+        
+        // 更新本地显示
+        const key = `historyList[${index}]`
+        this.setData({
+          [`${key}.articleTitle`]: newTitle,
+          [`${key}.title`]: newTitle
+        })
+        
+        wx.showToast({
+          title: '标题已更新',
+          icon: 'success'
+        })
+      } catch (error) {
+        console.error('更新标题失败:', error)
+        wx.showToast({
+          title: '更新失败',
+          icon: 'none'
+        })
+      }
+    } else {
+      // 本地记录
+      try {
+        const localHistory = wx.getStorageSync('parser_history') || []
+        const localIndex = localHistory.findIndex(local => local._id === item._id)
+        
+        if (localIndex !== -1) {
+          localHistory[localIndex].articleTitle = newTitle
+          localHistory[localIndex].title = newTitle
+          wx.setStorageSync('parser_history', localHistory)
+          
+          // 更新本地显示
+          const key = `historyList[${index}]`
+          this.setData({
+            [`${key}.articleTitle`]: newTitle,
+            [`${key}.title`]: newTitle
+          })
+          
+          wx.showToast({
+            title: '标题已更新',
+            icon: 'success'
+          })
+        }
+      } catch (error) {
+        console.error('更新本地标题失败:', error)
+        wx.showToast({
+          title: '更新失败',
+          icon: 'none'
+        })
+      }
+    }
+  },
+
+  // 添加标题
+  onAddTitle(e) {
+    const index = e.currentTarget.dataset.index
+    const item = this.data.historyList[index]
+    
+    wx.showModal({
+      title: '添加标题',
+      editable: true,
+      placeholderText: '请输入标题（10字以内）',
+      content: '',
+      success: async (res) => {
+        if (res.confirm && res.content && res.content.trim()) {
+          const newTitle = res.content.trim().substring(0, 10)
+          
+          // 更新数据库和本地存储
+          await this.updateTitle(item, index, newTitle)
+        }
+      }
+    })
+  },
+  
+  // 编辑标题
+  onEditTitle(e) {
+    const index = e.currentTarget.dataset.index
+    const item = this.data.historyList[index]
+    const currentTitle = item.articleTitle || item.title || ''
+    
+    wx.showModal({
+      title: '修改标题',
+      editable: true,
+      placeholderText: '请输入新标题',
+      content: currentTitle,
+      success: async (res) => {
+        if (res.confirm && res.content && res.content.trim()) {
+          const newTitle = res.content.trim()
+          await this.updateTitle(item, index, newTitle)
+        }
+      }
+    })
+  },
+
   // 切换收藏状态
   onToggleFavorite(e) {
     const index = e.currentTarget.dataset.index

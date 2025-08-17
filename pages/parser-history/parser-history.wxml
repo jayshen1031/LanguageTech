@@ -37,9 +37,14 @@
       </view>
       
       <view class="item-content" bindtap="onViewDetail" data-item="{{item}}">
-        <!-- 标题行（图片模式显示用户输入的标题） -->
-        <view wx:if="{{item.inputMethod === 'image' && (item.articleTitle || item.title)}}" class="item-title">
+        <!-- 标题行（有标题时显示） -->
+        <view wx:if="{{item.articleTitle || item.title}}" class="item-title">
           <text class="title-text">{{item.articleTitle || item.title}}</text>
+          <text class="edit-title-btn" catchtap="onEditTitle" data-index="{{index}}">✏️</text>
+        </view>
+        <!-- 添加标题按钮（没有标题时显示） -->
+        <view wx:elif="{{item.inputMethod === 'image' || item.inputMethod === 'text'}}" class="add-title-row">
+          <text class="add-title-btn" catchtap="onAddTitle" data-index="{{index}}">+ 添加标题</text>
         </view>
         <!-- 预览内容 -->
         <view class="item-preview">{{item.preview}}</view>

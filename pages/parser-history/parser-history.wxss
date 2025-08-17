@@ -111,14 +111,35 @@
 /* 标题样式 */
 .item-title {
   margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .title-text {
   font-size: 32rpx;
   font-weight: bold;
   color: #1a1a1a;
-  display: block;
+  flex: 1;
+}
+
+.edit-title-btn {
+  font-size: 28rpx;
+  padding: 4rpx 12rpx;
+  color: #667eea;
+  margin-left: 10rpx;
+}
+
+/* 添加标题按钮 */
+.add-title-row {
   margin-bottom: 8rpx;
+}
+
+.add-title-btn {
+  font-size: 26rpx;
+  color: #999;
+  padding: 4rpx 0;
+  display: inline-block;
 }
 
 .item-preview {
