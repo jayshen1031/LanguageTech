@@ -113,10 +113,25 @@ Page({
         const cloudData = cloudRes.data || []
         const localData = localRes.data || []
         
+        // 调试信息：显示加载的数据详情
+        console.log('云数据库返回的数据:', cloudData)
+        console.log('本地存储返回的数据:', localData)
+        
         // 合并云数据和本地数据
         const newList = [...cloudData, ...localData]
         
         console.log(`加载数据: 云数据${cloudData.length}条, 本地数据${localData.length}条`)
+        
+        // 显示每条记录的摘要
+        newList.forEach((item, index) => {
+          console.log(`记录${index + 1}:`, {
+            id: item._id,
+            inputMethod: item.inputMethod,
+            hasImageUrl: !!item.imageUrl,
+            title: item.title || item.inputText?.substring(0, 20),
+            sentencesCount: item.sentences?.length
+          })
+        })
         
         // 格式化时间和预览
         newList.forEach(item => {

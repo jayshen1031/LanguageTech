@@ -404,16 +404,25 @@ Page({
           isAnalyzing: false
         })
         
-        // 注释掉自动保存，改为手动保存
-        // this.saveParseResult({
-        //   inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || '图片识别'),
-        //   inputMethod,
-        //   imageUrl: inputMethod === 'image' ? this.data.imageUrl : '', // 保存图片URL
-        //   extractedText: inputMethod === 'image' ? this.data.extractedImageText : '', // 保存从图片提取的文本
-        //   analysisResult
-        // })
+        // 自动保存解析结果到历史
+        const autoSaveData = {
+          inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || this.data.userInputTitle || '图片识别'),
+          inputMethod,
+          imageUrl: inputMethod === 'image' ? this.data.imageUrl : '',
+          extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
+          articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : '',
+          analysisResult
+        }
         
-        console.log('解析完成，不自动保存到历史')
+        console.log('准备自动保存的数据:', {
+          inputMethod,
+          hasImageUrl: !!autoSaveData.imageUrl,
+          articleTitle: autoSaveData.articleTitle,
+          analysisResultCount: analysisResult.length
+        })
+        
+        // 自动保存到历史
+        this.saveParseResult(autoSaveData)
       }
       
     } catch (error) {
@@ -1092,7 +1101,16 @@ Page({
       }
       
       // 生成友好的标题摘要
-      const title = this.generateTitle(data)
+      let title = ''
+      if (data.inputMethod === 'image') {
+        title = data.articleTitle || data.inputText || '图片解析'
+      } else {
+        // 文本模式：使用前20个字符作为标题
+        title = data.inputText ? data.inputText.substring(0, 20) : '文本解析'
+        if (data.inputText && data.inputText.length > 20) {
+          title += '...'
+        }
+      }
       
       const saveData = {
         ...data,
@@ -1125,12 +1143,20 @@ Page({
         return
       }
       
+      console.log('准备保存到云数据库的完整数据:', JSON.stringify(saveData, null, 2))
+      
       const res = await this.db.collection('japanese_parser_history').add({
         data: saveData
       })
       
       console.log('云数据库保存成功:', res)
       console.log('保存的记录ID:', res._id)
+      console.log('保存的数据摘要:', {
+        inputMethod: saveData.inputMethod,
+        hasImageUrl: !!saveData.imageUrl,
+        title: saveData.title,
+        sentencesCount: saveData.sentences?.length
+      })
       
       wx.showToast({
         title: '已保存到历史',
@@ -1299,7 +1325,16 @@ Page({
       }
       
       // 生成友好的标题摘要
-      const title = this.generateTitle(data)
+      let title = ''
+      if (data.inputMethod === 'image') {
+        title = data.articleTitle || data.inputText || '图片解析'
+      } else {
+        // 文本模式：使用前20个字符作为标题
+        title = data.inputText ? data.inputText.substring(0, 20) : '文本解析'
+        if (data.inputText && data.inputText.length > 20) {
+          title += '...'
+        }
+      }
       
       const saveData = {
         _id: 'local_' + Date.now(),
@@ -1320,6 +1355,14 @@ Page({
       
       delete saveData.analysisResult
       
+      console.log('准备保存到本地的数据:', {
+        id: saveData._id,
+        inputMethod: saveData.inputMethod,
+        hasImageUrl: !!saveData.imageUrl,
+        title: saveData.title,
+        sentencesCount: saveData.sentences?.length
+      })
+      
       localHistory.unshift(saveData) // 添加到开头
       
       // 限制最多保存50条
@@ -1329,6 +1372,8 @@ Page({
       
       // 保存到本地
       wx.setStorageSync('parser_history', localHistory)
+      
+      console.log('本地保存成功，当前记录数:', localHistory.length)
       
       // 显示详细的保存状态
       wx.showModal({
