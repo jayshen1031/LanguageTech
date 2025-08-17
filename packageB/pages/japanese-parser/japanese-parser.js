@@ -216,6 +216,10 @@ Page({
         if (res.result.success) {
           result = res.result.data.analysis
           
+          // 添加调试日志
+          console.log('图片解析原始返回内容（前1000字符）:', result?.substring(0, 1000))
+          console.log('图片解析完整返回长度:', result?.length)
+          
           // 从AI响应中提取识别出的原始文本
           // AI会返回包含日文原文的解析结果
           const extractedText = this.extractOriginalTextFromAnalysis(result)
@@ -261,11 +265,11 @@ Page({
           }
         } else {
           // 行数较少，使用快速模式
-          console.log('使用azure-gpt4o-fast进行全文语法分析')
+          console.log('使用azure-gpt4o进行全文语法分析')
           wx.showLoading({ title: '全文解析中...' })
           
           const res = await wx.cloud.callFunction({
-            name: 'azure-gpt4o-fast',
+            name: 'azure-gpt4o',
             data: {
               action: 'grammar',
               sentence: inputText
@@ -1201,7 +1205,7 @@ Page({
   enterReviewMode() {
     // 跳转到复习页面，传递收藏的解析记录
     wx.navigateTo({
-      url: '/pages/parser-review/parser-review'
+      url: '/packageB/pages/parser-review/parser-review'
     })
   },
 

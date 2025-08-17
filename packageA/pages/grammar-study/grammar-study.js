@@ -419,7 +419,7 @@ Page({
   // 切换到语法库
   switchToLibrary() {
     wx.navigateTo({
-      url: '/pages/grammar-library/grammar-library'
+      url: '/packageA/pages/grammar-library/grammar-library'
     })
   },
 

@@ -146,12 +146,10 @@ exports.main = async (event, context) => {
       case 'search':
         // 搜索todo
         const keyword = data.keyword || '';
-        const searchCondition = keyword ? {
-          _.or([
-            { title: db.RegExp({ regexp: keyword, options: 'i' }) },
-            { description: db.RegExp({ regexp: keyword, options: 'i' }) }
-          ])
-        } : {};
+        const searchCondition = keyword ? _.or([
+          { title: db.RegExp({ regexp: keyword, options: 'i' }) },
+          { description: db.RegExp({ regexp: keyword, options: 'i' }) }
+        ]) : {};
         
         const searchResult = await db.collection(TODO_COLLECTION)
           .where(searchCondition)

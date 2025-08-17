@@ -357,8 +357,8 @@ Page({
 
   // 跳转到解析页面
   onGoToParser() {
-    wx.switchTab({
-      url: '/pages/japanese-parser/japanese-parser'
+    wx.navigateTo({
+      url: '/packageB/pages/japanese-parser/japanese-parser'
     })
   },
 

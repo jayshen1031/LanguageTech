@@ -132,7 +132,7 @@ const azureGPT4o = {
     try {
       // 使用超简化云函数
       const res = await wx.cloud.callFunction({
-        name: 'azure-gpt4o-simple',
+        name: 'azure-gpt4o',
         data: { prompt: message }
       })
       

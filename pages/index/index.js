@@ -87,14 +87,14 @@ Page({
   // 跳转到语法学习计划
   goToGrammarStudy() {
     wx.navigateTo({
-      url: '/pages/grammar-study/grammar-study'
+      url: '/packageA/pages/grammar-study/grammar-study'
     })
   },
 
   // 跳转到语法库
   goToGrammarLibrary() {
     wx.navigateTo({
-      url: '/pages/grammar-library/grammar-library'
+      url: '/packageA/pages/grammar-library/grammar-library'
     })
   },
 
@@ -104,7 +104,7 @@ Page({
   // 跳转到假名对照学习
   goToKanaMerged() {
     wx.navigateTo({
-      url: '/pages/kana-merged/kana-merged'
+      url: '/packageA/pages/kana-merged/kana-merged'
     })
   },
   
@@ -151,14 +151,14 @@ Page({
   // 跳转到日语解析工具
   goToParser() {
     wx.navigateTo({
-      url: '/pages/japanese-parser/japanese-parser'
+      url: '/packageB/pages/japanese-parser/japanese-parser'
     })
   },
   
   // 跳转到解析复习
   goToParserReview() {
     wx.navigateTo({
-      url: '/pages/parser-review/parser-review'
+      url: '/packageB/pages/parser-review/parser-review'
     })
   },
 
@@ -166,7 +166,7 @@ Page({
   // 跳转到语音对话页面
   goToVoiceDialogue() {
     wx.navigateTo({
-      url: '/pages/voice-dialogue/voice-dialogue'
+      url: '/packageA/pages/voice-dialogue/voice-dialogue'
     })
   },
 

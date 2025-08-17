@@ -5,19 +5,39 @@
     "pages/parser-history/parser-history",
     "pages/review/review",
     "pages/wordbook/wordbook",
-    "pages/voice-dialogue/voice-dialogue",
-    "pages/profile/profile",
-    "pages/kana-merged/kana-merged",
-    "pages/grammar-study/grammar-study",
-    "pages/grammar-library/grammar-library",
-    "pages/japanese-parser/japanese-parser",
-    "pages/parser-review/parser-review",
-    "pages/parser-detail/parser-detail",
-    "pages/history-vocabulary/history-vocabulary",
-    "pages/vocabulary-search/vocabulary-search",
-    "pages/learning-plan/learning-plan",
-    "pages/admin/import-n2",
-    "pages/todo-manage/todo-manage"
+    "pages/profile/profile"
+  ],
+  "subPackages": [
+    {
+      "root": "packageA",
+      "name": "packageA",
+      "pages": [
+        "pages/voice-dialogue/voice-dialogue",
+        "pages/kana-merged/kana-merged",
+        "pages/grammar-study/grammar-study",
+        "pages/grammar-library/grammar-library"
+      ]
+    },
+    {
+      "root": "packageB",
+      "name": "packageB",
+      "pages": [
+        "pages/japanese-parser/japanese-parser",
+        "pages/parser-review/parser-review",
+        "pages/parser-detail/parser-detail",
+        "pages/history-vocabulary/history-vocabulary",
+        "pages/vocabulary-search/vocabulary-search",
+        "pages/learning-plan/learning-plan"
+      ]
+    },
+    {
+      "root": "packageAdmin",
+      "name": "packageAdmin",
+      "pages": [
+        "pages/admin/import-n2",
+        "pages/todo-manage/todo-manage"
+      ]
+    }
   ],
   "window": {
     "backgroundTextStyle": "light",

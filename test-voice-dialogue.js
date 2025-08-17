@@ -145,7 +145,7 @@ async function testAIService() {
   for (const prompt of testPrompts) {
     try {
       const result = await wx.cloud.callFunction({
-        name: 'azure-gpt4o-simple',
+        name: 'azure-gpt4o',
         data: { prompt: prompt }
       })
       

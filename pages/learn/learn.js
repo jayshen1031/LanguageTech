@@ -230,7 +230,7 @@ Page({
             if (res.confirm) {
               // 跳转到导入页面
               wx.navigateTo({
-                url: '/pages/admin/import-n2'
+                url: '/packageAdmin/pages/admin/import-n2'
               })
             } else {
               // 使用默认词汇
