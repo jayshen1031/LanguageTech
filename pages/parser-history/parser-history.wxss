@@ -108,6 +108,19 @@
   padding: 16rpx 0;
 }
 
+/* 标题样式 */
+.item-title {
+  margin-bottom: 8rpx;
+}
+
+.title-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
 .item-preview {
   font-size: 30rpx;
   color: #333;

@@ -138,17 +138,38 @@ Page({
           item.displayTime = this.formatTime(item.createTime)
           item.isLocal = item._id && item._id.startsWith('local_')
           
-          // 提取第一个句子作为预览
-          if (item.sentences && item.sentences.length > 0) {
+          // 生成预览内容
+          // 对于图片模式，如果有标题，预览显示第一个句子内容
+          if (item.inputMethod === 'image' && (item.articleTitle || item.title)) {
+            // 标题会单独显示，所以预览显示句子内容
+            if (item.sentences && item.sentences.length > 0) {
+              item.preview = item.sentences[0].originalText
+              if (item.sentences.length > 1) {
+                item.preview += '...'
+              }
+            } else if (item.extractedText) {
+              item.preview = item.extractedText.substring(0, 50)
+              if (item.extractedText.length > 50) {
+                item.preview += '...'
+              }
+            } else {
+              item.preview = '图片解析内容'
+            }
+          } else if (item.sentences && item.sentences.length > 0) {
+            // 文本模式或没有标题的情况，显示第一个句子
             item.preview = item.sentences[0].originalText
             if (item.sentences.length > 1) {
               item.preview += '...'
             }
           } else if (item.inputText) {
+            // 文本模式显示输入文本
             item.preview = item.inputText.substring(0, 50)
             if (item.inputText.length > 50) {
               item.preview += '...'
             }
+          } else {
+            // 兜底情况
+            item.preview = item.title || '解析记录'
           }
         })
         
