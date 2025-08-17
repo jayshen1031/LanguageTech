@@ -59,36 +59,39 @@ exports.main = async (event, context) => {
 // 生成单个音频
 async function generateSingleAudio(text, lang, voice) {
   try {
-    // 方案1：优先尝试腾讯云TTS（需要配置密钥）
-    console.log('🔍 尝试使用腾讯云TTS...')
+    // 方案1：强制使用腾讯云TTS（已配置密钥）
+    console.log('🔍 使用腾讯云TTS生成音频...')
     try {
       const tencentUrl = await getTencentTTSUrl(text, lang, voice)
       if (tencentUrl) {
-        console.log('✅ 使用腾讯云TTS成功')
+        console.log('✅ 腾讯云TTS生成成功')
         return {
           success: true,
           audioUrl: tencentUrl,
-          alternatives: [getGoogleTTSUrl(text, lang)], // Google作为备选
+          alternatives: [], // 不提供备选，确保使用腾讯云
           source: 'tencent-tts',
           cached: false
         }
       } else {
-        console.log('⚠️ 腾讯云TTS返回空')
+        console.log('⚠️ 腾讯云TTS返回空结果')
+        // 继续尝试备选方案
       }
     } catch (tencentError) {
-      console.warn('⚠️ 腾讯云TTS不可用:', tencentError.message)
+      console.error('❌ 腾讯云TTS调用失败:', tencentError.message, tencentError.stack)
+      // 继续尝试备选方案
     }
     
-    // 方案2：使用Google TTS作为兜底（免费，稳定）
+    // 方案2：仅在腾讯云失败时使用Google TTS（紧急备选）
+    console.log('⚠️ 腾讯云TTS不可用，使用Google TTS作为紧急备选')
     const googleUrl = getGoogleTTSUrl(text, lang)
-    console.log('✅ 使用Google TTS（兜底）')
     
     return {
       success: true,
       audioUrl: googleUrl,
       alternatives: [], // 已经是最后的选择了
-      source: 'google-tts',
-      cached: false
+      source: 'google-tts-fallback',
+      cached: false,
+      warning: '腾讯云TTS暂时不可用，使用备选方案'
     }
     
   } catch (error) {
@@ -106,28 +109,33 @@ async function getTencentTTSUrl(text, lang, voice) {
   let secretId = process.env.TENCENT_SECRET_ID || ''
   let secretKey = process.env.TENCENT_SECRET_KEY || ''
   
-  // 尝试从本地配置文件读取（仅开发环境）
+  // 尝试从本地配置文件读取
   try {
     const config = require('./config.js')
     secretId = secretId || config.TENCENT_SECRET_ID
     secretKey = secretKey || config.TENCENT_SECRET_KEY
+    console.log('✅ 腾讯云密钥已加载')
   } catch (e) {
-    // 配置文件不存在
+    console.log('⚠️ 配置文件不存在，使用环境变量')
   }
   
   if (!secretId || !secretKey) {
-    console.log('腾讯云密钥未配置')
+    console.error('❌ 腾讯云密钥未配置')
     return null
   }
   
   try {
     // 使用腾讯云SDK生成音频
+    console.log(`📝 调用腾讯云TTS: text="${text}", lang="${lang}", voice="${voice}"`)
     const { generateWithTencentTTS } = require('./tencent-tts-config')
     const result = await generateWithTencentTTS(text, lang, voice)
     
     if (result && result.audioUrl) {
+      console.log('✅ 腾讯云TTS返回音频数据')
+      
       // 如果是base64数据，上传到云存储
       if (result.audioUrl.startsWith('data:')) {
+        console.log('📤 上传音频到云存储...')
         const base64Data = result.audioUrl.split(',')[1]
         const fileName = `tts/${lang}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`
         
@@ -135,21 +143,29 @@ async function getTencentTTSUrl(text, lang, voice) {
           cloudPath: fileName,
           fileContent: Buffer.from(base64Data, 'base64')
         })
+        console.log('✅ 音频上传成功:', uploadResult.fileID)
         
-        // 获取临时URL
+        // 获取临时URL（有效期1小时）
         const { fileList } = await cloud.getTempFileURL({
-          fileList: [uploadResult.fileID]
+          fileList: [{
+            fileId: uploadResult.fileID,
+            maxAge: 3600 // 1小时有效期
+          }]
         })
         
-        return fileList[0].tempFileURL
+        const tempUrl = fileList[0].tempFileURL
+        console.log('✅ 获取临时URL成功')
+        return tempUrl
       }
       
       return result.audioUrl
     }
     
+    console.log('⚠️ 腾讯云TTS未返回音频数据')
     return null
   } catch (error) {
-    console.error('腾讯云TTS错误:', error)
+    console.error('❌ 腾讯云TTS处理错误:', error.message)
+    console.error('错误详情:', error.stack)
     return null
   }
 }

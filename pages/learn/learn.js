@@ -153,16 +153,13 @@ Page({
         wx.hideLoading()
         wx.showModal({
           title: '词汇库为空',
-          content: '请选择导入方式',
-          confirmText: '快速初始化',
-          cancelText: '快速初始化',
+          content: '需要先导入词汇数据',
+          confirmText: '快速导入',
+          cancelText: '取消',
           success: (res) => {
             if (res.confirm) {
-              // 使用快速初始化
-              this.initVocabulary()
-            } else {
-              // 使用快速初始化
-              this.initVocabulary()
+              // 使用新的批量导入云函数
+              this.batchImportVocabulary()
             }
           }
         })
@@ -249,6 +246,50 @@ Page({
       this.loadDefaultWords()
     } finally {
       wx.hideLoading()
+    }
+  },
+  
+  // 批量导入词汇（使用新的batch-import云函数）
+  async batchImportVocabulary() {
+    wx.showLoading({
+      title: '正在导入词汇...'
+    })
+    
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'batch-import',
+        data: {
+          action: 'import',
+          clearExisting: false
+        }
+      })
+      
+      wx.hideLoading()
+      
+      if (res.result && res.result.success) {
+        wx.showToast({
+          title: `成功导入${res.result.successCount}个词汇`,
+          icon: 'success',
+          duration: 2000
+        })
+        
+        // 导入成功后重新加载词汇
+        setTimeout(() => {
+          this.loadTodayWords(this.data.selectedCount)
+        }, 2000)
+      } else {
+        wx.showToast({
+          title: '导入失败',
+          icon: 'none'
+        })
+      }
+    } catch (error) {
+      console.error('批量导入失败:', error)
+      wx.hideLoading()
+      wx.showToast({
+        title: '导入失败，请重试',
+        icon: 'none'
+      })
     }
   },
   

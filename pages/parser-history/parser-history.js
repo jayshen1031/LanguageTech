@@ -60,18 +60,55 @@ Page({
       orderBy = 'updateTime'
     }
     
-    return db.collection('japanese_parser_history')
+    // 并行加载云数据库和本地存储的数据
+    const cloudPromise = db.collection('japanese_parser_history')
       .where(query)
       .orderBy(orderBy, order)
       .skip(this.data.page * this.data.pageSize)
       .limit(this.data.pageSize)
       .get()
-      .then(res => {
-        const newList = res.data
+      .catch(err => {
+        console.log('云数据库加载失败，使用本地数据:', err)
+        return { data: [] }
+      })
+    
+    const localPromise = new Promise(resolve => {
+      try {
+        // 只在第一页时加载本地存储数据
+        if (this.data.page === 0) {
+          const localHistory = wx.getStorageSync('parser_history') || []
+          
+          // 应用筛选条件
+          let filteredLocal = localHistory
+          if (this.data.filterType === 'favorite') {
+            filteredLocal = localHistory.filter(item => item.favorite)
+          }
+          
+          resolve({ data: filteredLocal })
+        } else {
+          resolve({ data: [] })
+        }
+      } catch (error) {
+        console.log('本地存储读取失败:', error)
+        resolve({ data: [] })
+      }
+    })
+    
+    return Promise.all([cloudPromise, localPromise])
+      .then(([cloudRes, localRes]) => {
+        const cloudData = cloudRes.data || []
+        const localData = localRes.data || []
         
-        // 格式化时间
+        // 合并云数据和本地数据
+        const newList = [...cloudData, ...localData]
+        
+        console.log(`加载数据: 云数据${cloudData.length}条, 本地数据${localData.length}条`)
+        
+        // 格式化时间和预览
         newList.forEach(item => {
           item.displayTime = this.formatTime(item.createTime)
+          item.isLocal = item._id && item._id.startsWith('local_')
+          
           // 提取第一个句子作为预览
           if (item.sentences && item.sentences.length > 0) {
             item.preview = item.sentences[0].originalText
@@ -86,13 +123,13 @@ Page({
           }
         })
         
-        // 合并新数据到现有列表并去重
+        // 合并到现有列表并去重
         const allList = [...this.data.historyList, ...newList]
         const uniqueList = this.removeDuplicates(allList)
         
         this.setData({
           historyList: uniqueList,
-          hasMore: newList.length === this.data.pageSize,
+          hasMore: cloudData.length === this.data.pageSize, // 只根据云数据判断是否有更多
           page: this.data.page + 1,
           loading: false
         })
@@ -206,31 +243,91 @@ Page({
       content: '确定要删除这条解析记录吗？',
       success: (res) => {
         if (res.confirm) {
-          const db = wx.cloud.database()
-          db.collection('japanese_parser_history')
-            .doc(item._id)
-            .remove()
-            .then(() => {
-              const newList = [...this.data.historyList]
-              newList.splice(index, 1)
-              this.setData({
-                historyList: newList
-              })
-              wx.showToast({
-                title: '删除成功',
-                icon: 'success'
-              })
-            })
-            .catch(err => {
-              console.error('删除失败:', err)
-              wx.showToast({
-                title: '删除失败',
-                icon: 'none'
-              })
-            })
+          this.deleteRecord(item, index)
         }
       }
     })
+  },
+
+  // 删除记录（同时删除云数据库和本地存储）
+  deleteRecord(item, index) {
+    const db = wx.cloud.database()
+    
+    // 先删除云数据库中的记录
+    const deletePromises = []
+    
+    // 如果是云数据库记录（_id不以'local_'开头）
+    if (item._id && !item._id.startsWith('local_')) {
+      deletePromises.push(
+        db.collection('japanese_parser_history')
+          .doc(item._id)
+          .remove()
+          .catch(err => {
+            console.log('云数据库删除失败（可能记录不存在）:', err)
+            // 不抛出错误，继续执行本地存储删除
+          })
+      )
+    }
+    
+    // 同时删除本地存储中可能存在的记录
+    const localDeletePromise = new Promise((resolve) => {
+      try {
+        const localHistory = wx.getStorageSync('parser_history') || []
+        
+        // 根据内容匹配删除本地记录
+        let findIndex = -1
+        if (item.inputMethod === 'text' && item.inputText) {
+          // 文本输入：根据输入文本匹配
+          findIndex = localHistory.findIndex(local => 
+            local.inputText && local.inputText.trim() === item.inputText.trim()
+          )
+        } else if (item.sentences && item.sentences.length > 0) {
+          // 图片输入：根据第一个句子的原文匹配
+          const targetText = item.sentences[0].originalText
+          findIndex = localHistory.findIndex(local => 
+            local.sentences && local.sentences.length > 0 &&
+            local.sentences[0].originalText === targetText
+          )
+        }
+        
+        // 如果找到匹配的记录，删除它
+        if (findIndex !== -1) {
+          localHistory.splice(findIndex, 1)
+          wx.setStorageSync('parser_history', localHistory)
+          console.log('本地存储记录已删除')
+        }
+        
+        resolve()
+      } catch (error) {
+        console.log('本地存储删除失败:', error)
+        resolve() // 不阻塞主流程
+      }
+    })
+    
+    deletePromises.push(localDeletePromise)
+    
+    // 等待所有删除操作完成
+    Promise.all(deletePromises)
+      .then(() => {
+        // 从界面列表中移除
+        const newList = [...this.data.historyList]
+        newList.splice(index, 1)
+        this.setData({
+          historyList: newList
+        })
+        
+        wx.showToast({
+          title: '删除成功',
+          icon: 'success'
+        })
+      })
+      .catch(err => {
+        console.error('删除操作失败:', err)
+        wx.showToast({
+          title: '删除失败',
+          icon: 'none'
+        })
+      })
   },
 
   // 格式化时间
@@ -262,6 +359,197 @@ Page({
   onGoToParser() {
     wx.switchTab({
       url: '/pages/japanese-parser/japanese-parser'
+    })
+  },
+
+  // 清空所有历史记录（彻底清空）
+  async clearAllRecords() {
+    wx.showModal({
+      title: '危险操作',
+      content: '确定要清空所有解析历史记录吗？此操作不可恢复！',
+      confirmColor: '#ff0000',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '清空中...' })
+          
+          try {
+            const db = wx.cloud.database()
+            const _ = db.command
+            
+            // 批量删除云数据库中的所有记录
+            // 先获取所有记录的ID
+            let allIds = []
+            let hasMore = true
+            let page = 0
+            
+            while (hasMore) {
+              const res = await db.collection('japanese_parser_history')
+                .where({
+                  _openid: _.exists(true)
+                })
+                .skip(page * 100)
+                .limit(100)
+                .field({ _id: true })
+                .get()
+              
+              if (res.data.length > 0) {
+                allIds = allIds.concat(res.data.map(item => item._id))
+                page++
+                hasMore = res.data.length === 100
+              } else {
+                hasMore = false
+              }
+            }
+            
+            console.log(`准备删除${allIds.length}条记录`)
+            
+            // 批量删除（每次删除20条）
+            for (let i = 0; i < allIds.length; i += 20) {
+              const batch = allIds.slice(i, i + 20)
+              const deletePromises = batch.map(id => 
+                db.collection('japanese_parser_history')
+                  .doc(id)
+                  .remove()
+                  .catch(err => console.log(`删除${id}失败:`, err))
+              )
+              await Promise.all(deletePromises)
+            }
+            
+            // 清空本地存储
+            wx.removeStorageSync('parser_history')
+            
+            wx.hideLoading()
+            
+            // 清空界面数据
+            this.setData({
+              historyList: [],
+              page: 0,
+              hasMore: false
+            })
+            
+            wx.showToast({
+              title: `已清空${allIds.length}条记录`,
+              icon: 'success'
+            })
+            
+          } catch (error) {
+            wx.hideLoading()
+            console.error('清空失败:', error)
+            wx.showToast({
+              title: '清空失败',
+              icon: 'none'
+            })
+          }
+        }
+      }
+    })
+  },
+
+  // 删除所有重复记录
+  async clearDuplicates() {
+    wx.showLoading({ title: '清理重复记录中...' })
+    
+    try {
+      const db = wx.cloud.database()
+      
+      // 获取所有记录
+      const res = await db.collection('japanese_parser_history')
+        .where({
+          _openid: db.command.exists(true)
+        })
+        .get()
+      
+      const allRecords = res.data
+      const seenContent = new Set()
+      const duplicateIds = []
+      
+      // 找出重复记录
+      allRecords.forEach(record => {
+        let contentKey = ''
+        
+        if (record.inputMethod === 'text' && record.inputText) {
+          contentKey = `text:${record.inputText.trim()}`
+        } else if (record.inputMethod === 'image' && record.sentences && record.sentences.length > 0) {
+          contentKey = `image:${record.sentences[0].originalText}`
+        }
+        
+        if (contentKey) {
+          if (seenContent.has(contentKey)) {
+            // 这是重复记录
+            duplicateIds.push(record._id)
+          } else {
+            seenContent.add(contentKey)
+          }
+        }
+      })
+      
+      // 批量删除重复记录
+      if (duplicateIds.length > 0) {
+        const deletePromises = duplicateIds.map(id => 
+          db.collection('japanese_parser_history')
+            .doc(id)
+            .remove()
+            .catch(err => console.log(`删除记录${id}失败:`, err))
+        )
+        
+        await Promise.all(deletePromises)
+      }
+      
+      wx.hideLoading()
+      
+      wx.showToast({
+        title: `清理了${duplicateIds.length}条重复记录`,
+        icon: 'success'
+      })
+      
+      // 重新加载数据
+      this.setData({
+        historyList: [],
+        page: 0,
+        hasMore: true
+      })
+      this.loadHistory()
+      
+    } catch (error) {
+      wx.hideLoading()
+      console.error('清理重复记录失败:', error)
+      wx.showToast({
+        title: '清理失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 清理本地存储
+  clearLocalStorage() {
+    wx.showModal({
+      title: '清理本地缓存',
+      content: '这将清除所有本地存储的解析记录（不影响云端数据），确定继续吗？',
+      success: (res) => {
+        if (res.confirm) {
+          try {
+            wx.removeStorageSync('parser_history')
+            wx.showToast({
+              title: '本地缓存已清理',
+              icon: 'success'
+            })
+            
+            // 重新加载数据
+            this.setData({
+              historyList: [],
+              page: 0,
+              hasMore: true
+            })
+            this.loadHistory()
+          } catch (error) {
+            console.error('清理本地缓存失败:', error)
+            wx.showToast({
+              title: '清理失败',
+              icon: 'none'
+            })
+          }
+        }
+      }
     })
   },
 

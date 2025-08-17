@@ -315,7 +315,8 @@ Page({
                      .replace(/\(文本未完.*?\)/g, '')
       
       // 根据输入类型解析响应
-      const inputType = this.detectInputType(inputText);
+      // 对于图片模式，默认使用句子解析；对于文本模式，检测输入类型
+      const inputType = inputMethod === 'image' ? 'sentence' : this.detectInputType(inputText);
       const analysisResult = inputType === 'word' || inputType === 'wordlist' 
         ? this.parseWordResponse(result) 
         : this.parseSentenceResponse(result);
@@ -348,14 +349,16 @@ Page({
           isAnalyzing: false
         })
         
-        // 自动保存解析结果
-        this.saveParseResult({
-          inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || '图片识别'),
-          inputMethod,
-          imageUrl: inputMethod === 'image' ? this.data.imageUrl : '', // 保存图片URL
-          extractedText: inputMethod === 'image' ? this.data.extractedImageText : '', // 保存从图片提取的文本
-          analysisResult
-        })
+        // 注释掉自动保存，改为手动保存
+        // this.saveParseResult({
+        //   inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || '图片识别'),
+        //   inputMethod,
+        //   imageUrl: inputMethod === 'image' ? this.data.imageUrl : '', // 保存图片URL
+        //   extractedText: inputMethod === 'image' ? this.data.extractedImageText : '', // 保存从图片提取的文本
+        //   analysisResult
+        // })
+        
+        console.log('解析完成，不自动保存到历史')
       }
       
     } catch (error) {
@@ -618,6 +621,8 @@ Page({
   // 解析句子类型的AI响应（原parseAIResponse）
   parseSentenceResponse(response) {
     console.log('开始解析AI响应...')
+    console.log('响应长度:', response?.length)
+    console.log('响应前200字符:', response?.substring(0, 200))
     
     // 如果响应为空，返回空数组
     if (!response || typeof response !== 'string') {
@@ -647,6 +652,14 @@ Page({
         section.includes('【日文原文】') ||
         section.includes('日文原文');
       
+      console.log(`Section ${sectionIndex} 有句子标记:`, hasSentenceMarker)
+      console.log(`Section ${sectionIndex} 包含内容:`, {
+        '📘': section.includes('📘'),
+        '第...句': section.includes('第') && section.includes('句'),
+        '【日文原文】': section.includes('【日文原文】'),
+        '日文原文': section.includes('日文原文')
+      })
+      
       if (hasSentenceMarker) {
         // 尝试提取句子编号
         let sentenceIndex = sentences.length + 1;
@@ -661,12 +674,20 @@ Page({
           romaji: this.extractContent(section, '【罗马音】', '\n') || this.extractContent(section, '罗马音', '\n'),
           translation: this.extractContent(section, '【中文翻译】', '\n') || this.extractContent(section, '中文翻译', '\n'),
           structure: this.extractContent(section, '【精简结构】', '\n') || this.extractContent(section, '精简结构', '\n') || this.extractContent(section, '【句子结构】', '\n'),
-          analysis: this.extractContent(section, '【句子结构分析】', '【') || this.extractContent(section, '句子结构分析', '【') || this.extractContent(section, '【分析】', '【'),
-          grammar: this.extractContent(section, '【语法点说明】', '【') || this.extractContent(section, '语法点说明', '【') || this.extractContent(section, '【语法】', '【'),
+          analysis: this.extractContent(section, '【句子结构分析】', '【词汇明细表】') || this.extractContent(section, '句子结构分析', '【词汇明细表】') || this.extractContent(section, '【分析】', '【词汇明细表】'),
+          grammar: this.extractContent(section, '【语法点说明】', '【词汇明细表】') || this.extractContent(section, '语法点说明', '【词汇明细表】') || this.extractContent(section, '【语法】', '【词汇明细表】'),
           vocabulary: this.extractVocabulary(section)
         }
         
-        console.log('解析出的句子数据:', sentenceData)
+        console.log(`解析出的句子数据 ${sentenceIndex}:`, {
+          originalText: sentenceData.originalText?.substring(0, 50),
+          romaji: sentenceData.romaji?.substring(0, 50),
+          translation: sentenceData.translation?.substring(0, 50),
+          structure: sentenceData.structure?.substring(0, 50),
+          analysis: sentenceData.analysis?.substring(0, 100),
+          grammar: sentenceData.grammar?.substring(0, 100),
+          vocabularyCount: sentenceData.vocabulary?.length
+        })
         
         // 只有当至少有原文时才添加
         if (sentenceData.originalText) {
@@ -779,9 +800,14 @@ Page({
     
     // 特殊处理多行内容（如句子结构分析和语法点说明）
     if (startMarker.includes('句子结构分析') || startMarker.includes('语法点说明')) {
-      // 查找下一个【开头的位置作为结束
-      const nextBracket = text.indexOf('【', contentStart)
-      endIndex = nextBracket > contentStart ? nextBracket : -1
+      // 如果指定了具体的结束标记（如【词汇明细表】），使用它
+      if (endMarker !== '\n' && endMarker !== '【') {
+        endIndex = text.indexOf(endMarker, contentStart)
+      } else {
+        // 查找下一个【开头的位置作为结束
+        const nextBracket = text.indexOf('【', contentStart)
+        endIndex = nextBracket > contentStart ? nextBracket : -1
+      }
     } else if (endMarker === '\n') {
       // 查找下一个【开头的位置或双换行
       const nextBracket = text.indexOf('【', contentStart)
@@ -942,9 +968,50 @@ Page({
     })
   },
 
+  // 手动保存到历史
+  async manualSaveToHistory() {
+    const { inputText, inputMethod, imageUrl, analysisResult } = this.data
+    
+    if (!analysisResult || analysisResult.length === 0) {
+      wx.showToast({
+        title: '没有可保存的内容',
+        icon: 'none'
+      })
+      return
+    }
+    
+    wx.showModal({
+      title: '保存确认',
+      content: '是否保存当前解析结果到历史记录？',
+      success: async (res) => {
+        if (res.confirm) {
+          await this.saveParseResult({
+            inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || '图片识别'),
+            inputMethod,
+            imageUrl: inputMethod === 'image' ? this.data.imageUrl : '',
+            extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
+            analysisResult
+          })
+        }
+      }
+    })
+  },
+
   // 保存解析结果到数据库
   async saveParseResult(data) {
     try {
+      // 先检查是否已存在相同内容的记录
+      const isDuplicate = await this.checkDuplicateRecord(data)
+      if (isDuplicate) {
+        console.log('检测到重复记录，跳过保存')
+        wx.showToast({
+          title: '该内容已存在',
+          icon: 'none',
+          duration: 1500
+        })
+        return
+      }
+      
       // 生成友好的标题摘要
       const title = this.generateTitle(data)
       
@@ -998,9 +1065,81 @@ Page({
     }
   },
 
+  // 检查是否存在重复记录
+  async checkDuplicateRecord(data) {
+    try {
+      const db = this.db
+      let query = {}
+      
+      // 根据输入方式构建查询条件
+      if (data.inputMethod === 'text' && data.inputText) {
+        // 文本输入：检查输入文本
+        query.inputText = data.inputText.trim()
+        query.inputMethod = 'text'
+      } else if (data.inputMethod === 'image' && data.analysisResult && data.analysisResult.length > 0) {
+        // 图片输入：检查第一个句子的原文
+        const firstSentence = data.analysisResult[0].originalText
+        if (firstSentence) {
+          // 在sentences数组中查找匹配的记录
+          query['sentences.0.originalText'] = firstSentence
+          query.inputMethod = 'image'
+        }
+      }
+      
+      if (Object.keys(query).length === 0) {
+        return false // 无法构建查询条件，允许保存
+      }
+      
+      // 查询最近24小时内的记录（避免误判太久远的记录）
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      query.createTime = db.command.gte(yesterday)
+      
+      console.log('重复检查查询条件:', query)
+      
+      const res = await db.collection('japanese_parser_history')
+        .where(query)
+        .limit(1)
+        .get()
+      
+      const isDuplicate = res.data.length > 0
+      console.log('重复检查结果:', isDuplicate)
+      
+      return isDuplicate
+    } catch (error) {
+      console.error('重复检查失败:', error)
+      return false // 检查失败时允许保存
+    }
+  },
+
   // 本地存储备选方案
   saveToLocalStorage(data) {
     try {
+      // 获取现有本地历史记录
+      const localHistory = wx.getStorageSync('parser_history') || []
+      
+      // 检查本地是否已存在重复记录
+      const isDuplicate = localHistory.some(item => {
+        if (data.inputMethod === 'text' && data.inputText) {
+          return item.inputText && item.inputText.trim() === data.inputText.trim()
+        } else if (data.inputMethod === 'image' && data.analysisResult && data.analysisResult.length > 0) {
+          const firstSentence = data.analysisResult[0].originalText
+          return item.sentences && item.sentences.length > 0 && 
+                 item.sentences[0].originalText === firstSentence
+        }
+        return false
+      })
+      
+      if (isDuplicate) {
+        console.log('本地存储检测到重复记录，跳过保存')
+        wx.showToast({
+          title: '该内容已存在',
+          icon: 'none',
+          duration: 1500
+        })
+        return
+      }
+      
       // 生成友好的标题摘要
       const title = this.generateTitle(data)
       
@@ -1023,8 +1162,6 @@ Page({
       
       delete saveData.analysisResult
       
-      // 获取现有本地历史记录
-      const localHistory = wx.getStorageSync('parser_history') || []
       localHistory.unshift(saveData) // 添加到开头
       
       // 限制最多保存50条
@@ -1232,8 +1369,9 @@ Page({
       }
     }
     
-    // 保存到历史
-    await this.saveParsedToHistory(analysisResult)
+    // 注释掉自动保存
+    // await this.saveParsedToHistory(analysisResult)
+    console.log('批处理完成，不自动保存')
     
     // 显示提示
     if (failCount > 0) {
@@ -1447,13 +1585,31 @@ Page({
     }
   },
   
-  // 保存解析结果到历史
+  // 保存解析结果到历史（带重复检查）
   async saveParsedToHistory(analysisResult) {
     try {
       const db = wx.cloud.database()
+      
+      // 检查是否已存在相同内容
+      const inputText = analysisResult.sentences[0].originalText
+      const existingQuery = {
+        inputText: inputText,
+        inputMethod: analysisResult.inputMethod
+      }
+      
+      const existing = await db.collection('japanese_parser_history')
+        .where(existingQuery)
+        .limit(1)
+        .get()
+      
+      if (existing.data.length > 0) {
+        console.log('歌词解析结果已存在，跳过保存')
+        return
+      }
+      
       await db.collection('japanese_parser_history').add({
         data: {
-          inputText: analysisResult.sentences[0].originalText,
+          inputText: inputText,
           inputMethod: analysisResult.inputMethod,
           sentences: analysisResult.sentences,
           favorite: false,

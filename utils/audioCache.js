@@ -7,10 +7,10 @@ class AudioCache {
     this.cachePrefix = 'audio_cache_'
     // 缓存索引键
     this.indexKey = 'audio_cache_index'
-    // 最大缓存大小（50MB）
-    this.maxCacheSize = 50 * 1024 * 1024
-    // 缓存过期时间（7天）
-    this.cacheExpiry = 7 * 24 * 60 * 60 * 1000
+    // 最大缓存大小（100MB，为永久存储增加容量）
+    this.maxCacheSize = 100 * 1024 * 1024
+    // 缓存过期时间（设为null表示永不过期）
+    this.cacheExpiry = null
     // 文件系统管理器
     this.fs = wx.getFileSystemManager()
     // 缓存目录
@@ -65,18 +65,8 @@ class AudioCache {
       // 检查文件是否存在
       const stats = this.fs.statSync(filePath)
       
-      // 检查文件是否过期
-      const now = Date.now()
-      const fileAge = now - stats.lastModified
-      
-      if (fileAge > this.cacheExpiry) {
-        // 文件已过期，删除
-        this.fs.unlinkSync(filePath)
-        console.log('缓存已过期，已删除:', cacheKey)
-        return null
-      }
-      
-      console.log('找到有效缓存:', cacheKey)
+      // 永久缓存，不检查过期时间
+      console.log('找到永久缓存:', cacheKey)
       return filePath
     } catch (e) {
       // 文件不存在或读取失败
@@ -138,81 +128,94 @@ class AudioCache {
     }
   }
 
-  // 清理过期缓存
+  // 清理缓存（只在超过大小限制时清理）
   async cleanupCache() {
     try {
-      // 获取缓存索引
-      const index = wx.getStorageSync(this.indexKey) || {}
-      const now = Date.now()
-      const updatedIndex = {}
-      
-      // 检查每个缓存项
-      for (const key in index) {
-        const item = index[key]
-        const age = now - item.timestamp
-        
-        if (age > this.cacheExpiry) {
-          // 删除过期文件
-          const filePath = this.getCacheFilePath(key)
-          try {
-            this.fs.unlinkSync(filePath)
-            console.log('删除过期缓存:', key)
-          } catch (e) {
-            // 文件可能已经不存在
-          }
-        } else {
-          // 保留未过期的项
-          updatedIndex[key] = item
-        }
-      }
-      
-      // 更新索引
-      wx.setStorageSync(this.indexKey, updatedIndex)
-      
-      // 检查缓存大小
+      // 永久缓存不清理过期文件，只检查大小
       this.checkCacheSize()
     } catch (e) {
       console.error('清理缓存失败:', e)
     }
   }
 
-  // 检查缓存大小
+  // 检查缓存大小（智能管理策略）
   async checkCacheSize() {
     try {
-      const stats = this.fs.statSync(this.cacheDir)
+      // 获取所有缓存文件
+      const files = this.fs.readdirSync(this.cacheDir)
       
-      if (stats.size > this.maxCacheSize) {
-        console.log('缓存超过限制，开始清理最旧的文件')
-        
-        // 获取所有缓存文件
-        const files = this.fs.readdirSync(this.cacheDir)
-        
-        // 按修改时间排序
-        const fileStats = files.map(file => {
-          const filePath = `${this.cacheDir}/${file}`
+      // 计算总大小并获取文件信息
+      let totalSize = 0
+      const fileStats = files.map(file => {
+        const filePath = `${this.cacheDir}/${file}`
+        try {
           const stat = this.fs.statSync(filePath)
+          totalSize += stat.size
           return {
             path: filePath,
             time: stat.lastModified,
-            size: stat.size
+            size: stat.size,
+            filename: file
           }
-        }).sort((a, b) => a.time - b.time)
+        } catch (e) {
+          return null
+        }
+      }).filter(item => item !== null)
+      
+      console.log(`缓存总大小: ${(totalSize / 1024 / 1024).toFixed(2)}MB / ${(this.maxCacheSize / 1024 / 1024).toFixed(2)}MB`)
+      
+      if (totalSize > this.maxCacheSize) {
+        console.log('缓存超过限制，开始智能清理')
         
-        // 删除最旧的文件，直到低于限制
-        let totalSize = stats.size
-        for (const file of fileStats) {
-          if (totalSize <= this.maxCacheSize * 0.8) { // 清理到80%以下
-            break
+        // 按最后访问时间排序（最久未使用的在前）
+        fileStats.sort((a, b) => a.time - b.time)
+        
+        // 智能清理策略：保留假名等基础音频，优先删除其他音频
+        const kanaPattern = /^[あ-んア-ン]_/  // 假名文件的特征
+        const basicFiles = []
+        const otherFiles = []
+        
+        fileStats.forEach(file => {
+          if (kanaPattern.test(file.filename)) {
+            basicFiles.push(file)
+          } else {
+            otherFiles.push(file)
           }
+        })
+        
+        // 优先删除非假名音频
+        let currentSize = totalSize
+        const targetSize = this.maxCacheSize * 0.7 // 清理到70%
+        
+        // 先删除其他音频
+        for (const file of otherFiles) {
+          if (currentSize <= targetSize) break
           
           try {
             this.fs.unlinkSync(file.path)
-            totalSize -= file.size
-            console.log('删除旧缓存文件:', file.path)
+            currentSize -= file.size
+            console.log('删除缓存:', file.filename)
           } catch (e) {
             console.error('删除文件失败:', e)
           }
         }
+        
+        // 如果还超限，再删除最旧的假名音频
+        if (currentSize > targetSize) {
+          for (const file of basicFiles) {
+            if (currentSize <= targetSize) break
+            
+            try {
+              this.fs.unlinkSync(file.path)
+              currentSize -= file.size
+              console.log('删除假名缓存:', file.filename)
+            } catch (e) {
+              console.error('删除文件失败:', e)
+            }
+          }
+        }
+        
+        console.log(`清理完成，当前大小: ${(currentSize / 1024 / 1024).toFixed(2)}MB`)
       }
     } catch (e) {
       console.error('检查缓存大小失败:', e)

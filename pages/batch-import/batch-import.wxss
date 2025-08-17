@@ -1,0 +1,287 @@
+/* 批量导入页面样式 */
+.container {
+  padding: 20rpx;
+  background: #f7f8fa;
+  min-height: 100vh;
+}
+
+.header {
+  padding: 20rpx 0;
+  text-align: center;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #323233;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #969799;
+}
+
+/* 上传区域 */
+.upload-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 20rpx 0;
+}
+
+.upload-box {
+  border: 2rpx dashed #dcdee0;
+  border-radius: 8rpx;
+  padding: 60rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.upload-box:active {
+  background: #f7f8fa;
+}
+
+.upload-text {
+  margin-top: 20rpx;
+  color: #969799;
+  font-size: 28rpx;
+}
+
+.format-tips {
+  margin-top: 30rpx;
+  padding-top: 30rpx;
+  border-top: 1rpx solid #ebedf0;
+}
+
+.tips-title {
+  font-size: 28rpx;
+  color: #323233;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.format-item {
+  display: flex;
+  margin: 10rpx 0;
+  font-size: 26rpx;
+}
+
+.format-type {
+  color: #323233;
+  font-weight: 500;
+  margin-right: 10rpx;
+}
+
+.format-desc {
+  color: #969799;
+}
+
+/* 预览区域 */
+.preview-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 20rpx 0;
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #323233;
+  margin-bottom: 20rpx;
+}
+
+.count {
+  font-size: 26rpx;
+  color: #969799;
+  font-weight: normal;
+}
+
+.preview-list {
+  max-height: 400rpx;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #ebedf0;
+}
+
+.preview-item:last-child {
+  border-bottom: none;
+}
+
+.word-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.word {
+  font-size: 32rpx;
+  color: #323233;
+  font-weight: 500;
+}
+
+.kana {
+  font-size: 26rpx;
+  color: #969799;
+  margin: 5rpx 0;
+}
+
+.meaning {
+  font-size: 26rpx;
+  color: #646566;
+}
+
+.type {
+  font-size: 24rpx;
+  color: white;
+  background: #1989fa;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+}
+
+.preview-more {
+  text-align: center;
+  padding: 20rpx;
+  color: #969799;
+  font-size: 26rpx;
+}
+
+/* 导入选项 */
+.import-options {
+  background: white;
+  border-radius: 16rpx;
+  padding: 20rpx 30rpx;
+  margin: 20rpx 0;
+}
+
+.option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  font-size: 30rpx;
+  color: #323233;
+}
+
+/* 进度区域 */
+.progress-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 20rpx 0;
+}
+
+.progress-bar {
+  height: 20rpx;
+  background: #ebedf0;
+  border-radius: 10rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1989fa, #07c160);
+  border-radius: 10rpx;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  text-align: center;
+  display: block;
+  font-size: 28rpx;
+  color: #323233;
+  margin-bottom: 20rpx;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-around;
+  font-size: 26rpx;
+}
+
+.success {
+  color: #07c160;
+}
+
+.failed {
+  color: #ee0a24;
+}
+
+/* 结果区域 */
+.result-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin: 20rpx 0;
+  text-align: center;
+}
+
+.result-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #323233;
+  margin: 20rpx 0;
+}
+
+.result-stats {
+  font-size: 28rpx;
+  color: #646566;
+}
+
+.result-stats text {
+  display: block;
+  margin: 10rpx 0;
+}
+
+/* 错误列表 */
+.error-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 20rpx 0;
+}
+
+.error-list {
+  max-height: 300rpx;
+}
+
+.error-item {
+  padding: 15rpx;
+  border-bottom: 1rpx solid #ebedf0;
+}
+
+.error-word {
+  font-size: 28rpx;
+  color: #323233;
+  margin-right: 20rpx;
+}
+
+.error-msg {
+  font-size: 24rpx;
+  color: #ee0a24;
+}
+
+/* 按钮组 */
+.button-group {
+  padding: 20rpx 0 40rpx;
+}
+
+.button-group van-button {
+  margin-bottom: 20rpx;
+}

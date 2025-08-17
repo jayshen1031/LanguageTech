@@ -37,6 +37,28 @@ exports.main = async (event, context) => {
       });
     }
     
+    // 先检查是否已存在相同内容
+    const existingRecord = await db.collection('japanese_parser_history')
+      .where({
+        _openid: wxContext.OPENID,
+        inputText: text,
+        inputMethod: 'text'
+      })
+      .limit(1)
+      .get();
+    
+    if (existingRecord.data.length > 0) {
+      console.log('歌词已存在，返回已有记录');
+      return {
+        success: true,
+        data: {
+          _id: existingRecord.data[0]._id,
+          lineCount: parsedLines.length,
+          message: '歌词已存在历史记录中'
+        }
+      };
+    }
+    
     // 保存到数据库
     const result = await db.collection('japanese_parser_history').add({
       data: {

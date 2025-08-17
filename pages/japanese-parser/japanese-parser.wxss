@@ -224,6 +224,16 @@
   color: #fff;
 }
 
+.result-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.save-btn {
+  font-size: 28rpx;
+  color: #4CAF50;
+}
+
 .copy-btn {
   font-size: 28rpx;
   color: #fff;

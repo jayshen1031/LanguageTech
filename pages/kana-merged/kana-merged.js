@@ -69,6 +69,49 @@ Page({
       activeType: type,
       currentKanaList: kanaList
     })
+    
+    // 预加载当前页面假名的音频
+    this.preloadCurrentKanaAudio(kanaList)
+  },
+  
+  // 预加载当前假名音频
+  async preloadCurrentKanaAudio(kanaList) {
+    // 提取所有需要预加载的假名
+    const kanaToPreload = []
+    
+    kanaList.forEach(item => {
+      if (item.type !== 'empty') {
+        // 添加平假名
+        if (item.hiragana) {
+          kanaToPreload.push(item.hiragana)
+        }
+        // 添加片假名
+        if (item.katakana) {
+          kanaToPreload.push(item.katakana)
+        }
+      }
+    })
+    
+    if (kanaToPreload.length > 0) {
+      console.log(`开始预加载 ${kanaToPreload.length} 个假名音频`)
+      
+      // 批量预加载，不阻塞UI
+      audioMCP.preloadKanaAudio(kanaToPreload).then(results => {
+        const successCount = results.filter(r => r.cached).length
+        console.log(`预加载完成: ${successCount}/${kanaToPreload.length} 个假名`)
+        
+        // 如果有预加载成功的，显示提示
+        if (successCount > 0) {
+          wx.showToast({
+            title: '音频加载完成',
+            icon: 'success',
+            duration: 1000
+          })
+        }
+      }).catch(err => {
+        console.warn('预加载出错:', err)
+      })
+    }
   },
 
   // 切换假名类型

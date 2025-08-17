@@ -373,6 +373,160 @@ class AudioService {
     })
   }
   
+  // 播放假名发音（专门为假名优化的方法）
+  async playKanaSound(kana) {
+    console.log(`🎌 播放假名发音: "${kana}"`)
+    
+    // 使用专门的假名语音配置
+    const options = {
+      voice: 'ja-JP-NanamiNeural', // 使用最适合假名教学的语音
+      lang: 'ja',
+      speed: 0.8 // 稍微放慢速度，便于学习
+    }
+    
+    try {
+      // 1. 先检查文件缓存
+      const cachedFilePath = await this.fileCache.checkCache(kana, options)
+      if (cachedFilePath) {
+        console.log('✅ 使用假名缓存:', cachedFilePath)
+        return this.playAudio(cachedFilePath, {
+          onPlay: () => console.log('🔊 假名音频开始播放'),
+          onError: (err) => {
+            console.error('❌ 假名音频播放失败:', err)
+            this.showKanaFallback(kana)
+          },
+          onEnded: () => console.log('✅ 假名音频播放完成')
+        })
+      }
+      
+      // 2. 生成新的音频
+      const result = await this.generateAudio(kana, 'ja', options.voice)
+      
+      let audioUrl = null
+      let alternatives = []
+      
+      if (typeof result === 'string' && result.startsWith('http')) {
+        audioUrl = result
+      } else if (result && typeof result === 'object' && result.audioUrl) {
+        audioUrl = result.audioUrl
+        alternatives = result.alternatives || []
+      }
+      
+      if (audioUrl) {
+        console.log('✅ 准备播放假名音频:', audioUrl)
+        
+        // 保存到缓存（异步）
+        this.fileCache.saveToCache(kana, audioUrl, options)
+          .then(localPath => {
+            console.log('💾 假名音频已缓存:', localPath)
+          })
+          .catch(err => {
+            console.warn('保存假名音频缓存失败:', err)
+          })
+        
+        return this.playAudio(audioUrl, {
+          onPlay: () => console.log('🔊 假名音频开始播放'),
+          onError: (err) => {
+            console.error('❌ 假名音频播放失败:', err)
+            this.showKanaFallback(kana)
+          },
+          onEnded: () => console.log('✅ 假名音频播放完成')
+        }, alternatives)
+      } else {
+        this.showKanaFallback(kana)
+        return null
+      }
+    } catch (error) {
+      console.error('❌ 播放假名失败:', error)
+      this.showKanaFallback(kana)
+      return null
+    }
+  }
+  
+  // 批量预加载假名音频
+  async preloadKanaAudio(kanaList) {
+    console.log('📥 批量预加载假名音频:', kanaList.length, '个')
+    
+    const options = {
+      voice: 'ja-JP-NanamiNeural',
+      lang: 'ja',
+      speed: 0.8
+    }
+    
+    const promises = kanaList.map(async (kana) => {
+      try {
+        // 检查是否已缓存
+        const cachedFilePath = await this.fileCache.checkCache(kana, options)
+        if (cachedFilePath) {
+          console.log('✅ 假名已缓存:', kana)
+          return { kana, cached: true }
+        }
+        
+        // 生成并缓存
+        const result = await this.generateAudio(kana, 'ja', options.voice)
+        let audioUrl = null
+        
+        if (typeof result === 'string' && result.startsWith('http')) {
+          audioUrl = result
+        } else if (result && typeof result === 'object' && result.audioUrl) {
+          audioUrl = result.audioUrl
+        }
+        
+        if (audioUrl) {
+          await this.fileCache.saveToCache(kana, audioUrl, options)
+          console.log('✅ 假名音频已预加载:', kana)
+          return { kana, cached: true }
+        }
+        
+        return { kana, cached: false }
+      } catch (error) {
+        console.warn('⚠️ 预加载假名失败:', kana, error)
+        return { kana, cached: false, error: error.message }
+      }
+    })
+    
+    const results = await Promise.all(promises)
+    const successCount = results.filter(r => r.cached).length
+    console.log(`📊 假名预加载完成: ${successCount}/${kanaList.length}`)
+    return results
+  }
+  
+  // 显示假名发音降级信息
+  showKanaFallback(kana) {
+    // 尝试从假名数据获取罗马音
+    const kanaMap = {
+      'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
+      'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
+      'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
+      'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
+      'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
+      'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
+      'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
+      'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
+      'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
+      'わ': 'wa', 'を': 'wo', 'ん': 'n',
+      // 片假名
+      'ア': 'a', 'イ': 'i', 'ウ': 'u', 'エ': 'e', 'オ': 'o',
+      'カ': 'ka', 'キ': 'ki', 'ク': 'ku', 'ケ': 'ke', 'コ': 'ko',
+      'サ': 'sa', 'シ': 'shi', 'ス': 'su', 'セ': 'se', 'ソ': 'so',
+      'タ': 'ta', 'チ': 'chi', 'ツ': 'tsu', 'テ': 'te', 'ト': 'to',
+      'ナ': 'na', 'ニ': 'ni', 'ヌ': 'nu', 'ネ': 'ne', 'ノ': 'no',
+      'ハ': 'ha', 'ヒ': 'hi', 'フ': 'fu', 'ヘ': 'he', 'ホ': 'ho',
+      'マ': 'ma', 'ミ': 'mi', 'ム': 'mu', 'メ': 'me', 'モ': 'mo',
+      'ヤ': 'ya', 'ユ': 'yu', 'ヨ': 'yo',
+      'ラ': 'ra', 'リ': 'ri', 'ル': 'ru', 'レ': 're', 'ロ': 'ro',
+      'ワ': 'wa', 'ヲ': 'wo', 'ン': 'n'
+    }
+    
+    const romaji = kanaMap[kana] || kana
+    
+    wx.showToast({
+      title: `发音：${romaji}`,
+      icon: 'none',
+      duration: 2000
+    })
+  }
+  
   // 获取支持的声音列表（简化版本）
   async getVoices() {
     return {

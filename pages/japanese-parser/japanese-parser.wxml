@@ -83,7 +83,10 @@
   <view wx:if="{{showResult}}" class="result-container">
     <view class="result-header">
       <text class="result-title">解析结果</text>
-      <text class="copy-btn" bindtap="copyResult">复制全部</text>
+      <view class="result-actions">
+        <text class="save-btn" bindtap="manualSaveToHistory">保存到历史</text>
+        <text class="copy-btn" bindtap="copyResult">复制全部</text>
+      </view>
     </view>
 
     <!-- 平铺展示解析结果 -->
