@@ -1000,7 +1000,16 @@ Page({
 
   // 手动保存到历史
   async manualSaveToHistory() {
-    const { inputText, inputMethod, imageUrl, analysisResult } = this.data
+    const { inputText, inputMethod, imageUrl, analysisResult, extractedImageText, articleTitle } = this.data
+    
+    console.log('手动保存到历史，当前数据:', {
+      inputText,
+      inputMethod,
+      imageUrl: imageUrl ? '有图片' : '无图片',
+      extractedImageText,
+      articleTitle,
+      analysisResultLength: analysisResult?.length
+    })
     
     if (!analysisResult || analysisResult.length === 0) {
       wx.showToast({
@@ -1015,13 +1024,17 @@ Page({
       content: '是否保存当前解析结果到历史记录？',
       success: async (res) => {
         if (res.confirm) {
-          await this.saveParseResult({
-            inputText: inputMethod === 'text' ? inputText : (this.data.extractedImageText || '图片识别'),
+          const saveData = {
+            inputText: inputMethod === 'text' ? inputText : (extractedImageText || articleTitle || '图片识别'),
             inputMethod,
-            imageUrl: inputMethod === 'image' ? this.data.imageUrl : '',
-            extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
+            imageUrl: inputMethod === 'image' ? imageUrl : '',
+            extractedText: inputMethod === 'image' ? extractedImageText : '',
+            articleTitle: inputMethod === 'image' ? articleTitle : '',
             analysisResult
-          })
+          }
+          
+          console.log('准备保存的数据:', saveData)
+          await this.saveParseResult(saveData)
         }
       }
     })
