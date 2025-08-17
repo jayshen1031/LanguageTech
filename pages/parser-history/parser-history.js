@@ -195,7 +195,7 @@ Page({
     const app = getApp()
     app.globalData.currentHistoryItem = item
     wx.navigateTo({
-      url: `/pages/parser-detail/parser-detail?id=${item._id}`
+      url: `/packageB/pages/parser-detail/parser-detail?id=${item._id}`
     })
   },
 
@@ -607,7 +607,7 @@ Page({
         app.globalData.historyVocabulary = vocabularyList
         
         wx.navigateTo({
-          url: '/pages/history-vocabulary/history-vocabulary'
+          url: '/packageB/pages/history-vocabulary/history-vocabulary'
         })
         
         wx.showToast({
