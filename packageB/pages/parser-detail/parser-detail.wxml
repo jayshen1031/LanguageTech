@@ -141,9 +141,9 @@
           <text class="value">{{sentence.structure}}</text>
         </view>
 
-        <!-- 详细分析 -->
+        <!-- 句子结构分析 -->
         <view wx:if="{{sentence.analysis}}" class="analysis-section">
-          <text class="sub-label">详细分析：</text>
+          <text class="sub-label">句子结构分析：</text>
           <text class="analysis-text">{{sentence.analysis}}</text>
         </view>
 
