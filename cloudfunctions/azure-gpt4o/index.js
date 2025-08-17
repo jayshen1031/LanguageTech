@@ -239,7 +239,7 @@ exports.main = async (event, context) => {
         }
         
         const grammarResult = await callAzureGPT4o(analysisMessages, {
-          temperature: 0.3,
+          temperature: 0.5,  // 提高温度，让模型更活跃
           maxTokens: 16000  // 大幅增加token限制确保完整输出
         })
         
