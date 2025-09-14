@@ -6,7 +6,8 @@
     "pages/review/review",
     "pages/wordbook/wordbook",
     "pages/profile/profile",
-    "pages/mastery-stats/mastery-stats"
+    "pages/mastery-stats/mastery-stats",
+    "pages/register/register"
   ],
   "subPackages": [
     {

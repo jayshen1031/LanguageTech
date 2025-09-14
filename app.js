@@ -1,4 +1,6 @@
 // app.js
+const userService = require('./utils/userService')
+
 App({
   onLaunch() {
     // 展示本地存储能力
@@ -6,31 +8,43 @@ App({
     logs.unshift(Date.now())
     wx.setStorageSync('logs', logs)
 
-    // 获取用户信息
-    wx.getSetting({
-      success: res => {
-        if (res.authSetting['scope.userInfo']) {
-          // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
-          wx.getUserInfo({
-            success: res => {
-              // 可以将 res 发送给后台解码出 unionId
-              this.globalData.userInfo = res.userInfo
-
-              // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回
-              // 所以此处加入 callback 以防止这种情况
-              if (this.userInfoReadyCallback) {
-                this.userInfoReadyCallback(res)
-              }
-            }
-          })
-        }
-      }
-    })
-
     // 延迟初始化云开发环境，等待登录状态稳定
     setTimeout(() => {
       this.initCloudDev()
     }, 1000)
+
+    // 初始化用户服务
+    this.initUserService()
+  },
+
+  // 初始化用户服务
+  async initUserService() {
+    try {
+      await userService.init()
+      this.globalData.userService = userService
+      this.globalData.isLoggedIn = userService.checkLoginStatus()
+      this.globalData.userInfo = userService.getUserInfo()
+      this.globalData.userProfile = userService.getProfile()
+      
+      // 如果用户已登录，启动自动同步
+      if (this.globalData.isLoggedIn) {
+        this.startAutoSync()
+      }
+    } catch (error) {
+      console.error('初始化用户服务失败:', error)
+    }
+  },
+
+  // 启动自动同步
+  startAutoSync() {
+    // 每30分钟自动同步一次学习数据
+    setInterval(async () => {
+      try {
+        await this.globalData.userService.autoSync()
+      } catch (error) {
+        console.error('自动同步失败:', error)
+      }
+    }, 1800000) // 30分钟
   },
 
   // 云开发初始化方法
@@ -73,6 +87,9 @@ App({
 
   globalData: {
     userInfo: null,
+    userProfile: null,
+    userService: null,
+    isLoggedIn: false,
     apiBase: 'https://api.languagetech.com',
     todayWords: [],
     reviewWords: [],

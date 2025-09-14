@@ -1,42 +1,105 @@
+<!-- 个人中心页面 -->
 <view class="container">
-  <!-- 用户信息 -->
+  <!-- 用户信息区域 -->
   <view class="user-section">
-    <view class="user-info">
-      <view class="avatar-placeholder"></view>
+    <view wx:if="{{isLoggedIn}}" class="user-info">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       <view class="user-details">
-        <text class="nickname">语言学习者</text>
-        <text class="study-days">已学习 0 天</text>
+        <text class="nickname">{{userProfile.nickname || '语伴君用户'}}</text>
+        <text class="level">{{userProfile.currentLevel === 'beginner' ? '初学者' : userProfile.currentLevel === 'intermediate' ? '中级' : '高级'}}</text>
+        <text class="goal">{{userProfile.learningGoal === 'daily' ? '日常交流' : userProfile.learningGoal === 'exam' ? '考试备考' : userProfile.learningGoal === 'business' ? '商务日语' : '旅游日语'}}</text>
+      </view>
+      <view class="edit-btn" bindtap="goToRegister">
+        <text class="edit-icon">✏️</text>
+      </view>
+    </view>
+    
+    <view wx:else class="login-prompt">
+      <image class="login-avatar" src="/images/default-avatar.png" mode="aspectFit"></image>
+      <view class="login-info">
+        <text class="login-title">立即登录</text>
+        <text class="login-desc">同步学习记录，个性化学习体验</text>
+      </view>
+      <button class="login-btn" bindtap="goToRegister">登录/注册</button>
+    </view>
+  </view>
+
+  <!-- 学习统计卡片 -->
+  <view class="stats-section">
+    <view class="section-title">学习统计</view>
+    <view class="stats-grid">
+      <view class="stat-card" bindtap="goToMasteryStats">
+        <text class="stat-number">{{learningStats.studyDays}}</text>
+        <text class="stat-label">学习天数</text>
+        <text class="stat-icon">📅</text>
+      </view>
+      <view class="stat-card" bindtap="goToMasteryStats">
+        <text class="stat-number">{{learningStats.totalWords}}</text>
+        <text class="stat-label">词汇总数</text>
+        <text class="stat-icon">📚</text>
+      </view>
+      <view class="stat-card" bindtap="goToMasteryStats">
+        <text class="stat-number">{{learningStats.masteredWords}}</text>
+        <text class="stat-label">已掌握</text>
+        <text class="stat-icon">✅</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-number">{{learningStats.todayStudyTime}}</text>
+        <text class="stat-label">今日学习(分钟)</text>
+        <text class="stat-icon">⏱️</text>
       </view>
     </view>
   </view>
 
-  <!-- 缓存管理 -->
-  <view class="cache-section">
-    <view class="section-title">缓存管理</view>
-    <view class="cache-info">
-      <view class="cache-item">
-        <text class="cache-label">音频缓存文件：</text>
-        <text class="cache-value">{{cacheStats.fileCount}} 个</text>
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="section-title">功能设置</view>
+    
+    <!-- 数据同步 -->
+    <view wx:if="{{isLoggedIn}}" class="menu-item" bindtap="syncLearningData">
+      <view class="menu-icon">☁️</view>
+      <view class="menu-content">
+        <text class="menu-title">同步学习数据</text>
+        <text class="menu-desc">将学习记录同步到云端</text>
       </view>
-      <view class="cache-item">
-        <text class="cache-label">缓存大小：</text>
-        <text class="cache-value">{{cacheStats.totalSizeMB}} MB</text>
+      <view class="menu-arrow">›</view>
+    </view>
+    
+    <!-- 学习统计 -->
+    <view class="menu-item" bindtap="goToMasteryStats">
+      <view class="menu-icon">📊</view>
+      <view class="menu-content">
+        <text class="menu-title">学习统计</text>
+        <text class="menu-desc">查看详细的学习进度</text>
       </view>
-      <button class="clear-cache-btn" bindtap="clearAudioCache">清理音频缓存</button>
+      <view class="menu-arrow">›</view>
+    </view>
+    
+    <!-- 缓存管理 -->
+    <view class="menu-item" bindtap="clearAudioCache">
+      <view class="menu-icon">🗑️</view>
+      <view class="menu-content">
+        <text class="menu-title">清理音频缓存</text>
+        <text class="menu-desc">{{cacheStats.fileCount}}个文件，{{cacheStats.totalSizeMB}}MB</text>
+      </view>
+      <view class="menu-arrow">›</view>
     </view>
   </view>
-  
-  <!-- 管理功能 -->
-  <view class="admin-section">
-    <view class="section-title">管理功能</view>
-    <navigator url="/pages/todo-manage/todo-manage" class="admin-item">
-      <text class="admin-label">项目待办管理</text>
-      <text class="admin-arrow">›</text>
-    </navigator>
-  </view>
-  
-  <!-- 其他功能 -->
-  <view class="other-section">
-    <text class="tips">更多功能开发中...</text>
+
+  <!-- 学习目标卡片 -->
+  <view wx:if="{{isLoggedIn && userProfile}}" class="goal-section">
+    <view class="section-title">学习目标</view>
+    <view class="goal-card">
+      <view class="goal-header">
+        <text class="goal-title">每日目标</text>
+        <text class="goal-time">{{userProfile.studyTimePerDay}}分钟</text>
+      </view>
+      <view class="goal-progress">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{learningStats.todayStudyTime / userProfile.studyTimePerDay * 100}}%"></view>
+        </view>
+        <text class="progress-text">{{learningStats.todayStudyTime}}/{{userProfile.studyTimePerDay}}分钟</text>
+      </view>
+    </view>
   </view>
 </view>

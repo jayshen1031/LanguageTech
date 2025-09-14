@@ -1,176 +1,276 @@
+/* 个人中心页面样式 */
 .container {
   padding: 20rpx;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
 }
 
-/* 用户信息 */
+/* 用户信息区域 */
 .user-section {
-  background: #4A90E2;
-  padding: 40rpx;
-  border-radius: 20rpx;
   margin-bottom: 30rpx;
 }
 
+/* 已登录用户信息 */
 .user-info {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  padding: 40rpx;
+  border-radius: 25rpx;
   display: flex;
   align-items: center;
-  gap: 30rpx;
+  position: relative;
+  box-shadow: 0 20rpx 40rpx rgba(0,0,0,0.1);
 }
 
-.avatar-placeholder {
-  width: 100rpx;
-  height: 100rpx;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  margin-right: 30rpx;
+  border: 4rpx solid #4A90E2;
 }
 
 .user-details {
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .nickname {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.level {
+  font-size: 26rpx;
+  color: #4A90E2;
+  margin-bottom: 4rpx;
+  font-weight: 600;
+}
+
+.goal {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.edit-btn {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  width: 60rpx;
+  height: 60rpx;
+  background: #4A90E2;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon {
   font-size: 32rpx;
-  color: #fff;
+  color: white;
+}
+
+/* 未登录提示 */
+.login-prompt {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  padding: 40rpx;
+  border-radius: 25rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 20rpx 40rpx rgba(0,0,0,0.1);
+}
+
+.login-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  opacity: 0.5;
+  margin-right: 30rpx;
+}
+
+.login-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.login-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.login-btn {
+  background: #4A90E2;
+  color: white;
+  border-radius: 30rpx;
+  height: 60rpx;
+  font-size: 26rpx;
+  padding: 0 30rpx;
+}
+
+/* 学习统计区域 */
+.stats-section {
+  margin-bottom: 30rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  box-shadow: 0 10rpx 25rpx rgba(0,0,0,0.1);
+}
+
+.stat-number {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #4A90E2;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
   margin-bottom: 10rpx;
 }
 
-.study-days {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.8);
+.stat-icon {
+  position: absolute;
+  top: 15rpx;
+  right: 15rpx;
+  font-size: 28rpx;
+  opacity: 0.6;
 }
 
-/* 菜单 */
+/* 功能菜单 */
 .menu-section {
   margin-bottom: 30rpx;
 }
 
-.menu-btn {
-  width: 100%;
-  height: 100rpx;
-  background: #fff;
-  border: none;
-  font-size: 32rpx;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.menu-item {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
   border-radius: 20rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
-}
-
-.menu-btn::after {
-  display: none;
-}
-
-.admin-btn {
-  background: #FF6B6B;
-  color: #fff;
-}
-
-.admin-btn:active {
-  opacity: 0.8;
-  transform: scale(0.98);
-}
-
-/* 缓存管理 */
-.cache-section {
-  background: #fff;
   padding: 30rpx;
-  border-radius: 20rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
-}
-
-.section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20rpx;
-}
-
-.cache-info {
-  padding: 20rpx 0;
-}
-
-.cache-item {
+  margin-bottom: 15rpx;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 15rpx 0;
+  box-shadow: 0 10rpx 25rpx rgba(0,0,0,0.1);
 }
 
-.cache-label {
-  font-size: 28rpx;
+.menu-icon {
+  font-size: 40rpx;
+  margin-right: 25rpx;
+  width: 60rpx;
+  text-align: center;
+}
+
+.menu-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.menu-desc {
+  font-size: 24rpx;
   color: #666;
 }
 
-.cache-value {
+.menu-arrow {
+  font-size: 40rpx;
+  color: #ccc;
+}
+
+/* 学习目标区域 */
+.goal-section {
+  margin-bottom: 30rpx;
+}
+
+.goal-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 10rpx 25rpx rgba(0,0,0,0.1);
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.goal-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.goal-time {
   font-size: 28rpx;
   color: #4A90E2;
   font-weight: bold;
 }
 
-.clear-cache-btn {
-  width: 100%;
-  height: 80rpx;
-  background: #FF6B6B;
-  color: #fff;
-  font-size: 30rpx;
-  border-radius: 10rpx;
-  margin-top: 30rpx;
-  border: none;
-}
-
-.clear-cache-btn::after {
-  display: none;
-}
-
-.clear-cache-btn:active {
-  opacity: 0.8;
-  transform: scale(0.98);
-}
-
-/* 管理功能 */
-.admin-section {
-  background: #fff;
-  padding: 30rpx;
-  border-radius: 20rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
-}
-
-.admin-item {
+.goal-progress {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1px solid #f0f0f0;
+  flex-direction: column;
 }
 
-.admin-item:last-child {
-  border-bottom: none;
+.progress-bar {
+  height: 12rpx;
+  background: #f0f0f0;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 10rpx;
 }
 
-.admin-label {
-  font-size: 30rpx;
-  color: #333;
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4A90E2, #667eea);
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
 }
 
-.admin-arrow {
-  font-size: 36rpx;
-  color: #999;
-}
-
-/* 其他 */
-.other-section {
+.progress-text {
+  font-size: 24rpx;
+  color: #666;
   text-align: center;
-  padding: 40rpx;
 }
 
-.tips {
-  color: #999;
+/* 通用样式 */
+.section-title {
   font-size: 28rpx;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 20rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
 }
