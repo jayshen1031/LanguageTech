@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
       await Promise.all(deletePromises)
       totalDeleted += batchData.data.length
       
-      console.log(`已删除 ${totalDeleted} 条数据`)
+      // console.log(`已删除 ${totalDeleted} 条数据`)
       
       // 如果这批数据少于batchSize，说明已经没有更多数据了
       if (batchData.data.length < batchSize) {

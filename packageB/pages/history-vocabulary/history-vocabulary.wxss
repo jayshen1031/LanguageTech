@@ -199,6 +199,56 @@
   border-radius: 12rpx;
 }
 
+/* 出处信息 */
+.vocab-sources {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.sources-label {
+  font-size: 22rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.sources-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 4rpx;
+}
+
+.source-item {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  background-color: #f8f9fa;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+}
+
+.source-title {
+  color: #4a90e2;
+  font-weight: 500;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-detail {
+  color: #666;
+}
+
+.sources-count {
+  font-size: 20rpx;
+  color: #999;
+  font-style: italic;
+}
+
 /* 底部操作栏 */
 .bottom-bar {
   position: fixed;

@@ -1,4 +1,5 @@
 // pages/parser-detail/parser-detail.js
+
 const app = getApp()
 
 Page({

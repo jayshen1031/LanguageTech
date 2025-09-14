@@ -1,6 +1,7 @@
 // 日语解析工具页面
 const { azureGPT4o } = require('../../../utils/ai')
 
+
 Page({
   data: {
     inputText: '', // 输入的文本
@@ -231,24 +232,44 @@ Page({
         wx.showLoading({ title: '识别并解析中...' })
         
         // 上传图片到云存储
-        const uploadRes = await wx.cloud.uploadFile({
-          cloudPath: `japanese-parser/image_${Date.now()}.jpg`,
-          filePath: imageUrl
-        })
-        
-        // 保存云存储的文件ID，用于永久保存
-        this.setData({
-          cloudImageUrl: uploadRes.fileID
-        })
-        
-        console.log('图片已上传到云存储:', uploadRes.fileID)
+        let cloudImageUrl = ''
+        try {
+          const uploadRes = await wx.cloud.uploadFile({
+            cloudPath: `japanese-parser/image_${Date.now()}.jpg`,
+            filePath: imageUrl
+          })
+          
+          // 验证上传是否成功
+          if (!uploadRes.fileID) {
+            throw new Error('图片上传失败：未获取到云存储文件ID')
+          }
+          
+          cloudImageUrl = uploadRes.fileID
+          
+          // 保存云存储的文件ID，用于永久保存
+          this.setData({
+            cloudImageUrl: cloudImageUrl
+          })
+          
+          // console.log('图片已成功上传到云存储:', cloudImageUrl)
+        } catch (uploadError) {
+          console.error('图片上传失败:', uploadError)
+          wx.hideLoading()
+          wx.showModal({
+            title: '上传失败',
+            content: '图片上传到云存储失败，请检查网络后重试',
+            showCancel: false
+          })
+          this.setData({ isAnalyzing: false })
+          return
+        }
         
         // 调用Azure GPT-4o的grammar接口（支持图片识别）
         const res = await wx.cloud.callFunction({
           name: 'azure-gpt4o',
           data: {
             action: 'grammar',
-            imageUrl: uploadRes.fileID,
+            imageUrl: cloudImageUrl,  // 使用前面保存的cloudImageUrl变量
             userTitle: this.data.userInputTitle // 传递用户输入的标题
           }
         })
@@ -264,8 +285,8 @@ Page({
           result = res.result.data.analysis
           
           // 添加调试日志
-          console.log('图片解析原始返回内容（前1000字符）:', result?.substring(0, 1000))
-          console.log('图片解析完整返回长度:', result?.length)
+          // console.log('图片解析原始返回内容（前1000字符）:', result?.substring(0, 1000))
+          // console.log('图片解析完整返回长度:', result?.length)
           
           // 从AI响应中提取识别出的原始文本
           // AI会返回包含日文原文的解析结果
@@ -280,7 +301,7 @@ Page({
       } else {
         // 文本模式
         const lines = inputText.split('\n').filter(line => line.trim())
-        console.log(`输入文本共${lines.length}行`)
+        // console.log(`输入文本共${lines.length}行`)
         
         // 检查是否需要分批处理：行数超过8行 或 总字符数超过800字符
         const totalChars = inputText.length
@@ -288,13 +309,13 @@ Page({
         
         // 如果是歌词格式（包含假名标注），使用分批处理
         if (inputText.includes('（') || inputText.includes('(')) {
-          console.log('检测到歌词格式，使用分批处理')
+          // console.log('检测到歌词格式，使用分批处理')
           await this.batchProcessLyrics(inputText)
           return
         }
         
         if (needsBatch) {
-          console.log(`文本较长，使用分批处理模式：${lines.length}行，${totalChars}字符`)
+          // console.log(`文本较长，使用分批处理模式：${lines.length}行，${totalChars}字符`)
           wx.showLoading({ title: `分批解析中(${totalChars}字符)...` })
           
           const res = await wx.cloud.callFunction({
@@ -306,13 +327,13 @@ Page({
           
           if (res.result.success) {
             result = res.result.data.analysis
-            console.log(`分批处理完成，共${res.result.data.batches}批，${res.result.data.totalLines}行`)
+            // console.log(`分批处理完成，共${res.result.data.batches}批，${res.result.data.totalLines}行`)
           } else {
             throw new Error(res.result.error || '分批处理失败')
           }
         } else {
           // 行数较少，使用快速模式
-          console.log('使用azure-gpt4o进行全文语法分析')
+          // console.log('使用azure-gpt4o进行全文语法分析')
           wx.showLoading({ title: '全文解析中...' })
           
           const res = await wx.cloud.callFunction({
@@ -329,11 +350,11 @@ Page({
             // 显示调试信息
             if (res.result.data.debug) {
               const debug = res.result.data.debug
-              console.log('=== 解析调试信息 ===')
-              console.log('输入行数:', debug.inputLines)
-              console.log('输出长度:', debug.outputLength)
-              console.log('Token使用:', debug.tokenUsage)
-              console.log('解析句子数:', debug.parsedSentences)
+              // console.log('=== 解析调试信息 ===')
+              // console.log('输入行数:', debug.inputLines)
+              // console.log('输出长度:', debug.outputLength)
+              // console.log('Token使用:', debug.tokenUsage)
+              // console.log('解析句子数:', debug.parsedSentences)
               
               // 如果解析数量不匹配，显示警告
               if (debug.parsedSentences < debug.inputLines) {
@@ -342,7 +363,7 @@ Page({
             }
           } else {
             // 如果快速函数失败，回退到简单函数
-            console.log('回退到simpleChat')
+            // console.log('回退到simpleChat')
             const prompt = this.buildAnalysisPrompt(inputText)
             result = await azureGPT4o.simpleChat(prompt)
           }
@@ -350,8 +371,8 @@ Page({
       }
       
       // 解析AI返回的结果
-      console.log('AI返回的原始结果长度:', result ? result.length : 0)
-      console.log('AI返回的原始结果前500字符:', result ? result.substring(0, 500) : 'null')
+      // console.log('AI返回的原始结果长度:', result ? result.length : 0)
+      // console.log('AI返回的原始结果前500字符:', result ? result.substring(0, 500) : 'null')
       
       // 确保result是字符串
       if (typeof result !== 'string') {
@@ -378,8 +399,8 @@ Page({
         articleTitle = parseResult.title;
       }
       
-      console.log('解析后的结果:', analysisResult)
-      console.log('文章标题:', articleTitle)
+      // console.log('解析后的结果:', analysisResult)
+      // console.log('文章标题:', articleTitle)
       
       // 如果是图片模式，优先使用用户输入的标题
       if (inputMethod === 'image') {
@@ -425,7 +446,7 @@ Page({
           analysisResult
         }
         
-        console.log('准备自动保存的数据:', {
+        // console.log('准备自动保存的数据:', {
           inputMethod,
           hasImageUrl: !!autoSaveData.imageUrl,
           articleTitle: autoSaveData.articleTitle,
@@ -519,7 +540,7 @@ Page({
   // 构建解析提示词
   buildAnalysisPrompt(text) {
     const inputType = this.detectInputType(text);
-    console.log('检测到输入类型:', inputType);
+    // console.log('检测到输入类型:', inputType);
     
     if (inputType === 'word' || inputType === 'wordlist') {
       return this.buildWordAnalysisPrompt(text);
@@ -593,7 +614,7 @@ Page({
 
   // 解析单词类型的AI响应
   parseWordResponse(response) {
-    console.log('开始解析单词响应...')
+    // console.log('开始解析单词响应...')
     
     if (!response || typeof response !== 'string') {
       console.error('AI响应为空或格式错误:', response)
@@ -695,9 +716,9 @@ Page({
 
   // 解析句子类型的AI响应（原parseAIResponse）
   parseSentenceResponse(response) {
-    console.log('开始解析AI响应...')
-    console.log('响应长度:', response?.length)
-    console.log('响应前200字符:', response?.substring(0, 200))
+    // console.log('开始解析AI响应...')
+    // console.log('响应长度:', response?.length)
+    // console.log('响应前200字符:', response?.substring(0, 200))
     
     // 如果响应为空，返回空数组
     if (!response || typeof response !== 'string') {
@@ -710,7 +731,7 @@ Page({
     const titleMatch = response.match(/【文章标题】\s*(.+?)(?:\n|$)/)
     if (titleMatch) {
       title = titleMatch[1].trim()
-      console.log('提取到标题:', title)
+      // console.log('提取到标题:', title)
     }
     
     // 将AI返回的文本按句子分割并结构化
@@ -722,10 +743,10 @@ Page({
       sections = [response]
     }
     
-    console.log('分割后的sections数量:', sections.length)
+    // console.log('分割后的sections数量:', sections.length)
     
     sections.forEach((section, sectionIndex) => {
-      console.log(`处理第${sectionIndex}个section:`, section.substring(0, 100) + '...')
+      // console.log(`处理第${sectionIndex}个section:`, section.substring(0, 100) + '...')
       
       // 更灵活的句子标记检测
       // 检查是否包含句子标记（📘、第X句、【日文原文】等）
@@ -735,8 +756,8 @@ Page({
         section.includes('【日文原文】') ||
         section.includes('日文原文');
       
-      console.log(`Section ${sectionIndex} 有句子标记:`, hasSentenceMarker)
-      console.log(`Section ${sectionIndex} 包含内容:`, {
+      // console.log(`Section ${sectionIndex} 有句子标记:`, hasSentenceMarker)
+      // console.log(`Section ${sectionIndex} 包含内容:`, {
         '📘': section.includes('📘'),
         '第...句': section.includes('第') && section.includes('句'),
         '【日文原文】': section.includes('【日文原文】'),
@@ -762,7 +783,7 @@ Page({
           vocabulary: this.extractVocabulary(section)
         }
         
-        console.log(`解析出的句子数据 ${sentenceIndex}:`, {
+        // console.log(`解析出的句子数据 ${sentenceIndex}:`, {
           originalText: sentenceData.originalText?.substring(0, 50),
           romaji: sentenceData.romaji?.substring(0, 50),
           translation: sentenceData.translation?.substring(0, 50),
@@ -778,7 +799,7 @@ Page({
         }
       } else if (section.length > 50) {
         // 如果没有明显的标记但内容较长，尝试作为整体解析
-        console.log('尝试整体解析无标记的section')
+        // console.log('尝试整体解析无标记的section')
         const sentenceData = {
           index: sentences.length + 1,
           originalText: this.extractFirstJapaneseLine(section),
@@ -796,16 +817,16 @@ Page({
       }
     })
     
-    console.log('最终解析出的句子数量:', sentences.length)
+    // console.log('最终解析出的句子数量:', sentences.length)
     
     // 打印所有解析出的句子原文，用于调试
     sentences.forEach((s, i) => {
-      console.log(`句子${i + 1}: ${s.originalText}`)
+      // console.log(`句子${i + 1}: ${s.originalText}`)
     })
     
     // 如果解析结果太少，尝试按行解析
     if (sentences.length < 3 && response.includes('\n')) {
-      console.log('句子数量过少，尝试按行解析')
+      // console.log('句子数量过少，尝试按行解析')
       const additionalSentences = this.parseByLines(response, sentences.length)
       sentences.push(...additionalSentences)
     }
@@ -920,7 +941,7 @@ Page({
     }
     
     if (!vocabSection) {
-      console.log('未找到词汇表部分')
+      // console.log('未找到词汇表部分')
       return []
     }
     
@@ -1059,7 +1080,7 @@ Page({
   async manualSaveToHistory() {
     const { inputText, inputMethod, imageUrl, analysisResult, extractedImageText, articleTitle } = this.data
     
-    console.log('手动保存到历史，当前数据:', {
+    // console.log('手动保存到历史，当前数据:', {
       inputText,
       inputMethod,
       imageUrl: imageUrl ? '有图片' : '无图片',
@@ -1090,7 +1111,7 @@ Page({
             analysisResult
           }
           
-          console.log('准备保存的数据:', saveData)
+          // console.log('准备保存的数据:', saveData)
           await this.saveParseResult(saveData)
         }
       }
@@ -1103,7 +1124,7 @@ Page({
       // 先检查是否已存在相同内容的记录
       const isDuplicate = await this.checkDuplicateRecord(data)
       if (isDuplicate) {
-        console.log('检测到重复记录，跳过保存')
+        // console.log('检测到重复记录，跳过保存')
         wx.showToast({
           title: '该内容已存在',
           icon: 'none',
@@ -1144,7 +1165,7 @@ Page({
       
       // 检查数据大小（单条记录不能超过1MB）
       const dataSize = JSON.stringify(saveData).length
-      console.log('准备保存的数据大小:', dataSize, '字节')
+      // console.log('准备保存的数据大小:', dataSize, '字节')
       
       if (dataSize > 1024 * 1024) {
         wx.showModal({
@@ -1155,15 +1176,15 @@ Page({
         return
       }
       
-      console.log('准备保存到云数据库的完整数据:', JSON.stringify(saveData, null, 2))
+      // console.log('准备保存到云数据库的完整数据:', JSON.stringify(saveData, null, 2))
       
       const res = await this.db.collection('japanese_parser_history').add({
         data: saveData
       })
       
-      console.log('云数据库保存成功:', res)
-      console.log('保存的记录ID:', res._id)
-      console.log('保存的数据摘要:', {
+      // console.log('云数据库保存成功:', res)
+      // console.log('保存的记录ID:', res._id)
+      // console.log('保存的数据摘要:', {
         inputMethod: saveData.inputMethod,
         hasImageUrl: !!saveData.imageUrl,
         title: saveData.title,
@@ -1181,7 +1202,7 @@ Page({
         const pages = getCurrentPages()
         const historyPage = pages.find(page => page.route === 'pages/parser-history/parser-history')
         if (historyPage) {
-          console.log('刷新历史页面')
+          // console.log('刷新历史页面')
           historyPage.loadHistory()
         }
       }, 500)
@@ -1218,7 +1239,7 @@ Page({
       })
       
       // 所有错误情况都尝试使用本地存储
-      console.log('使用本地存储作为备选方案')
+      // console.log('使用本地存储作为备选方案')
       
       // 延迟执行本地存储，避免toast重叠
       setTimeout(() => {
@@ -1257,7 +1278,7 @@ Page({
       yesterday.setDate(yesterday.getDate() - 1)
       query.createTime = db.command.gte(yesterday)
       
-      console.log('重复检查查询条件:', query)
+      // console.log('重复检查查询条件:', query)
       
       const res = await db.collection('japanese_parser_history')
         .where(query)
@@ -1265,7 +1286,7 @@ Page({
         .get()
       
       const isDuplicate = res.data.length > 0
-      console.log('重复检查结果:', isDuplicate)
+      // console.log('重复检查结果:', isDuplicate)
       
       return isDuplicate
     } catch (error) {
@@ -1282,7 +1303,7 @@ Page({
       const usedMB = (storageInfo.currentSize / 1024).toFixed(2)
       const limitMB = (storageInfo.limitSize / 1024).toFixed(2)
       
-      console.log('本地存储信息:', {
+      // console.log('本地存储信息:', {
         currentSize: storageInfo.currentSize,
         limitSize: storageInfo.limitSize,
         keys: storageInfo.keys.length,
@@ -1292,7 +1313,7 @@ Page({
       
       // 如果存储空间超过8MB（留2MB余量），清理旧数据
       if (storageInfo.currentSize > 8 * 1024) {
-        console.log('本地存储空间不足，清理旧数据')
+        // console.log('本地存储空间不足，清理旧数据')
         
         // 提示用户正在清理
         wx.showToast({
@@ -1309,7 +1330,7 @@ Page({
       
       // 限制本地存储最多100条记录
       if (localHistory.length >= 100) {
-        console.log('本地记录数超限，删除最旧的记录')
+        // console.log('本地记录数超限，删除最旧的记录')
         // 删除最旧的10条
         localHistory.splice(0, 10)
       }
@@ -1327,7 +1348,7 @@ Page({
       })
       
       if (isDuplicate) {
-        console.log('本地存储检测到重复记录，跳过保存')
+        // console.log('本地存储检测到重复记录，跳过保存')
         wx.showToast({
           title: '该内容已存在',
           icon: 'none',
@@ -1367,7 +1388,7 @@ Page({
       
       delete saveData.analysisResult
       
-      console.log('准备保存到本地的数据:', {
+      // console.log('准备保存到本地的数据:', {
         id: saveData._id,
         inputMethod: saveData.inputMethod,
         hasImageUrl: !!saveData.imageUrl,
@@ -1385,7 +1406,7 @@ Page({
       // 保存到本地
       wx.setStorageSync('parser_history', localHistory)
       
-      console.log('本地保存成功，当前记录数:', localHistory.length)
+      // console.log('本地保存成功，当前记录数:', localHistory.length)
       
       // 显示详细的保存状态
       wx.showModal({
@@ -1456,7 +1477,7 @@ Page({
         // 只保留最新的50条
         const newHistory = localHistory.slice(-50)
         wx.setStorageSync('parser_history', newHistory)
-        console.log(`清理本地历史记录，从${localHistory.length}条减少到${newHistory.length}条`)
+        // console.log(`清理本地历史记录，从${localHistory.length}条减少到${newHistory.length}条`)
       }
     } catch (error) {
       console.error('清理本地存储失败:', error)
@@ -1571,7 +1592,7 @@ Page({
       batches.push(batch.join('\n'))
     }
     
-    console.log(`歌词共${lines.length}行，分成${batches.length}批处理`)
+    // console.log(`歌词共${lines.length}行，分成${batches.length}批处理`)
     
     const allSentences = []
     let successCount = 0
@@ -1585,7 +1606,7 @@ Page({
       })
       
       try {
-        console.log(`处理第${i + 1}批，内容：`, batches[i].substring(0, 50) + '...')
+        // console.log(`处理第${i + 1}批，内容：`, batches[i].substring(0, 50) + '...')
         
         const res = await wx.cloud.callFunction({
           name: 'azure-gpt4o',
@@ -1599,7 +1620,7 @@ Page({
           const parsedBatch = this.parseBatchResult(res.result.data.analysis, batches[i])
           allSentences.push(...parsedBatch)
           successCount++
-          console.log(`第${i + 1}批解析成功`)
+          // console.log(`第${i + 1}批解析成功`)
         } else {
           console.error(`第${i + 1}批解析失败:`, res.result.error)
           // 失败的批次使用本地解析
@@ -1637,7 +1658,7 @@ Page({
     
     // 注释掉自动保存
     // await this.saveParsedToHistory(analysisResult)
-    console.log('批处理完成，不自动保存')
+    // console.log('批处理完成，不自动保存')
     
     // 显示提示
     if (failCount > 0) {
@@ -1869,7 +1890,7 @@ Page({
         .get()
       
       if (existing.data.length > 0) {
-        console.log('歌词解析结果已存在，跳过保存')
+        // console.log('歌词解析结果已存在，跳过保存')
         return
       }
       
@@ -1883,7 +1904,7 @@ Page({
           updateTime: new Date()
         }
       })
-      console.log('已保存到历史记录')
+      // console.log('已保存到历史记录')
     } catch (error) {
       console.error('保存到历史失败:', error)
     }

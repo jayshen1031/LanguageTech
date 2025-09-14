@@ -31,29 +31,43 @@
   font-weight: bold;
 }
 
-/* 词汇提取按钮 */
-.vocab-extract-bar {
+/* 功能按钮栏 */
+.function-bar {
   background-color: #fff;
   padding: 20rpx;
   border-bottom: 1rpx solid #eee;
+  display: flex;
+  gap: 16rpx;
 }
 
-.btn-extract-vocab {
-  width: 100%;
+.btn-function {
+  flex: 1;
   height: 80rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background-color: #f8f9fa;
+  color: #666;
   border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16rpx;
-  font-size: 28rpx;
+  gap: 12rpx;
+  font-size: 26rpx;
   font-weight: 500;
+  border: none;
+  transition: all 0.3s;
 }
 
-.extract-icon {
-  font-size: 32rpx;
+.btn-function.primary {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(74, 144, 226, 0.3);
+}
+
+.btn-function:active {
+  transform: scale(0.98);
+}
+
+.function-icon {
+  font-size: 28rpx;
 }
 
 /* 历史列表 */
@@ -210,6 +224,26 @@
   padding: 32rpx;
   font-size: 24rpx;
   color: #999;
+}
+
+/* 维护按钮 */
+.maintenance-btn {
+  position: fixed;
+  right: 30rpx;
+  bottom: 150rpx;
+  width: 80rpx;
+  height: 80rpx;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  z-index: 99;
+}
+
+.maintenance-icon {
+  font-size: 36rpx;
 }
 
 /* 图标样式 */

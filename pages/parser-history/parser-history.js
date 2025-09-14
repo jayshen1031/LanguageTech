@@ -82,7 +82,7 @@ Page({
       .limit(this.data.pageSize)
       .get()
       .catch(err => {
-        console.log('云数据库加载失败，使用本地数据:', err)
+        // 云数据库加载失败，使用本地数据
         return { data: [] }
       })
     
@@ -103,7 +103,7 @@ Page({
           resolve({ data: [] })
         }
       } catch (error) {
-        console.log('本地存储读取失败:', error)
+        // 本地存储读取失败
         resolve({ data: [] })
       }
     })
@@ -114,24 +114,13 @@ Page({
         const localData = localRes.data || []
         
         // 调试信息：显示加载的数据详情
-        console.log('云数据库返回的数据:', cloudData)
-        console.log('本地存储返回的数据:', localData)
         
         // 合并云数据和本地数据
-        const newList = [...cloudData, ...localData]
+        const newList = cloudData.concat(localData)
         
-        console.log(`加载数据: 云数据${cloudData.length}条, 本地数据${localData.length}条`)
+        // 加载数据统计
         
         // 显示每条记录的摘要
-        newList.forEach((item, index) => {
-          console.log(`记录${index + 1}:`, {
-            id: item._id,
-            inputMethod: item.inputMethod,
-            hasImageUrl: !!item.imageUrl,
-            title: item.title || item.inputText?.substring(0, 20),
-            sentencesCount: item.sentences?.length
-          })
-        })
         
         // 格式化时间和预览
         newList.forEach(item => {
@@ -174,7 +163,7 @@ Page({
         })
         
         // 合并到现有列表并去重
-        const allList = [...this.data.historyList, ...newList]
+        const allList = this.data.historyList.concat(newList)
         const uniqueList = this.removeDuplicates(allList)
         
         this.setData({
@@ -421,7 +410,7 @@ Page({
           .doc(item._id)
           .remove()
           .catch(err => {
-            console.log('云数据库删除失败（可能记录不存在）:', err)
+            // 云数据库删除失败（可能记录不存在）
             // 不抛出错误，继续执行本地存储删除
           })
       )
@@ -452,12 +441,12 @@ Page({
         if (findIndex !== -1) {
           localHistory.splice(findIndex, 1)
           wx.setStorageSync('parser_history', localHistory)
-          console.log('本地存储记录已删除')
+          // 本地存储记录已删除
         }
         
         resolve()
       } catch (error) {
-        console.log('本地存储删除失败:', error)
+        // 本地存储删除失败
         resolve() // 不阻塞主流程
       }
     })
@@ -468,7 +457,7 @@ Page({
     Promise.all(deletePromises)
       .then(() => {
         // 从界面列表中移除
-        const newList = [...this.data.historyList]
+        const newList = this.data.historyList.slice()
         newList.splice(index, 1)
         this.setData({
           historyList: newList
@@ -559,7 +548,7 @@ Page({
               }
             }
             
-            console.log(`准备删除${allIds.length}条记录`)
+            // 准备批量删除记录
             
             // 批量删除（每次删除20条）
             for (let i = 0; i < allIds.length; i += 20) {
@@ -568,7 +557,7 @@ Page({
                 db.collection('japanese_parser_history')
                   .doc(id)
                   .remove()
-                  .catch(err => console.log(`删除${id}失败:`, err))
+                  .catch(err => {})
               )
               await Promise.all(deletePromises)
             }
@@ -647,7 +636,7 @@ Page({
           db.collection('japanese_parser_history')
             .doc(id)
             .remove()
-            .catch(err => console.log(`删除记录${id}失败:`, err))
+            .catch(err => {})
         )
         
         await Promise.all(deletePromises)
@@ -752,23 +741,35 @@ Page({
         // 遍历所有记录，提取词汇
         allRecords.forEach(record => {
           if (record.sentences && Array.isArray(record.sentences)) {
-            record.sentences.forEach(sentence => {
+            record.sentences.forEach((sentence, sentenceIndex) => {
               if (sentence.vocabulary && Array.isArray(sentence.vocabulary)) {
                 sentence.vocabulary.forEach(word => {
                   if (word.japanese && word.chinese) {
-                    // 使用日文作为去重键
+                    // 使用日文作为去重键，但保留所有出现位置
                     const key = word.japanese.trim()
                     if (!vocabularyMap.has(key)) {
                       vocabularyMap.set(key, {
                         japanese: word.japanese.trim(),
                         romaji: word.romaji || '',
                         chinese: word.chinese.trim(),
-                        sourceRecordId: record._id,
-                        sourceTime: record.createTime,
+                        sources: [], // 改为数组存储多个出处
                         learned: false,
                         addedToStudy: false
                       })
                     }
+                    
+                    // 添加出处信息
+                    const vocab = vocabularyMap.get(key)
+                    vocab.sources.push({
+                      recordId: record._id,
+                      recordTitle: record.articleTitle || record.title || 
+                        (record.inputMethod === 'image' ? '图片内容' : 
+                         record.inputText ? record.inputText.substring(0, 10) + '...' : '未命名文章'),
+                      recordTime: record.createTime,
+                      sentenceIndex: sentenceIndex + 1,
+                      sentenceText: sentence.originalText || sentence.text || '',
+                      inputMethod: record.inputMethod
+                    })
                   }
                 })
               }
@@ -801,5 +802,160 @@ Page({
           icon: 'none'
         })
       })
+  },
+
+  // 跳转到掌握度统计页面
+  onViewMasteryStats() {
+    wx.navigateTo({
+      url: '/pages/mastery-stats/mastery-stats'
+    })
+  },
+
+  // 显示维护菜单
+  showMaintenanceMenu() {
+    wx.showActionSheet({
+      itemList: ['批量更新标题', '清理重复记录', '清空本地缓存'],
+      success: (res) => {
+        switch(res.tapIndex) {
+          case 0:
+            this.batchUpdateTitles()
+            break
+          case 1:
+            this.clearDuplicates()
+            break
+          case 2:
+            this.clearLocalStorage()
+            break
+        }
+      }
+    })
+  },
+
+  // 批量更新缺失的标题
+  async batchUpdateTitles() {
+    wx.showModal({
+      title: '批量更新标题',
+      content: '这将为所有没有标题或标题为"图片解析"的记录自动生成标题，是否继续？',
+      success: async (res) => {
+        if (res.confirm) {
+          await this.doUpdateTitles()
+        }
+      }
+    })
+  },
+
+  // 执行标题更新
+  async doUpdateTitles() {
+    wx.showLoading({ title: '检查记录中...' })
+    
+    const db = wx.cloud.database()
+    const _ = db.command
+    
+    try {
+      // 获取所有需要更新的记录
+      const res = await db.collection('japanese_parser_history')
+        .where(
+          _.or([
+            { articleTitle: _.in(['', null, '图片解析']) },
+            { title: _.in(['', null, '图片解析']) }
+          ])
+        )
+        .limit(100)
+        .get()
+      
+      const records = res.data
+      
+      if (records.length === 0) {
+        wx.hideLoading()
+        wx.showToast({
+          title: '所有记录都有合适的标题',
+          icon: 'success'
+        })
+        return
+      }
+      
+      wx.showLoading({ title: `更新 0/${records.length}` })
+      
+      let updated = 0
+      for (const record of records) {
+        // 生成新标题
+        let newTitle = ''
+        
+        if (record.sentences && record.sentences.length > 0) {
+          const firstSentence = record.sentences[0]
+          if (firstSentence.originalText) {
+            // 智能截取：找到第一个句号或前15个字符
+            const text = firstSentence.originalText
+            let endIndex = text.indexOf('。')
+            if (endIndex === -1 || endIndex > 15) {
+              endIndex = Math.min(15, text.length)
+            } else {
+              endIndex = Math.min(endIndex, 15)
+            }
+            newTitle = text.substring(0, endIndex)
+            if (text.length > endIndex) {
+              newTitle += '...'
+            }
+          }
+        }
+        
+        // 如果还是没有生成标题，使用备选方案
+        if (!newTitle) {
+          if (record.inputMethod === 'image') {
+            newTitle = `图片内容_${new Date(record.createTime).getMonth() + 1}月${new Date(record.createTime).getDate()}日`
+          } else if (record.inputText) {
+            newTitle = record.inputText.substring(0, 15)
+            if (record.inputText.length > 15) {
+              newTitle += '...'
+            }
+          } else {
+            newTitle = `解析内容_${new Date(record.createTime).getMonth() + 1}月${new Date(record.createTime).getDate()}日`
+          }
+        }
+        
+        // 更新记录
+        try {
+          await db.collection('japanese_parser_history')
+            .doc(record._id)
+            .update({
+              data: {
+                articleTitle: newTitle,
+                title: newTitle,
+                updateTime: new Date()
+              }
+            })
+          
+          updated++
+          wx.showLoading({ title: `更新 ${updated}/${records.length}` })
+        } catch (error) {
+          console.error(`更新记录 ${record._id} 失败:`, error)
+        }
+      }
+      
+      wx.hideLoading()
+      
+      wx.showModal({
+        title: '更新完成',
+        content: `成功更新 ${updated} 条记录的标题`,
+        showCancel: false,
+        success: () => {
+          // 刷新列表
+          this.setData({
+            historyList: [],
+            page: 0,
+            hasMore: true
+          })
+          this.loadHistory()
+        }
+      })
+      
+    } catch (error) {
+      wx.hideLoading()
+      console.error('批量更新失败:', error)
+      wx.showToast({
+        title: '更新失败',
+        icon: 'none'
+      })
+    }
   }
 })

@@ -7,14 +7,11 @@ cloud.init({
 })
 
 // DeepSeek API配置
-let DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || ''
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || ''
 
-// 尝试从本地配置文件读取（仅开发环境）
-try {
-  const config = require('./config.js')
-  DEEPSEEK_API_KEY = DEEPSEEK_API_KEY || config.DEEPSEEK_API_KEY
-} catch (e) {
-  console.log('配置文件不存在，请设置环境变量或创建config.js')
+// 检查环境变量配置
+if (!DEEPSEEK_API_KEY) {
+  console.warn('DeepSeek API Key未在环境变量中配置，请在云函数环境变量中设置DEEPSEEK_API_KEY')
 }
 
 const API_BASE_URL = 'https://api.deepseek.com/v1'
@@ -29,7 +26,7 @@ async function callDeepSeekAPI(messages, options = {}) {
     stream: false
   }
   
-  console.log('DeepSeek API 请求参数:', JSON.stringify(requestBody, null, 2))
+  // // console.log('DeepSeek API 请求参数:', JSON.stringify(requestBody, null, 2))
   
   try {
     const response = await axios.post(`${API_BASE_URL}/chat/completions`, requestBody, {
@@ -39,7 +36,7 @@ async function callDeepSeekAPI(messages, options = {}) {
       }
     })
     
-    console.log('DeepSeek API 响应成功')
+    // // console.log('DeepSeek API 响应成功')
     return response.data
   } catch (error) {
     console.error('DeepSeek API 调用失败:')
@@ -55,7 +52,7 @@ exports.main = async (event, context) => {
   const { action, messages, temperature, model } = event
   
   try {
-    console.log('DeepSeek云函数被调用，action:', action)
+    // // console.log('DeepSeek云函数被调用，action:', action)
     
     if (!DEEPSEEK_API_KEY) {
       console.error('DeepSeek API Key未配置')
@@ -84,7 +81,7 @@ exports.main = async (event, context) => {
         
       case 'grammar':
         // 日语语法分析 - 支持图片
-        console.log('处理grammar请求，参数:', { 
+        // // console.log('处理grammar请求，参数:', { 
           sentence: event.sentence, 
           imageUrl: event.imageUrl 
         })
@@ -92,9 +89,9 @@ exports.main = async (event, context) => {
         let analysisMessages = []
         
         if (event.imageUrl) {
-          console.log('处理图片模式')
+          // // console.log('处理图片模式')
           // DeepSeek 目前可能不支持图片输入，需要先使用 OCR
-          console.log('DeepSeek 暂不支持图片，改用 OCR + 文本分析')
+          // // console.log('DeepSeek 暂不支持图片，改用 OCR + 文本分析')
           
           // 调用 OCR 服务识别文字
           const ocrResult = await wx.cloud.callFunction({
@@ -110,7 +107,7 @@ exports.main = async (event, context) => {
           }
           
           const recognizedText = ocrResult.result.data.text || ''
-          console.log('OCR 识别结果:', recognizedText)
+          // // console.log('OCR 识别结果:', recognizedText)
           
           if (!recognizedText) {
             throw new Error('未能识别到图片中的文字')

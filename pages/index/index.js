@@ -121,7 +121,7 @@ Page({
       const gridCols = wx.getStorageSync('gridCols') || 4;
       this.setData({ gridCols });
     } catch (error) {
-      console.log('加载用户偏好失败:', error);
+      // 加载用户偏好失败
     }
   },
 
@@ -134,7 +134,7 @@ Page({
     try {
       wx.setStorageSync('gridCols', cols);
     } catch (error) {
-      console.log('保存用户偏好失败:', error);
+      // 保存用户偏好失败
     }
   },
 

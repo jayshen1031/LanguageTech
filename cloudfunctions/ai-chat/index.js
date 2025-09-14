@@ -52,7 +52,7 @@ async function handleChat(data) {
     }
   } catch (error) {
     // 如果云开发AI接口不可用，返回模拟数据
-    console.log('AI接口调用失败，返回模拟数据')
+    // console.log('AI接口调用失败，返回模拟数据')
     return {
       success: true,
       data: {

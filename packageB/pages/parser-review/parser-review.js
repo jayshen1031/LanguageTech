@@ -1,4 +1,5 @@
 // 日语解析复习页面
+
 Page({
   data: {
     reviewList: [], // 复习列表
@@ -38,7 +39,7 @@ Page({
         historyData = res.data
       } catch (dbError) {
         // 云数据库失败，从本地存储加载
-        console.log('云数据库加载失败，使用本地存储:', dbError)
+        // 云数据库加载失败，使用本地存储
         const localHistory = wx.getStorageSync('parser_history') || []
         historyData = localHistory
       }
@@ -211,7 +212,7 @@ Page({
     try {
       // 可以在这里保存用户的掌握情况到数据库
       // 比如更新句子的掌握状态、复习次数等
-      console.log(`句子掌握情况: ${mastered ? '已掌握' : '未掌握'}`, currentSentence.originalText)
+      // 句子掌握情况记录
     } catch (error) {
       console.error('记录掌握情况失败:', error)
     }

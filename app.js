@@ -27,15 +27,42 @@ App({
       }
     })
 
-    // 初始化云开发环境
+    // 延迟初始化云开发环境，等待登录状态稳定
+    setTimeout(() => {
+      this.initCloudDev()
+    }, 1000)
+  },
+
+  // 云开发初始化方法
+  initCloudDev() {
     if (!wx.cloud) {
       console.error('请使用 2.2.3 或以上的基础库以使用云能力')
-    } else {
+      return
+    }
+
+    try {
       wx.cloud.init({
         env: 'cloud1-2g49srond2b01891',
         traceUser: true,
       })
-      console.log('云开发环境初始化成功')
+      // 云开发环境初始化成功
+      this.globalData.cloudReady = true
+    } catch (error) {
+      console.error('云开发初始化失败:', error)
+      // 重试初始化
+      setTimeout(() => {
+        try {
+          wx.cloud.init({
+            env: 'cloud1-2g49srond2b01891',
+            traceUser: true,
+          })
+          // 云开发环境重试初始化成功
+          this.globalData.cloudReady = true
+        } catch (retryError) {
+          console.error('云开发重试初始化失败:', retryError)
+          this.globalData.cloudReady = false
+        }
+      }, 3000)
     }
   },
 
@@ -49,6 +76,7 @@ App({
     apiBase: 'https://api.languagetech.com',
     todayWords: [],
     reviewWords: [],
+    cloudReady: false,
     learningProgress: {
       totalWords: 0,
       masteredWords: 0,

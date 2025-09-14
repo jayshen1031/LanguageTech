@@ -85,7 +85,7 @@ async function importVocabulary(options = {}) {
   const failedItems = []; // 记录失败的项目
   const chunkSize = 5; // 减小并发数量，每次插入5条
   
-  console.log(`开始导入 ${vocabulary.length} 个词汇...`);
+  // console.log(`开始导入 ${vocabulary.length} 个词汇...`);
   
   for (let i = 0; i < vocabulary.length; i += batchSize) {
     const batch = vocabulary.slice(i, i + batchSize);
@@ -132,7 +132,7 @@ async function importVocabulary(options = {}) {
     
     // 每处理100条输出一次进度
     if ((imported + failed) % 100 === 0 || imported + failed === vocabulary.length) {
-      console.log(`Progress: ${imported + failed}/${vocabulary.length} (成功:${imported}, 失败:${failed})`);
+      // console.log(`Progress: ${imported + failed}/${vocabulary.length} (成功:${imported}, 失败:${failed})`);
     }
   }
   

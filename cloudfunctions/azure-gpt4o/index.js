@@ -8,17 +8,14 @@ cloud.init({
 })
 
 // Azure OpenAI 配置
-let AZURE_API_KEY = process.env.AZURE_API_KEY || ''
+const AZURE_API_KEY = process.env.AZURE_API_KEY || ''
 const AZURE_ENDPOINT = 'https://bondex.openai.azure.com'
 const DEPLOYMENT_NAME = 'global-gpt-4o'
 const API_VERSION = '2025-01-01-preview'
 
-// 尝试从本地配置文件读取（仅开发环境）
-try {
-  const config = require('./config.js')
-  AZURE_API_KEY = AZURE_API_KEY || config.AZURE_API_KEY
-} catch (e) {
-  console.log('配置文件不存在，请设置环境变量或创建config.js')
+// 检查环境变量配置
+if (!AZURE_API_KEY) {
+  console.warn('Azure API Key未在环境变量中配置，请在云函数环境变量中设置AZURE_API_KEY')
 }
 
 // 调用 Azure OpenAI API
@@ -37,8 +34,7 @@ async function callAzureGPT4o(messages, options = {}) {
     stream: false
   }
   
-  console.log('Azure GPT-4o API 请求URL:', url)
-  console.log('请求参数:', JSON.stringify(requestBody, null, 2))
+  // Azure GPT-4o API 请求
   
   try {
     const response = await axios.post(url, requestBody, {
@@ -48,7 +44,7 @@ async function callAzureGPT4o(messages, options = {}) {
       }
     })
     
-    console.log('Azure GPT-4o API 响应成功')
+    // Azure GPT-4o API 响应成功
     return response.data
   } catch (error) {
     console.error('Azure GPT-4o API 调用失败:')
@@ -63,7 +59,7 @@ exports.main = async (event, context) => {
   const { action, messages, temperature, maxTokens } = event
   
   try {
-    console.log('Azure GPT-4o 云函数被调用，action:', action)
+    // Azure GPT-4o 云函数被调用
     
     if (!AZURE_API_KEY) {
       console.error('Azure API Key未配置')
@@ -92,21 +88,21 @@ exports.main = async (event, context) => {
         
       case 'grammar':
         // 日语语法分析 - 支持图片
-        console.log('处理grammar请求，参数:', { 
-          sentence: event.sentence, 
-          imageUrl: event.imageUrl 
-        })
+        // 处理grammar请求
         
         let analysisMessages = []
         
         if (event.imageUrl) {
-          console.log('处理图片模式，下载图片:', event.imageUrl)
+          // 处理图片模式
+          
           // 下载图片并转换为base64
           const imageRes = await cloud.downloadFile({
             fileID: event.imageUrl
           })
-          console.log('图片下载成功，大小:', imageRes.fileContent.length)
+          // 图片下载成功
           const base64Image = imageRes.fileContent.toString('base64')
+          
+          const userTitle = event.userTitle || ''
           
           // GPT-4o 支持多模态输入
           analysisMessages = [{
@@ -116,12 +112,24 @@ exports.main = async (event, context) => {
                 type: 'text',
                 text: `你是一个专业的日语教师。请识别图片中的所有日语文字，然后按照以下格式进行详细的语法解析。
 
-【任务】：对图片中的日语内容进行完整的语法分析，包括每个句子的词汇分析、语法结构和语法点说明。
+【重要提醒】：
+- 必须先完整识别图片中的所有文字内容，一字不漏
+- 特别注意识别短句（如：しかし、そして、だから等）
+- 包括标题、正文、注释、标点符号等所有可见文本
+- 即使是单独一行的短句或连接词也不能遗漏
+
+【任务】：${userTitle ? `这是一篇关于「${userTitle}」的内容。` : ''}
+1. 第一步：逐行扫描图片，完整识别并提取所有日语文字
+2. 第二步：自检是否有遗漏（特别是短句和连接词）
+3. 第三步：对识别出的每个句子进行完整的语法分析
 
 【输出格式要求】：
 必须严格按照以下格式输出，每个部分都是必填项，不能省略：
 
-【文章标题】（根据内容生成10字以内的中文标题）
+【文章标题】${userTitle || '（根据内容生成10字以内的中文标题）'}
+
+【完整原文】
+（在这里输出图片中识别出的所有原始文本，保持原始格式和换行。必须包含图片中的每一个字符、每一个句子，不能遗漏任何内容）
 
 ---
 📘 第1句
@@ -168,7 +176,15 @@ exports.main = async (event, context) => {
 私｜watashi｜我
 学生｜gakusei｜学生
 
-请严格按照上述格式解析图片中的所有日语句子。每个部分都必须有内容，不能省略。`
+请严格按照上述格式解析图片中的所有日语句子。
+
+【特别强调】：
+1. 必须逐句解析，不能跳过任何句子
+2. 即使某些句子很短或看似简单，也必须完整解析
+3. 如果图片中有10个句子，输出就必须有10个句子的解析
+4. 解析的句子数量必须与【完整原文】中的句子数量完全一致
+
+每个部分都必须有内容，不能省略。确保没有遗漏任何一个句子。`
               },
               {
                 type: 'image_url',
@@ -239,8 +255,9 @@ exports.main = async (event, context) => {
         }
         
         const grammarResult = await callAzureGPT4o(analysisMessages, {
-          temperature: 0.5,  // 提高温度，让模型更活跃
-          maxTokens: 16000  // 大幅增加token限制确保完整输出
+          temperature: 0.1,  // 降低温度，提高识别稳定性和一致性
+          maxTokens: 16000,  // 大幅增加token限制确保完整输出
+          topP: 0.9  // 添加topP参数，进一步控制输出的确定性
         })
         
         return {

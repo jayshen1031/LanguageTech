@@ -42,7 +42,7 @@ Component({
     initRecorder() {
       // 录音开始
       recorderManager.onStart(() => {
-        console.log('🎙️ 录音开始')
+        // console.log('🎙️ 录音开始')
         this.setData({ isRecording: true })
         this.startTimer()
         this.triggerEvent('start')
@@ -50,21 +50,21 @@ Component({
 
       // 录音暂停
       recorderManager.onPause(() => {
-        console.log('⏸️ 录音暂停')
+        // console.log('⏸️ 录音暂停')
         this.stopTimer()
         this.triggerEvent('pause')
       })
 
       // 录音继续
       recorderManager.onResume(() => {
-        console.log('▶️ 录音继续')
+        // console.log('▶️ 录音继续')
         this.startTimer()
         this.triggerEvent('resume')
       })
 
       // 录音停止
       recorderManager.onStop((res) => {
-        console.log('⏹️ 录音停止', res)
+        // console.log('⏹️ 录音停止', res)
         this.stopTimer()
         this.setData({
           isRecording: false,

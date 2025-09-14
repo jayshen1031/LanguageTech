@@ -46,7 +46,7 @@ exports.main = async (event, context) => {
       .get();
     
     if (existingRecord.data.length > 0) {
-      console.log('歌词内容已存在，返回已有记录');
+      // console.log('歌词内容已存在，返回已有记录');
       return {
         code: 200,
         data: {

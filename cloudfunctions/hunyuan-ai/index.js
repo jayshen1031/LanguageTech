@@ -18,7 +18,7 @@ try {
   SECRET_KEY = SECRET_KEY || config.TENCENT_SECRET_KEY
 } catch (e) {
   // 配置文件不存在，使用环境变量
-  console.log('配置文件不存在，请设置环境变量或创建config.js')
+  // console.log('配置文件不存在，请设置环境变量或创建config.js')
 }
 const SERVICE = 'hunyuan'
 const HOST = 'hunyuan.tencentcloudapi.com'
@@ -115,8 +115,8 @@ exports.main = async (event, context) => {
   const { action, messages, temperature = 0.7, topP = 0.9, model = 'hunyuan-standard' } = event
   
   try {
-    console.log('混元AI云函数被调用，action:', action)
-    console.log('密钥配置状态:', {
+    // console.log('混元AI云函数被调用，action:', action)
+    // console.log('密钥配置状态:', {
       SECRET_ID: SECRET_ID ? SECRET_ID.substring(0, 10) + '...' : '未配置',
       SECRET_KEY: SECRET_KEY ? '已配置' : '未配置'
     })
@@ -153,7 +153,7 @@ exports.main = async (event, context) => {
         
       case 'grammar':
         // 语法分析 - 支持文本或图片
-        console.log('处理grammar请求，参数:', { 
+        // console.log('处理grammar请求，参数:', { 
           sentence: event.sentence, 
           imageUrl: event.imageUrl 
         })
@@ -161,17 +161,17 @@ exports.main = async (event, context) => {
         let grammarMessages = []
         
         if (event.imageUrl) {
-          console.log('处理图片模式，下载图片:', event.imageUrl)
+          // console.log('处理图片模式，下载图片:', event.imageUrl)
           // 如果有图片，先下载并转换为base64
           const imageRes = await cloud.downloadFile({
             fileID: event.imageUrl
           })
-          console.log('图片下载成功，大小:', imageRes.fileContent.length)
+          // console.log('图片下载成功，大小:', imageRes.fileContent.length)
           const base64Image = imageRes.fileContent.toString('base64')
-          console.log('Base64编码完成，长度:', base64Image.length)
+          // console.log('Base64编码完成，长度:', base64Image.length)
           
           // 腾讯混元目前可能不支持图片输入，需要先使用OCR识别文字
-          console.log('混元AI可能不支持直接图片输入，先调用OCR识别')
+          // console.log('混元AI可能不支持直接图片输入，先调用OCR识别')
           
           // 调用OCR云函数识别文字
           const ocrRes = await wx.cloud.callFunction({
@@ -187,7 +187,7 @@ exports.main = async (event, context) => {
           }
           
           const recognizedText = ocrRes.result.data.text || ''
-          console.log('OCR识别结果:', recognizedText)
+          // console.log('OCR识别结果:', recognizedText)
           
           if (!recognizedText) {
             throw new Error('未能识别到图片中的文字')

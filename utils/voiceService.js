@@ -15,7 +15,7 @@ class VoiceService {
       // 检查音频服务健康状态
       const health = await audioService.checkHealth()
       this.isInitialized = health
-      console.log('🎤 语音服务初始化:', health ? '成功' : '失败')
+      // console.log('🎤 语音服务初始化:', health ? '成功' : '失败')
       return health
     } catch (error) {
       console.error('语音服务初始化失败:', error)
@@ -32,7 +32,7 @@ class VoiceService {
     } = options
     
     try {
-      console.log(`🔊 TTS: "${text}" (${lang})`)
+      // console.log(`🔊 TTS: "${text}" (${lang})`)
       
       // 生成音频
       const result = await audioService.generateAudio(text, lang, voice)
@@ -66,7 +66,7 @@ class VoiceService {
     } = options
     
     try {
-      console.log(`🎙️ ASR: ${tempFilePath} (${lang})`)
+      // console.log(`🎙️ ASR: ${tempFilePath} (${lang})`)
       
       // 1. 先上传文件到云存储
       const fileID = await this.uploadAudioFile(tempFilePath)
@@ -85,7 +85,7 @@ class VoiceService {
       this.cleanupTempFile(fileID)
       
       if (result.result && result.result.success) {
-        console.log('✅ ASR识别成功:', result.result.text)
+        // console.log('✅ ASR识别成功:', result.result.text)
         return {
           success: true,
           text: result.result.text,
@@ -123,7 +123,7 @@ class VoiceService {
         filePath: tempFilePath
       })
       
-      console.log('✅ 音频文件上传成功:', uploadResult.fileID)
+      // console.log('✅ 音频文件上传成功:', uploadResult.fileID)
       
       // 缓存文件ID，用于后续清理
       this.tempFileCache.set(uploadResult.fileID, {
@@ -148,7 +148,7 @@ class VoiceService {
           fileList: [fileID]
         })
         this.tempFileCache.delete(fileID)
-        console.log('🗑️ 临时文件已清理:', fileID)
+        // console.log('🗑️ 临时文件已清理:', fileID)
       }, 60000) // 60秒后清理
       
     } catch (error) {
@@ -161,7 +161,7 @@ class VoiceService {
     return new Promise((resolve, reject) => {
       const context = audioService.playAudio(audioUrl, {
         onPlay: () => {
-          console.log('🔊 开始播放音频')
+          // console.log('🔊 开始播放音频')
           resolve({ success: true })
         },
         onError: (err) => {
@@ -169,7 +169,7 @@ class VoiceService {
           reject(err)
         },
         onEnded: () => {
-          console.log('✅ 播放完成')
+          // console.log('✅ 播放完成')
         }
       }, alternatives)
       
@@ -197,7 +197,7 @@ class VoiceService {
       }
       
       const userText = asrResult.text
-      console.log('👤 用户说:', userText)
+      // console.log('👤 用户说:', userText)
       
       // 触发识别完成回调
       if (onRecognized) {
@@ -207,7 +207,7 @@ class VoiceService {
       // 2. 获取AI回复（需要外部传入）
       if (onResponse) {
         const aiResponse = await onResponse(userText)
-        console.log('🤖 AI回复:', aiResponse)
+        // console.log('🤖 AI回复:', aiResponse)
         
         // 3. 生成回复语音
         const ttsResult = await this.textToSpeech(aiResponse, {
@@ -246,7 +246,7 @@ class VoiceService {
   async preloadAudioList(textList, lang = 'ja') {
     try {
       await audioService.batchPreload(textList, lang)
-      console.log('✅ 批量预加载完成')
+      // console.log('✅ 批量预加载完成')
     } catch (error) {
       console.warn('批量预加载失败:', error)
     }
@@ -261,7 +261,7 @@ class VoiceService {
   clearCache() {
     this.tempFileCache.clear()
     // audioService的缓存由其自行管理
-    console.log('🗑️ 缓存已清理')
+    // console.log('🗑️ 缓存已清理')
   }
 }
 

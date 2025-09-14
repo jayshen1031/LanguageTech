@@ -1,22 +1,71 @@
-# 微信开发者工具
-.DS_Store
-node_modules/
-miniprogram_npm/
+# 微信小程序开发忽略文件
+
+# 敏感配置文件
+cloudfunctions/*/config.js
+**/config.js
+*.env
+.env.*
+
+# API密钥和配置
+api-keys.json
+secrets.json
+
+# 开发工具生成的文件
 project.private.config.json
+*.backup
 
-# 临时文件
+# 依赖包
+node_modules/
+**/node_modules/
+
+# 日志文件
 *.log
-*.tmp
-*.swp
+logs/
+**/logs/
 
-# 编译文件
+# 缓存文件
+.cache/
+**/cache/
+
+# 构建产物
 dist/
 build/
 
-# 环境配置
-.env
-.env.local
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
 
-# 云函数
-cloudfunctions/*/node_modules/
-cloudfunctions/*/config.js
+# IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 音频缓存
+audio-mcp-server/audio-cache/
+**/audio-cache/
+
+# 测试文件
+test-*.js
+**/test-*.js
+
+# 文档草稿
+docs/draft/
+**/draft/
+
+# 云函数本地调试
+cloudfunctions/**/node_modules/
+cloudfunctions/**/.env
+cloudfunctions/**/config.local.js
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

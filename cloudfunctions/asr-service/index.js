@@ -15,7 +15,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   
   try {
-    console.log('ASR请求:', { fileID, format, lang })
+    // console.log('ASR请求:', { fileID, format, lang })
     
     // 1. 下载音频文件
     const fileContent = await downloadFile(fileID)
@@ -110,7 +110,7 @@ async function recognizeSpeech(audioData, format, lang) {
       DataLen: audioData.length
     }
     
-    console.log('调用腾讯云ASR:', {
+    // console.log('调用腾讯云ASR:', {
       EngineModelType: engineModelType,
       DataLen: params.DataLen
     })
@@ -134,7 +134,7 @@ async function recognizeSpeech(audioData, format, lang) {
     // 如果是日语，尝试使用备选方案
     if (lang === 'ja') {
       // 可以集成其他日语识别服务作为备选
-      console.log('尝试备选日语识别方案')
+      // console.log('尝试备选日语识别方案')
     }
     
     throw error

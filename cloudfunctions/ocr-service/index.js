@@ -18,7 +18,7 @@ try {
   SECRET_KEY = SECRET_KEY || config.TENCENT_SECRET_KEY
 } catch (e) {
   // 配置文件不存在，使用环境变量
-  console.log('配置文件不存在，请设置环境变量或创建config.js')
+  // console.log('配置文件不存在，请设置环境变量或创建config.js')
 }
 const SERVICE = 'ocr'
 const HOST = 'ocr.tencentcloudapi.com'
@@ -93,12 +93,12 @@ async function callOCRAPI(action, params) {
       res.on('end', () => {
         try {
           const result = JSON.parse(data)
-          console.log('腾讯云API响应:', JSON.stringify(result, null, 2))
+          // console.log('腾讯云API响应:', JSON.stringify(result, null, 2))
           if (result.Response.Error) {
             console.error('腾讯云API错误:', result.Response.Error)
             reject(result.Response.Error)
           } else {
-            console.log('OCR识别成功')
+            // console.log('OCR识别成功')
             resolve(result.Response)
           }
         } catch (error) {
@@ -118,7 +118,7 @@ exports.main = async (event, context) => {
   const { imageUrl, imageBase64, languageType = 'jap' } = event
   
   try {
-    console.log('OCR云函数被调用，参数:', { imageUrl, imageBase64: imageBase64 ? '已提供' : '未提供', languageType })
+    // console.log('OCR云函数被调用，参数:', { imageUrl, imageBase64: imageBase64 ? '已提供' : '未提供', languageType })
     
     if (!SECRET_ID || !SECRET_KEY) {
       console.error('密钥未配置')
@@ -128,20 +128,20 @@ exports.main = async (event, context) => {
       }
     }
     
-    console.log('密钥已配置，SECRET_ID:', SECRET_ID.substring(0, 10) + '...')
+    // console.log('密钥已配置，SECRET_ID:', SECRET_ID.substring(0, 10) + '...')
     
     // 如果传入的是云存储路径，需要先下载
     let base64Image = imageBase64
     
     if (imageUrl && !imageBase64) {
-      console.log('开始下载云存储图片:', imageUrl)
+      // console.log('开始下载云存储图片:', imageUrl)
       // 从云存储下载图片
       const res = await cloud.downloadFile({
         fileID: imageUrl
       })
-      console.log('图片下载成功，大小:', res.fileContent.length, '字节')
+      // console.log('图片下载成功，大小:', res.fileContent.length, '字节')
       base64Image = res.fileContent.toString('base64')
-      console.log('Base64编码完成，长度:', base64Image.length)
+      // console.log('Base64编码完成，长度:', base64Image.length)
     }
     
     // 调用通用OCR接口（支持多语言）

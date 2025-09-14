@@ -7,14 +7,11 @@ cloud.init({
 })
 
 // Azure OpenAI 配置
-let AZURE_API_KEY = process.env.AZURE_API_KEY || ''
+const AZURE_API_KEY = process.env.AZURE_API_KEY || ''
 
-// 尝试从本地配置文件读取（仅开发环境）
-try {
-  const config = require('./config.js')
-  AZURE_API_KEY = AZURE_API_KEY || config.AZURE_API_KEY
-} catch (e) {
-  console.log('配置文件不存在，请设置环境变量或创建config.js')
+// 检查环境变量配置
+if (!AZURE_API_KEY) {
+  console.warn('Azure API Key未在环境变量中配置，请在云函数环境变量中设置AZURE_API_KEY')
 }
 
 const AZURE_ENDPOINT = 'bondex.openai.azure.com'
@@ -69,14 +66,14 @@ exports.main = async (event, context) => {
     }
     
     const results = []
-    console.log(`总共${lines.length}行，平均每行${Math.round(avgLineLength)}字符，每批${batchSize}行`)
+    // // console.log(`总共${lines.length}行，平均每行${Math.round(avgLineLength)}字符，每批${batchSize}行`)
     
     for (let i = 0; i < lines.length; i += batchSize) {
       const batch = lines.slice(i, Math.min(i + batchSize, lines.length))
       const batchText = batch.join('\n')
       const batchNum = Math.floor(i / batchSize) + 1
       
-      console.log(`处理第${batchNum}批（第${i + 1}-${Math.min(i + batchSize, lines.length)}行）`)
+      // // console.log(`处理第${batchNum}批（第${i + 1}-${Math.min(i + batchSize, lines.length)}行）`)
       
       // 为每个批次的句子重新编号
       const startIndex = i + 1

@@ -88,12 +88,12 @@ Page({
 
   // 录音状态变化处理
   onRecordStart() {
-    console.log('开始录音')
+    // 开始录音
     this.setData({ isRecording: true })
   },
 
   onRecordStop(e) {
-    console.log('录音结束', e.detail)
+    // 录音结束
     this.setData({ isRecording: false })
     
     // 处理录音文件
@@ -147,7 +147,7 @@ Page({
         }
       })
       
-      console.log('对话完成:', result)
+      // 对话完成
       
     } catch (error) {
       console.error('处理语音失败:', error)

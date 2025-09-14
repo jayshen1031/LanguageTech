@@ -37,6 +37,26 @@
       {
         "value": "PROJECT_ITERATION_LOG.md",
         "type": "file"
+      },
+      {
+        "value": "test-voice-dialogue.js",
+        "type": "file"
+      },
+      {
+        "value": "build-npm.js",
+        "type": "file"
+      },
+      {
+        "value": "cloudbase",
+        "type": "folder"
+      },
+      {
+        "value": "README.md",
+        "type": "file"
+      },
+      {
+        "value": "PROJECT_REVIEW_REPORT.md",
+        "type": "file"
       }
     ],
     "include": []
@@ -59,7 +79,7 @@
     "uploadWithSourceMap": true,
     "useIsolateContext": true,
     "nodeModules": false,
-    "enhance": true,
+    "enhance": false,
     "useMultiFrameRuntime": true,
     "useApiHook": true,
     "useApiHostProcess": true,
@@ -83,7 +103,8 @@
     "localPlugins": false,
     "condition": false,
     "swc": false,
-    "disableSWC": true
+    "disableSWC": true,
+    "lazyCodeLoading": "requiredComponents"
   },
   "compileType": "miniprogram",
   "libVersion": "3.2.4",

@@ -10,6 +10,12 @@
         <button class="count-option" bindtap="selectWordCount" data-count="20">20个</button>
       </view>
       <text class="setup-tip">建议每天学习10-15个新词</text>
+      
+      <!-- 自动开始选项 -->
+      <view class="auto-start-option">
+        <switch bindchange="toggleAutoStart" />
+        <text>下次自动开始学习</text>
+      </view>
     </view>
   </view>
 
@@ -31,7 +37,6 @@
       <view class="word-main">
         <text class="word-text">{{currentWord.word}}</text>
         <view class="word-kana">
-          <text>{{currentWord.kana}}</text>
           <text class="romaji">{{currentWord.romaji}}</text>
         </view>
       </view>
@@ -52,7 +57,24 @@
         <text class="example-title">例句：</text>
         <view class="example-item" wx:for="{{currentWord.examples}}" wx:key="index">
           <text class="example-jp">{{item.jp}}</text>
+          <text class="example-romaji" wx:if="{{item.romaji}}">{{item.romaji}}</text>
           <text class="example-cn">{{item.cn}}</text>
+          
+          <!-- 句子结构 -->
+          <view class="example-structure" wx:if="{{item.structure}}">
+            <text class="structure-label">结构：</text>
+            <text class="structure-content">{{item.structure}}</text>
+          </view>
+          
+          <!-- 语法分析 -->
+          <view class="example-analysis" wx:if="{{item.analysis}}">
+            <text class="analysis-label">分析：</text>
+            <text class="analysis-content">{{item.analysis}}</text>
+          </view>
+          
+          <view class="example-source" wx:if="{{item.source}}">
+            <text class="source-label">出处：{{item.source}}</text>
+          </view>
         </view>
         
         <!-- 语法信息 -->
@@ -78,6 +100,11 @@
       <view class="example-section" wx:if="{{!currentWord.examples || currentWord.examples.length === 0}}">
         <text class="example-title">例句：</text>
         <text class="no-example-hint">暂无例句</text>
+        <view class="add-example-hint">
+          <text>💡 去</text>
+          <text class="link-text" bindtap="goToParser">日语解析</text>
+          <text>页面输入包含此词的句子，系统会自动关联例句</text>
+        </view>
       </view>
       
       <view class="audio-hint">
@@ -141,7 +168,10 @@
           <text class="stat-value">{{forgotCount}}</text>
         </view>
       </view>
-      <button class="btn-primary" bindtap="goBack">返回首页</button>
+      <view class="complete-buttons">
+        <button class="btn-secondary" bindtap="learnMore">学习更多</button>
+        <button class="btn-primary" bindtap="goBack">结束学习</button>
+      </view>
     </view>
   </view>
 </view>

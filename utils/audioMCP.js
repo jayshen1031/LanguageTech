@@ -8,7 +8,7 @@ class AudioService {
     this.preloadQueue = new Map() // 预加载队列
     this.audioContextPool = [] // 音频上下文池
     this.maxPoolSize = 5 // 最大池大小
-    console.log('🎵 AudioService初始化（云函数版本 + 本地缓存）')
+    // console.log('🎵 AudioService初始化（云函数版本 + 本地缓存）')
     this.initAudioPool()
   }
   
@@ -28,14 +28,14 @@ class AudioService {
   
   // 生成音频（调用云函数）
   async generateAudio(text, lang = 'ja', voice = null) {
-    console.log(`🎤 生成音频: "${text}" (${lang})`)
+    // console.log(`🎤 生成音频: "${text}" (${lang})`)
     
     const options = { voice, lang }
     
     // 1. 先检查文件缓存
     const cachedFilePath = await this.fileCache.checkCache(text, options)
     if (cachedFilePath) {
-      console.log('✅ 使用文件缓存:', cachedFilePath)
+      // console.log('✅ 使用文件缓存:', cachedFilePath)
       return {
         success: true,
         audioUrl: cachedFilePath,
@@ -47,7 +47,7 @@ class AudioService {
     // 2. 检查内存缓存
     const cacheKey = `${text}_${lang}_${voice || 'default'}`
     if (this.cache.has(cacheKey)) {
-      console.log('✅ 使用内存缓存')
+      // console.log('✅ 使用内存缓存')
       return this.cache.get(cacheKey)
     }
     
@@ -57,18 +57,18 @@ class AudioService {
         name: 'tts-service',
         data: { text, lang, voice },
         success: async (res) => {
-          console.log('🎵 云函数调用成功:', res.result)
+          // console.log('🎵 云函数调用成功:', res.result)
           
           if (res.result && res.result.success) {
             const audioUrl = res.result.audioUrl
             if (audioUrl) {
-              console.log('✅ 获得音频URL:', audioUrl)
-              console.log('🔄 备选源数量:', res.result.alternatives?.length || 0)
+              // console.log('✅ 获得音频URL:', audioUrl)
+              // console.log('🔄 备选源数量:', res.result.alternatives?.length || 0)
               
               // 保存到文件缓存（异步，不阻塞）
               this.fileCache.saveToCache(text, audioUrl, options)
                 .then(localPath => {
-                  console.log('💾 已保存到文件缓存:', localPath)
+                  // console.log('💾 已保存到文件缓存:', localPath)
                   // 更新内存缓存，使用本地路径
                   const cachedResult = {
                     ...res.result,
@@ -87,7 +87,7 @@ class AudioService {
               this.cache.set(cacheKey, res.result)
               resolve(res.result) // 返回完整结果
             } else {
-              console.log('⚠️ 无音频URL，返回读音信息:', res.result.readingInfo)
+              // console.log('⚠️ 无音频URL，返回读音信息:', res.result.readingInfo)
               resolve(res.result.readingInfo)
             }
           } else {
@@ -105,7 +105,7 @@ class AudioService {
   
   // 批量生成音频
   async batchGenerateAudio(items, lang = 'ja', voice = null) {
-    console.log('🎵 批量生成音频:', items.length, '个')
+    // console.log('🎵 批量生成音频:', items.length, '个')
     const results = []
     
     // 简单实现：逐个调用（可优化为真正的批量处理）
@@ -144,7 +144,7 @@ class AudioService {
     try {
       // 尝试调用一个简单的云函数测试
       const result = await this.generateAudio('test', 'ja')
-      console.log('✅ 云函数服务健康检查通过')
+      // console.log('✅ 云函数服务健康检查通过')
       return true
     } catch (error) {
       console.warn('⚠️ 云函数服务检查失败:', error)
@@ -181,7 +181,7 @@ class AudioService {
         
         // 监听可播放事件，表示音频已加载
         ctx.onCanplay(() => {
-          console.log('✅ 音频已缓存:', text)
+          // console.log('✅ 音频已缓存:', text)
           // 立即销毁，避免占用资源
           ctx.destroy()
         })
@@ -193,7 +193,7 @@ class AudioService {
         })
         
         // 不调用play()，避免与实际播放冲突
-        console.log('📥 开始预加载:', text)
+        // console.log('📥 开始预加载:', text)
       }
     } catch (error) {
       console.warn('⚠️ 预加载失败:', text, error)
@@ -213,7 +213,7 @@ class AudioService {
   
   // 播放音频（支持备选源）
   playAudio(audioUrl, callbacks = {}, alternatives = []) {
-    console.log('🎵 开始播放音频:', audioUrl)
+    // console.log('🎵 开始播放音频:', audioUrl)
     
     if (!audioUrl || audioUrl === 'null' || audioUrl === 'undefined') {
       console.warn('⚠️ 音频URL无效')
@@ -238,13 +238,13 @@ class AudioService {
       let hasPlayed = false
       
       innerAudioContext.onCanplay(() => {
-        console.log('🎵 音频可以播放')
+        // console.log('🎵 音频可以播放')
       })
       
       innerAudioContext.onPlay(() => {
         if (!hasPlayed) {
           hasPlayed = true
-          console.log('🔊 音频开始播放:', url)
+          // console.log('🔊 音频开始播放:', url)
           if (callbacks.onPlay) callbacks.onPlay()
         }
       })
@@ -254,7 +254,7 @@ class AudioService {
         
         // 尝试备选音频源
         if (altUrls.length > 0) {
-          console.log('🔄 尝试备选音频源:', altUrls[0])
+          // console.log('🔄 尝试备选音频源:', altUrls[0])
           innerAudioContext.destroy()
           tryPlayAudio(altUrls[0], altUrls.slice(1))
         } else {
@@ -265,7 +265,7 @@ class AudioService {
       })
       
       innerAudioContext.onEnded(() => {
-        console.log('✅ 音频播放完成')
+        // console.log('✅ 音频播放完成')
         if (callbacks.onEnded) callbacks.onEnded()
         setTimeout(() => {
           innerAudioContext.destroy()
@@ -294,7 +294,7 @@ class AudioService {
         console.error('❌ 播放启动失败:', error)
         innerAudioContext.destroy()
         if (altUrls.length > 0) {
-          console.log('🔄 尝试备选音频源:', altUrls[0])
+          // console.log('🔄 尝试备选音频源:', altUrls[0])
           tryPlayAudio(altUrls[0], altUrls.slice(1))
         } else {
           if (callbacks.onError) callbacks.onError(error)
@@ -310,7 +310,7 @@ class AudioService {
   
   // 直接播放文本（生成音频并播放）
   async playText(text, lang = 'ja', voice = null) {
-    console.log(`🎤 请求播放文本: "${text}" (${lang})`)
+    // console.log(`🎤 请求播放文本: "${text}" (${lang})`)
     
     try {
       // 生成音频（现在可能返回云函数的完整结果）
@@ -330,24 +330,24 @@ class AudioService {
       
       if (audioUrl && audioUrl.startsWith('http')) {
         // 成功获取音频URL，播放音频（支持备选源）
-        console.log('✅ 准备播放音频:', audioUrl)
-        console.log('🔄 备选音频源:', alternatives.length)
+        // console.log('✅ 准备播放音频:', audioUrl)
+        // console.log('🔄 备选音频源:', alternatives.length)
         
         return this.playAudio(audioUrl, {
           onPlay: () => {
-            console.log('🔊 音频开始播放')
+            // console.log('🔊 音频开始播放')
           },
           onError: (err) => {
             console.error('❌ 音频播放失败:', err)
             this.showFallbackMessage(text, lang)
           },
           onEnded: () => {
-            console.log('✅ 音频播放完成')
+            // console.log('✅ 音频播放完成')
           }
         }, alternatives)
       } else {
         // 没有音频URL，显示读音信息
-        console.log('⚠️ 无法生成音频，显示读音信息')
+        // console.log('⚠️ 无法生成音频，显示读音信息')
         this.showFallbackMessage(text, lang)
         return null
       }
@@ -375,7 +375,7 @@ class AudioService {
   
   // 播放假名发音（专门为假名优化的方法）
   async playKanaSound(kana) {
-    console.log(`🎌 播放假名发音: "${kana}"`)
+    // console.log(`🎌 播放假名发音: "${kana}"`)
     
     // 使用专门的假名语音配置
     const options = {
@@ -388,14 +388,14 @@ class AudioService {
       // 1. 先检查文件缓存
       const cachedFilePath = await this.fileCache.checkCache(kana, options)
       if (cachedFilePath) {
-        console.log('✅ 使用假名缓存:', cachedFilePath)
+        // console.log('✅ 使用假名缓存:', cachedFilePath)
         return this.playAudio(cachedFilePath, {
-          onPlay: () => console.log('🔊 假名音频开始播放'),
+          onPlay: () => // console.log('🔊 假名音频开始播放'),
           onError: (err) => {
             console.error('❌ 假名音频播放失败:', err)
             this.showKanaFallback(kana)
           },
-          onEnded: () => console.log('✅ 假名音频播放完成')
+          onEnded: () => // console.log('✅ 假名音频播放完成')
         })
       }
       
@@ -413,24 +413,24 @@ class AudioService {
       }
       
       if (audioUrl) {
-        console.log('✅ 准备播放假名音频:', audioUrl)
+        // console.log('✅ 准备播放假名音频:', audioUrl)
         
         // 保存到缓存（异步）
         this.fileCache.saveToCache(kana, audioUrl, options)
           .then(localPath => {
-            console.log('💾 假名音频已缓存:', localPath)
+            // console.log('💾 假名音频已缓存:', localPath)
           })
           .catch(err => {
             console.warn('保存假名音频缓存失败:', err)
           })
         
         return this.playAudio(audioUrl, {
-          onPlay: () => console.log('🔊 假名音频开始播放'),
+          onPlay: () => // console.log('🔊 假名音频开始播放'),
           onError: (err) => {
             console.error('❌ 假名音频播放失败:', err)
             this.showKanaFallback(kana)
           },
-          onEnded: () => console.log('✅ 假名音频播放完成')
+          onEnded: () => // console.log('✅ 假名音频播放完成')
         }, alternatives)
       } else {
         this.showKanaFallback(kana)
@@ -445,7 +445,7 @@ class AudioService {
   
   // 批量预加载假名音频
   async preloadKanaAudio(kanaList) {
-    console.log('📥 批量预加载假名音频:', kanaList.length, '个')
+    // console.log('📥 批量预加载假名音频:', kanaList.length, '个')
     
     const options = {
       voice: 'ja-JP-NanamiNeural',
@@ -458,7 +458,7 @@ class AudioService {
         // 检查是否已缓存
         const cachedFilePath = await this.fileCache.checkCache(kana, options)
         if (cachedFilePath) {
-          console.log('✅ 假名已缓存:', kana)
+          // console.log('✅ 假名已缓存:', kana)
           return { kana, cached: true }
         }
         
@@ -474,7 +474,7 @@ class AudioService {
         
         if (audioUrl) {
           await this.fileCache.saveToCache(kana, audioUrl, options)
-          console.log('✅ 假名音频已预加载:', kana)
+          // console.log('✅ 假名音频已预加载:', kana)
           return { kana, cached: true }
         }
         
@@ -487,7 +487,7 @@ class AudioService {
     
     const results = await Promise.all(promises)
     const successCount = results.filter(r => r.cached).length
-    console.log(`📊 假名预加载完成: ${successCount}/${kanaList.length}`)
+    // console.log(`📊 假名预加载完成: ${successCount}/${kanaList.length}`)
     return results
   }
   

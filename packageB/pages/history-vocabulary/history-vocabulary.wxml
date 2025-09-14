@@ -63,6 +63,16 @@
             <text class="romaji-text">{{item.romaji}}</text>
             <text class="status-tag" wx:if="{{item.addedToStudy}}">已加入</text>
           </view>
+          <view class="vocab-sources" wx:if="{{item.sources}}">
+            <text class="sources-label">📚 出现在:</text>
+            <view class="sources-list">
+              <view wx:for="{{item.sources}}" wx:for-item="source" wx:key="recordId" class="source-item">
+                <text class="source-title">《{{source.recordTitle}}》</text>
+                <text class="source-detail">第{{source.sentenceIndex}}句</text>
+              </view>
+            </view>
+            <text class="sources-count" wx:if="{{item.sources.length > 1}}">等{{item.sources.length}}处</text>
+          </view>
         </view>
       </view>
     </scroll-view>

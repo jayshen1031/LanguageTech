@@ -29,7 +29,7 @@ class AudioCache {
       // 目录不存在，创建目录
       try {
         this.fs.mkdirSync(this.cacheDir, true)
-        console.log('音频缓存目录创建成功')
+        // console.log('音频缓存目录创建成功')
       } catch (err) {
         console.error('创建缓存目录失败:', err)
       }
@@ -66,7 +66,7 @@ class AudioCache {
       const stats = this.fs.statSync(filePath)
       
       // 永久缓存，不检查过期时间
-      console.log('找到永久缓存:', cacheKey)
+      // console.log('找到永久缓存:', cacheKey)
       return filePath
     } catch (e) {
       // 文件不存在或读取失败
@@ -86,7 +86,7 @@ class AudioCache {
         filePath: filePath,
         success: (res) => {
           if (res.statusCode === 200) {
-            console.log('音频已缓存:', cacheKey)
+            // console.log('音频已缓存:', cacheKey)
             
             // 更新缓存索引
             this.updateCacheIndex(cacheKey, text, options)
@@ -162,10 +162,10 @@ class AudioCache {
         }
       }).filter(item => item !== null)
       
-      console.log(`缓存总大小: ${(totalSize / 1024 / 1024).toFixed(2)}MB / ${(this.maxCacheSize / 1024 / 1024).toFixed(2)}MB`)
+      // console.log(`缓存总大小: ${(totalSize / 1024 / 1024).toFixed(2)}MB / ${(this.maxCacheSize / 1024 / 1024).toFixed(2)}MB`)
       
       if (totalSize > this.maxCacheSize) {
-        console.log('缓存超过限制，开始智能清理')
+        // console.log('缓存超过限制，开始智能清理')
         
         // 按最后访问时间排序（最久未使用的在前）
         fileStats.sort((a, b) => a.time - b.time)
@@ -194,7 +194,7 @@ class AudioCache {
           try {
             this.fs.unlinkSync(file.path)
             currentSize -= file.size
-            console.log('删除缓存:', file.filename)
+            // console.log('删除缓存:', file.filename)
           } catch (e) {
             console.error('删除文件失败:', e)
           }
@@ -208,14 +208,14 @@ class AudioCache {
             try {
               this.fs.unlinkSync(file.path)
               currentSize -= file.size
-              console.log('删除假名缓存:', file.filename)
+              // console.log('删除假名缓存:', file.filename)
             } catch (e) {
               console.error('删除文件失败:', e)
             }
           }
         }
         
-        console.log(`清理完成，当前大小: ${(currentSize / 1024 / 1024).toFixed(2)}MB`)
+        // console.log(`清理完成，当前大小: ${(currentSize / 1024 / 1024).toFixed(2)}MB`)
       }
     } catch (e) {
       console.error('检查缓存大小失败:', e)
@@ -240,7 +240,7 @@ class AudioCache {
       // 清空缓存索引
       wx.removeStorageSync(this.indexKey)
       
-      console.log('所有音频缓存已清空')
+      // console.log('所有音频缓存已清空')
       return true
     } catch (e) {
       console.error('清空缓存失败:', e)

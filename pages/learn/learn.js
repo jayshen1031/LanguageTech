@@ -2,10 +2,6 @@ const app = getApp()
 // const plugin = requirePlugin("WechatSI") // 暂时注释掉插件
 const audioMCP = require('../../utils/audioMCP')
 
-// 初始化云环境
-wx.cloud.init({
-  env: 'cloud1-2g49srond2b01891'
-})
 
 const db = wx.cloud.database()
 
@@ -31,7 +27,7 @@ Page({
   timers: [], // 存储所有定时器
   isPageUnloaded: false, // 页面是否已卸载
 
-  onLoad() {
+  onLoad(options) {
     // 检查MCP服务（可选）
     // this.checkMCPService()
     
@@ -39,11 +35,40 @@ Page({
     this.setData({ mcpAvailable: false })
     console.log('⚠️ 跳过MCP服务，使用备用方案')
     
-    // 不立即加载单词，等待用户选择数量
-    // this.loadTodayWords()
-    
     // 初始化音频上下文
     this.initAudioContext()
+    
+    // 检查自动开始学习设置
+    const autoStart = wx.getStorageSync('autoStartLearning') || false
+    this.setData({
+      autoStartLearning: autoStart
+    })
+    
+    // 清理过期的音频缓存
+    this.cleanExpiredAudioCache()
+    
+    // 检查是否有传入的学习数量，如果有则自动开始
+    if (options && options.count) {
+      const count = parseInt(options.count)
+      if (count > 0) {
+        this.setData({ 
+          selectedCount: count,
+          showSetup: false 
+        })
+        this.loadTodayWords(count)
+        return
+      }
+    }
+    
+    // 检查是否要自动开始（使用默认数量）
+    if (autoStart) {
+      const defaultCount = wx.getStorageSync('defaultLearningCount') || 10
+      this.setData({
+        selectedCount: defaultCount,
+        showSetup: false
+      })
+      this.loadTodayWords(defaultCount)
+    }
   },
 
   // 选择学习数量
@@ -54,8 +79,26 @@ Page({
       showSetup: false
     })
     
+    // 保存用户选择的数量作为默认值
+    wx.setStorageSync('defaultLearningCount', count)
+    
     // 加载指定数量的单词
     this.loadTodayWords(count)
+  },
+  
+  // 设置自动开始学习
+  toggleAutoStart(e) {
+    const autoStart = e.detail.value
+    
+    // 保存到本地存储
+    wx.setStorageSync('autoStartLearning', autoStart)
+    
+    // 更新页面数据
+    this.setData({
+      autoStartLearning: autoStart
+    })
+    
+    console.log('自动开始学习设置:', autoStart)
   },
   
   // 初始化音频上下文
@@ -63,6 +106,7 @@ Page({
     // 创建全局音频上下文
     this.innerAudioContext = wx.createInnerAudioContext()
     this.innerAudioContext.autoplay = false
+    
     
     // 设置音频事件监听
     this.innerAudioContext.onPlay(() => {
@@ -101,6 +145,38 @@ Page({
     
     // 标记页面已卸载
     this.isPageUnloaded = true
+  },
+  
+  
+  // 清理过期的音频缓存
+  cleanExpiredAudioCache() {
+    try {
+      console.log('🧹 清理过期音频缓存...')
+      
+      const storage = wx.getStorageInfoSync()
+      const keys = storage.keys
+      
+      let cleanedCount = 0
+      
+      // 找到所有音频缓存key
+      const audioCacheKeys = keys.filter(key => key.startsWith('audio_'))
+      
+      // 限制最多保留30个音频缓存
+      if (audioCacheKeys.length > 30) {
+        // 删除最老的缓存（简单按key排序）
+        const toDelete = audioCacheKeys.sort().slice(0, audioCacheKeys.length - 30)
+        
+        toDelete.forEach(key => {
+          wx.removeStorageSync(key)
+          cleanedCount++
+        })
+        
+        console.log(`🗑️ 清理了${cleanedCount}个过期音频缓存`)
+      }
+      
+    } catch (error) {
+      console.error('❌ 清理缓存失败:', error)
+    }
   },
   
   // 检查MCP服务是否可用
@@ -194,19 +270,59 @@ Page({
       }
       
       if (res.data && res.data.length > 0) {
-        const wordList = res.data
+        let wordList = res.data
+        
+        // 为所有词汇补充解析历史中的例句
+        console.log('🔍 为所有词汇补充解析历史例句...')
+        for (let word of wordList) {
+          // 如果词汇有sourceRecordId，直接从对应记录获取例句
+          if (word.sourceRecordId && (!word.examples || word.examples.length === 0)) {
+            console.log(`🎯 词汇 "${word.word}" 有出处记录，直接获取: ${word.sourceRecordId}`)
+            const sourceExamples = await this.getExamplesFromSourceRecord(word.sourceRecordId, word.word)
+            if (sourceExamples.length > 0) {
+              word.examples = sourceExamples
+              console.log(`✅ 从出处记录为词汇 "${word.word}" 添加了${sourceExamples.length}个例句`)
+            }
+          }
+          
+          // 如果仍然没有例句，再从解析历史搜索
+          if (!word.examples || word.examples.length === 0) {
+            const examplesFromHistory = await this.getExamplesFromHistory(word.word)
+            
+            if (examplesFromHistory.length > 0) {
+              word.examples = examplesFromHistory.slice(0, 3)
+              console.log(`✅ 从解析历史为词汇 "${word.word}" 添加了${word.examples.length}个例句`)
+            } else {
+              word.examples = []
+              console.log(`⚠️ 词汇 "${word.word}" 暂无例句，建议通过日语解析添加语境`)
+            }
+          }
+        }
         
         // 调试：输出词汇数据结构
         console.log('📚 加载的词汇列表：', wordList)
         if (wordList[0]) {
           console.log('📖 当前词汇详情：', wordList[0])
-          console.log('🔍 语法信息：', {
-            grammar: wordList[0].grammar,
-            analysis: wordList[0].analysis,
-            structure: wordList[0].structure,
-            examples: wordList[0].examples
+          console.log('🔍 例句信息：', wordList[0].examples)
+          console.log('🔍 出处信息：', {
+            source: wordList[0].source,
+            sourceRecordId: wordList[0].sourceRecordId,
+            primarySource: wordList[0].primarySource,
+            sources: wordList[0].sources
           })
         }
+        
+        // 统计有例句的词汇数量
+        const wordsWithExamples = wordList.filter(w => w.examples && w.examples.length > 0).length
+        const historyWords = wordList.filter(w => w.source === 'history').length
+        console.log(`📊 统计：${wordsWithExamples}/${wordList.length} 个词汇有例句，${historyWords} 个来自解析历史`)
+        
+        // 手机端调试：显示统计信息
+        wx.showToast({
+          title: `${wordsWithExamples}/${wordList.length}词汇有例句`,
+          icon: 'none',
+          duration: 3000
+        })
         
         this.setData({
           wordList,
@@ -246,6 +362,120 @@ Page({
       this.loadDefaultWords()
     } finally {
       wx.hideLoading()
+    }
+  },
+  
+  // 从特定记录ID获取例句
+  async getExamplesFromSourceRecord(recordId, word) {
+    try {
+      const db = wx.cloud.database()
+      
+      console.log(`🎯 从记录ID获取例句: ${recordId} -> ${word}`)
+      
+      // 根据记录ID查找特定解析记录
+      const res = await db.collection('japanese_parser_history')
+        .doc(recordId)
+        .get()
+      
+      if (res.data && res.data.sentences) {
+        const examples = []
+        
+        // 查找包含目标词汇的句子
+        for (const sentence of res.data.sentences) {
+          if (sentence.originalText && sentence.originalText.includes(word)) {
+            examples.push({
+              jp: sentence.originalText,
+              cn: sentence.translation || '',
+              source: res.data.articleTitle || '解析记录',
+              romaji: sentence.romaji || '',
+              structure: sentence.structure || '',
+              analysis: sentence.analysis || '',
+              grammar: sentence.grammar || ''
+            })
+          }
+        }
+        
+        console.log(`✅ 从记录ID为词汇 "${word}" 找到${examples.length}个例句`)
+        return examples
+      }
+      
+      console.log(`❌ 记录ID ${recordId} 未找到或无句子数据`)
+      return []
+      
+    } catch (error) {
+      console.error('从记录ID获取例句失败:', error)
+      return []
+    }
+  },
+  
+  // 从解析历史中获取例句
+  async getExamplesFromHistory(word) {
+    try {
+      const db = wx.cloud.database()
+      
+      console.log(`🔍 搜索词汇 "${word}" 的解析历史例句...`)
+      
+      // 查找包含此词汇的解析记录
+      const res = await db.collection('japanese_parser_history')
+        .where({
+          _openid: db.command.eq(db.command.openid())
+        })
+        .orderBy('createTime', 'desc')
+        .limit(20)  // 增加查找范围
+        .get()
+      
+      console.log(`📚 找到${res.data.length}条解析记录`)
+      
+      const examples = []
+      
+      // 遍历解析记录，查找包含目标词汇的句子
+      for (const record of res.data) {
+        if (record.sentences && Array.isArray(record.sentences)) {
+          for (const sentence of record.sentences) {
+            // 检查句子中是否包含目标词汇（支持多种匹配方式）
+            if (sentence.originalText) {
+              const originalText = sentence.originalText
+              const vocabulary = sentence.vocabulary || []
+              
+              // 方式1：直接文本包含
+              const directMatch = originalText.includes(word)
+              
+              // 方式2：词汇表匹配
+              const vocabMatch = vocabulary.some(v => 
+                v.japanese === word || v.romaji === word || v.chinese === word
+              )
+              
+              if (directMatch || vocabMatch) {
+                examples.push({
+                  jp: originalText,
+                  cn: sentence.translation || '',
+                  source: record.articleTitle || '解析记录',
+                  romaji: sentence.romaji || '',
+                  structure: sentence.structure || '',
+                  analysis: sentence.analysis || '',
+                  grammar: sentence.grammar || ''
+                })
+                
+                console.log(`✅ 为词汇 "${word}" 找到例句: ${originalText}`)
+                
+                // 每个词汇最多3个例句
+                if (examples.length >= 3) {
+                  break
+                }
+              }
+            }
+          }
+          
+          if (examples.length >= 3) {
+            break
+          }
+        }
+      }
+      
+      return examples
+    } catch (error) {
+      console.error('获取例句失败:', error)
+      return []
     }
   },
   
@@ -610,14 +840,49 @@ Page({
     const { currentWord, isPlaying } = this.data
     
     if (isPlaying) {
-      console.log('⏸️ 正在播放中，跳过')
+      console.log('⏸️ 正在播放中，强制重置状态')
+      // 强制重置状态，允许重新播放
+      this.setData({ isPlaying: false })
+      // 停止当前播放
+      if (this.innerAudioContext) {
+        this.innerAudioContext.stop()
+      }
+    }
+    
+    // 检查是否有缓存的音频
+    const cacheKey = `audio_file_${currentWord.word}_ja`
+    const cachedFileManager = wx.getStorageSync(cacheKey)
+    
+    if (cachedFileManager) {
+      console.log('✅ 使用缓存音频播放')
+      this.setData({ isPlaying: true })
+      this.innerAudioContext.src = cachedFileManager
+      this.innerAudioContext.play()
       return
     }
     
+    // 没有缓存，使用TTS并尝试保存
+    const word = encodeURIComponent(currentWord.word)
+    const ttsUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${word}&spd=3&source=web`
+    
+    console.log('🎵 播放TTS并尝试缓存:', currentWord.word)
     this.setData({ isPlaying: true })
     
-    // 直接播放音频
-    this.playJapaneseAudio(currentWord)
+    // 播放成功时保存到本地文件系统
+    this.innerAudioContext.onCanplay(() => {
+      console.log('📱 TTS准备就绪，保存音频缓存')
+      wx.setStorageSync(cacheKey, ttsUrl) // 先保存URL作为缓存标记
+    })
+    
+    this.innerAudioContext.onError((err) => {
+      console.error('❌ TTS播放失败:', err)
+      this.setData({ isPlaying: false })
+      console.log('🔄 降级到云函数方案')
+      this.playJapaneseAudio(currentWord)
+    })
+    
+    this.innerAudioContext.src = ttsUrl
+    this.innerAudioContext.play()
   },
   
   // 单词被点击时自动播放
@@ -626,7 +891,7 @@ Page({
     this.playAudio()
   },
   
-  // 播放日语音频（使用云函数）
+  // 播放日语音频（优先使用云函数缓存）
   async playJapaneseAudio(word) {
     console.log('🎌 播放日语:', word.word)
     
@@ -641,18 +906,8 @@ Page({
     })
     
     try {
-      // 方案1: 尝试使用百度TTS（国内访问更快）
-      const baiduUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(word.word)}&spd=3&source=web`
-      console.log('尝试百度TTS:', baiduUrl)
-      
-      // 使用全局音频上下文播放
-      if (this.innerAudioContext) {
-        this.innerAudioContext.src = baiduUrl
-        this.innerAudioContext.play()
-        return
-      }
-      
-      // 方案2: 调用云函数获取音频URL
+      // 方案1: 优先调用云函数（支持缓存）
+      console.log('🔍 尝试云函数TTS（支持缓存）...')
       const res = await wx.cloud.callFunction({
         name: 'tts-service',
         data: {
@@ -664,22 +919,95 @@ Page({
       console.log('云函数返回:', res.result)
       
       if (res.result && res.result.success && res.result.audioUrl) {
-        this.playAudioUrl(res.result.audioUrl, word)
-      } else {
-        console.log('云函数无音频，使用本地TTS')
-        this.testSimpleAudio(word)
+        console.log(`✅ 使用${res.result.cached ? '缓存' : '新生成'}音频`)
+        
+        // 检查是否是base64数据，如果是且播放失败，降级到直链
+        if (res.result.audioUrl.startsWith('data:audio')) {
+          console.log('🎵 播放base64音频')
+          // 给base64音频添加错误处理
+          this.playBase64Audio(res.result.audioUrl, word)
+        } else {
+          this.playAudioUrl(res.result.audioUrl, word)
+        }
+        return
+      }
+      
+      // 方案2: 云函数失败时使用百度TTS备选
+      console.log('⚠️ 云函数无可用音频，使用百度TTS备选')
+      const baiduUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(word.word)}&spd=3&source=web`
+      console.log('尝试百度TTS:', baiduUrl)
+      
+      // 使用全局音频上下文播放
+      if (this.innerAudioContext) {
+        this.innerAudioContext.src = baiduUrl
+        this.innerAudioContext.play()
+        return
       }
       
     } catch (error) {
-      console.error('云函数调用失败:', error)
-      // 降级到本地TTS
+      console.error('音频播放失败:', error)
+      // 最终降级方案
       this.testSimpleAudio(word)
     }
   },
   
+  // 播放base64音频（带降级处理）
+  playBase64Audio(base64Url, word) {
+    console.log('🎵 尝试播放base64音频')
+    
+    // 停止之前的音频
+    if (this.innerAudioContext) {
+      this.innerAudioContext.stop()
+    }
+    
+    const audio = wx.createInnerAudioContext()
+    audio.src = base64Url
+    
+    // 设置3秒播放超时
+    const playTimeout = setTimeout(() => {
+      console.log('⏰ base64音频播放超时，降级到直链')
+      audio.destroy()
+      this.fallbackToDirectUrl(word)
+    }, 3000)
+    
+    audio.onPlay(() => {
+      console.log('✅ base64音频开始播放')
+      clearTimeout(playTimeout)
+    })
+    
+    audio.onError((err) => {
+      console.error('❌ base64音频播放失败:', err)
+      clearTimeout(playTimeout)
+      audio.destroy()
+      // 降级到直链播放
+      this.fallbackToDirectUrl(word)
+    })
+    
+    audio.onEnded(() => {
+      console.log('✅ base64音频播放结束')
+      clearTimeout(playTimeout)
+      this.setData({ isPlaying: false })
+      audio.destroy()
+    })
+    
+    audio.play()
+  },
+  
+  // 降级到直链播放
+  fallbackToDirectUrl(word) {
+    console.log('🔄 降级到百度TTS直链播放')
+    const baiduUrl = `https://fanyi.baidu.com/gettts?lan=jp&text=${encodeURIComponent(word.word)}&spd=3&source=web`
+    this.playAudioUrl(baiduUrl, word)
+  },
+  
   // 播放音频URL
   playAudioUrl(url, word) {
-    console.log('📻 播放音频URL:', url)
+    console.log('📻 播放音频URL:', url.substring(0, 100) + '...')
+    
+    // 停止之前的音频
+    if (this.innerAudioContext) {
+      this.innerAudioContext.stop()
+    }
     
     const audio = wx.createInnerAudioContext()
     audio.src = url
@@ -690,13 +1018,18 @@ Page({
     
     audio.onError((err) => {
       console.error('❌ 播放失败:', err)
-      // 如果失败，尝试备选方案
-      this.testSimpleAudio(word)
+      this.setData({ isPlaying: false })
+      // 清理音频对象
+      audio.destroy()
+      // 网络音频失败时，直接显示读音信息
+      this.showReadingInfo()
     })
     
     audio.onEnded(() => {
       console.log('✅ 播放结束')
       this.setData({ isPlaying: false })
+      // 清理音频对象
+      audio.destroy()
     })
     
     audio.play()
@@ -1233,7 +1566,52 @@ Page({
       forgotCount
     })
     
-    // TODO: 保存学习记录到数据库
+    // 保存学习记录到数据库
+    this.saveLearningRecord(masteredCount, fuzzyCount, forgotCount)
+  },
+  
+  // 保存学习记录
+  async saveLearningRecord(masteredCount, fuzzyCount, forgotCount) {
+    try {
+      const db = wx.cloud.database()
+      await db.collection('learning_records').add({
+        data: {
+          date: new Date().toDateString(),
+          totalWords: this.data.wordList.length,
+          masteredCount,
+          fuzzyCount, 
+          forgotCount,
+          completedAt: new Date()
+        }
+      })
+      console.log('学习记录保存成功')
+    } catch (error) {
+      console.error('保存学习记录失败:', error)
+    }
+  },
+  
+  // 学习更多词汇
+  learnMore() {
+    // 清空当前学习状态
+    this.setData({
+      showComplete: false,
+      learningRecord: {},
+      masteredCount: 0,
+      fuzzyCount: 0,
+      forgotCount: 0
+    })
+    
+    // 重新加载词汇（使用相同数量）
+    const count = this.data.selectedCount || 10
+    this.loadTodayWords(count)
+  },
+  
+  // 结束学习
+  finishLearning() {
+    // 返回首页或显示成就
+    wx.switchTab({
+      url: '/pages/index/index'
+    })
   },
 
   
@@ -1242,6 +1620,33 @@ Page({
   goBack() {
     wx.switchTab({
       url: '/pages/index/index'
+    })
+  },
+  
+  // 跳转到日语解析页面
+  goToParser() {
+    wx.navigateTo({
+      url: '/packageB/pages/japanese-parser/japanese-parser'
+    })
+  },
+  
+  // 学习更多
+  learnMore() {
+    // 重置学习状态
+    this.setData({
+      showComplete: false,
+      currentIndex: 0,
+      showExample: true,
+      learningRecord: {},
+      inWordbook: false,
+      masteredCount: 0,
+      fuzzyCount: 0,
+      forgotCount: 0
+    })
+    
+    // 显示设置界面，让用户选择数量
+    this.setData({
+      showSetup: true
     })
   }
 })

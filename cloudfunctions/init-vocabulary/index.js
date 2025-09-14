@@ -420,19 +420,19 @@ const n2VocabularyData = [
 exports.main = async (event, context) => {
   const { action = 'init', batchSize = 10, offset = 0 } = event
   
-  console.log('执行操作:', action, '批次大小:', batchSize, '偏移量:', offset)
+  // console.log('执行操作:', action, '批次大小:', batchSize, '偏移量:', offset)
   
   try {
     if (action === 'init') {
       // 初始化词汇表（支持分批处理）
-      console.log('开始初始化N2词汇数据...')
+      // console.log('开始初始化N2词汇数据...')
       
       // 如果指定了偏移量，则进行分批处理
       const dataToInsert = offset > 0 
         ? n2VocabularyData.slice(offset, offset + batchSize)
         : n2VocabularyData.slice(0, batchSize)
       
-      console.log(`处理第 ${offset + 1} 到 ${offset + dataToInsert.length} 条数据`)
+      // console.log(`处理第 ${offset + 1} 到 ${offset + dataToInsert.length} 条数据`)
       
       let successCount = 0
       let failCount = 0
@@ -470,7 +470,7 @@ exports.main = async (event, context) => {
       
       const hasMore = offset + batchSize < n2VocabularyData.length
       
-      console.log(`本批次完成: 成功 ${successCount} 条, 失败 ${failCount} 条`)
+      // console.log(`本批次完成: 成功 ${successCount} 条, 失败 ${failCount} 条`)
       
       return {
         success: true,

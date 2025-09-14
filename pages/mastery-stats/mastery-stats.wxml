@@ -1,0 +1,194 @@
+<!-- pages/mastery-stats/mastery-stats.wxml -->
+<view class="container">
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="header-left" bindtap="onBack">
+      <text class="back-btn">←</text>
+    </view>
+    <view class="header-title">学习统计</view>
+    <view class="header-right"></view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">统计计算中...</text>
+  </view>
+
+  <!-- 统计内容 -->
+  <view wx:else class="stats-content">
+    <!-- 筛选栏 -->
+    <view class="filter-bar">
+      <view class="filter-item {{filterType === 'all' ? 'active' : ''}}" bindtap="onFilterChange" data-type="all">
+        全部记录
+      </view>
+      <view class="filter-item {{filterType === 'favorite' ? 'active' : ''}}" bindtap="onFilterChange" data-type="favorite">
+        收藏记录
+      </view>
+      <view class="filter-item {{filterType === 'recent' ? 'active' : ''}}" bindtap="onFilterChange" data-type="recent">
+        最近7天
+      </view>
+    </view>
+
+    <!-- 总体概览 -->
+    <view class="overview-card">
+      <view class="overview-title">📊 总体掌握情况</view>
+      <view class="overview-grid">
+        <view class="overview-item">
+          <text class="overview-number">{{totalStats.sentence.total}}</text>
+          <text class="overview-label">句子总数</text>
+        </view>
+        <view class="overview-item">
+          <text class="overview-number">{{totalStats.word.total}}</text>
+          <text class="overview-label">词汇总数</text>
+        </view>
+        <view class="overview-item">
+          <text class="overview-number">{{totalStats.analysis.total}}</text>
+          <text class="overview-label">语法点总数</text>
+        </view>
+        <view class="overview-item">
+          <text class="overview-number">{{totalStats.sentence.mastered + totalStats.word.mastered + totalStats.analysis.mastered}}</text>
+          <text class="overview-label">已掌握项目</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 分类统计 -->
+    <view class="category-stats">
+      <!-- 句子掌握度 -->
+      <view class="stat-card">
+        <view class="stat-header">
+          <text class="stat-title">📝 句子掌握情况</text>
+          <text class="stat-total">({{totalStats.sentence.total}}个)</text>
+        </view>
+        <view class="stat-bar">
+          <view class="bar-segment mastered" style="width: {{totalStats.sentence.masteredPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{totalStats.sentence.partialPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{totalStats.sentence.unfamiliarPercent}}%"></view>
+          <view class="bar-segment unseen" style="width: {{totalStats.sentence.unseenPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <view class="legend-item mastered">
+            <view class="legend-dot"></view>
+            <text>已掌握 {{totalStats.sentence.mastered}}</text>
+          </view>
+          <view class="legend-item partial">
+            <view class="legend-dot"></view>
+            <text>略懂 {{totalStats.sentence.partial}}</text>
+          </view>
+          <view class="legend-item unfamiliar">
+            <view class="legend-dot"></view>
+            <text>未掌握 {{totalStats.sentence.unfamiliar}}</text>
+          </view>
+          <view class="legend-item unseen">
+            <view class="legend-dot"></view>
+            <text>未看 {{totalStats.sentence.unseen}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 词汇掌握度 -->
+      <view class="stat-card">
+        <view class="stat-header">
+          <text class="stat-title">📚 词汇掌握情况</text>
+          <text class="stat-total">({{totalStats.word.total}}个)</text>
+        </view>
+        <view class="stat-bar">
+          <view class="bar-segment mastered" style="width: {{totalStats.word.masteredPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{totalStats.word.partialPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{totalStats.word.unfamiliarPercent}}%"></view>
+          <view class="bar-segment unseen" style="width: {{totalStats.word.unseenPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <view class="legend-item mastered">
+            <view class="legend-dot"></view>
+            <text>已掌握 {{totalStats.word.mastered}}</text>
+          </view>
+          <view class="legend-item partial">
+            <view class="legend-dot"></view>
+            <text>略懂 {{totalStats.word.partial}}</text>
+          </view>
+          <view class="legend-item unfamiliar">
+            <view class="legend-dot"></view>
+            <text>未掌握 {{totalStats.word.unfamiliar}}</text>
+          </view>
+          <view class="legend-item unseen">
+            <view class="legend-dot"></view>
+            <text>未看 {{totalStats.word.unseen}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 语法分析掌握度 -->
+      <view class="stat-card">
+        <view class="stat-header">
+          <text class="stat-title">🔍 语法分析掌握情况</text>
+          <text class="stat-total">({{totalStats.analysis.total}}个)</text>
+        </view>
+        <view class="stat-bar">
+          <view class="bar-segment mastered" style="width: {{totalStats.analysis.masteredPercent}}%"></view>
+          <view class="bar-segment partial" style="width: {{totalStats.analysis.partialPercent}}%"></view>
+          <view class="bar-segment unfamiliar" style="width: {{totalStats.analysis.unfamiliarPercent}}%"></view>
+          <view class="bar-segment unseen" style="width: {{totalStats.analysis.unseenPercent}}%"></view>
+        </view>
+        <view class="stat-legend">
+          <view class="legend-item mastered">
+            <view class="legend-dot"></view>
+            <text>已掌握 {{totalStats.analysis.mastered}}</text>
+          </view>
+          <view class="legend-item partial">
+            <view class="legend-dot"></view>
+            <text>略懂 {{totalStats.analysis.partial}}</text>
+          </view>
+          <view class="legend-item unfamiliar">
+            <view class="legend-dot"></view>
+            <text>未掌握 {{totalStats.analysis.unfamiliar}}</text>
+          </view>
+          <view class="legend-item unseen">
+            <view class="legend-dot"></view>
+            <text>未看 {{totalStats.analysis.unseen}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 学习建议 -->
+    <view class="suggestion-card">
+      <view class="suggestion-title">💡 学习建议</view>
+      <view class="suggestion-content">
+        <view wx:if="{{totalStats.sentence.unfamiliar > 0}}" class="suggestion-item">
+          <text class="suggestion-icon">📝</text>
+          <text class="suggestion-text">还有 {{totalStats.sentence.unfamiliar}} 个句子需要重点学习</text>
+        </view>
+        <view wx:if="{{totalStats.word.unfamiliar > 0}}" class="suggestion-item">
+          <text class="suggestion-icon">📚</text>
+          <text class="suggestion-text">还有 {{totalStats.word.unfamiliar}} 个词汇需要加强记忆</text>
+        </view>
+        <view wx:if="{{totalStats.analysis.unfamiliar > 0}}" class="suggestion-item">
+          <text class="suggestion-icon">🔍</text>
+          <text class="suggestion-text">还有 {{totalStats.analysis.unfamiliar}} 个语法点需要深入理解</text>
+        </view>
+        <view wx:if="{{totalStats.sentence.partial + totalStats.word.partial + totalStats.analysis.partial > 0}}" class="suggestion-item">
+          <text class="suggestion-icon">📖</text>
+          <text class="suggestion-text">建议多复习"略懂"的内容，巩固记忆</text>
+        </view>
+        <view wx:if="{{totalStats.sentence.mastered === totalStats.sentence.total && totalStats.word.mastered === totalStats.word.total && totalStats.analysis.mastered === totalStats.analysis.total}}" class="suggestion-item success">
+          <text class="suggestion-icon">🎉</text>
+          <text class="suggestion-text">恭喜！您已经掌握了所有内容</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 进度环形图 -->
+    <view class="progress-circle-card">
+      <view class="progress-title">🎯 总体进度</view>
+      <view class="progress-circle">
+        <view class="circle-bg"></view>
+        <view class="circle-progress" style="stroke-dasharray: {{(totalStats.sentence.mastered + totalStats.word.mastered + totalStats.analysis.mastered) / (totalStats.sentence.total + totalStats.word.total + totalStats.analysis.total) * 314}}, 314"></view>
+        <view class="circle-text">
+          <text class="progress-percent">{{Math.round((totalStats.sentence.mastered + totalStats.word.mastered + totalStats.analysis.mastered) / (totalStats.sentence.total + totalStats.word.total + totalStats.analysis.total) * 100) || 0}}%</text>
+          <text class="progress-label">已掌握</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

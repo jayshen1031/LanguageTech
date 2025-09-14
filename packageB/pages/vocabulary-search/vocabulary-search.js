@@ -1,4 +1,5 @@
 // pages/vocabulary-search/vocabulary-search.js
+
 Page({
   data: {
     keyword: '',

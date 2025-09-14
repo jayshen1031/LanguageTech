@@ -5,7 +5,8 @@
     "pages/parser-history/parser-history",
     "pages/review/review",
     "pages/wordbook/wordbook",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/mastery-stats/mastery-stats"
   ],
   "subPackages": [
     {
@@ -73,5 +74,6 @@
       }
     ]
   },
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
 }

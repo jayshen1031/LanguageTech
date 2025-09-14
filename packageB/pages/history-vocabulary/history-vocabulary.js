@@ -1,10 +1,6 @@
 // pages/history-vocabulary/history-vocabulary.js
 const app = getApp()
 
-// 初始化云环境
-wx.cloud.init({
-  env: 'cloud1-2g49srond2b01891'
-})
 
 Page({
   data: {
@@ -154,20 +150,27 @@ Page({
     // 获取完整的解析记录信息
     const recordPromises = this.data.selectedWords.map(async (word) => {
       try {
-        const recordRes = await db.collection('japanese_parser_history')
-          .doc(word.sourceRecordId)
-          .get()
-        return { word, record: recordRes.data }
+        // 如果词汇有多个出处，选择第一个作为主要来源
+        const primarySource = word.sources && word.sources.length > 0 ? word.sources[0] : null
+        
+        if (primarySource) {
+          const recordRes = await db.collection('japanese_parser_history')
+            .doc(primarySource.recordId)
+            .get()
+          return { word, record: recordRes.data, primarySource }
+        } else {
+          return { word, record: null, primarySource: null }
+        }
       } catch (err) {
         console.error('获取原始记录失败：', err)
-        return { word, record: null }
+        return { word, record: null, primarySource: null }
       }
     })
 
     const recordsData = await Promise.all(recordPromises)
 
     // 转换为学习计划的格式
-    const studyWords = recordsData.map(({ word, record }) => {
+    const studyWords = recordsData.map(({ word, record, primarySource }) => {
       // 寻找包含该词汇的句子
       let sourceContext = {
         originalSentence: '',
@@ -176,10 +179,9 @@ Page({
         analysis: ''
       }
 
-      if (record && record.sentences) {
-        const sentence = record.sentences.find(s => 
-          s.vocabulary && s.vocabulary.some(v => v.japanese === word.japanese)
-        )
+      if (record && record.sentences && primarySource) {
+        // 根据出处信息找到确切的句子
+        const sentence = record.sentences[primarySource.sentenceIndex - 1]
         if (sentence) {
           sourceContext = {
             originalSentence: sentence.originalText || '',
@@ -221,8 +223,10 @@ Page({
         createTime: db.serverDate(),
         updateTime: db.serverDate(),
         source: 'history',
-        sourceRecordId: word.sourceRecordId,
-        // 新增：保存语法和解析信息
+        sourceRecordId: primarySource ? primarySource.recordId : '',
+        // 新增：保存出处和语法解析信息
+        sources: word.sources || [],
+        primarySource: primarySource,
         grammar: sourceContext.grammar,
         analysis: sourceContext.analysis,
         structure: sourceContext.structure,
@@ -341,11 +345,71 @@ Page({
   onPreviewWord(e) {
     const { word } = e.currentTarget.dataset
     
+    // 构建出处信息
+    let sourceInfo = ''
+    if (word.sources && word.sources.length > 0) {
+      sourceInfo = '\n\n📚 出现位置：\n'
+      word.sources.forEach((source, index) => {
+        const timeStr = this.formatTime(source.recordTime)
+        sourceInfo += `${index + 1}. 《${source.recordTitle}》第${source.sentenceIndex}句\n`
+        sourceInfo += `   时间：${timeStr}\n`
+        if (source.sentenceText) {
+          sourceInfo += `   句子：${source.sentenceText}\n`
+        }
+        sourceInfo += '\n'
+      })
+      
+      if (word.sources.length > 1) {
+        sourceInfo += `共在 ${word.sources.length} 个位置出现过`
+      }
+    }
+    
     wx.showModal({
       title: word.japanese,
-      content: `读音：${word.romaji}\n意思：${word.chinese}\n来源：解析记录`,
-      showCancel: false
+      content: `🔤 读音：${word.romaji}\n💡 意思：${word.chinese}${sourceInfo}`,
+      showCancel: true,
+      cancelText: '关闭',
+      confirmText: '查看原文',
+      success: (res) => {
+        if (res.confirm && word.sources && word.sources.length > 0) {
+          // 跳转到第一个出处的原文
+          this.viewOriginalText(word.sources[0])
+        }
+      }
     })
+  },
+
+  // 查看原文
+  viewOriginalText(source) {
+    // 先查找对应的历史记录
+    const db = wx.cloud.database()
+    db.collection('japanese_parser_history')
+      .doc(source.recordId)
+      .get()
+      .then(res => {
+        const historyItem = res.data
+        const app = getApp()
+        app.globalData.currentHistoryItem = historyItem
+        
+        wx.navigateTo({
+          url: `/packageB/pages/parser-detail/parser-detail?id=${source.recordId}&highlight=${source.sentenceIndex}`
+        })
+      })
+      .catch(err => {
+        console.error('获取原文失败:', err)
+        wx.showToast({
+          title: '获取原文失败',
+          icon: 'none'
+        })
+      })
+  },
+
+  // 格式化时间
+  formatTime(date) {
+    if (!date) return ''
+    
+    const target = new Date(date)
+    return `${target.getMonth() + 1}月${target.getDate()}日`
   },
 
   // 返回历史页面

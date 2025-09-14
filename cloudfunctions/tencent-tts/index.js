@@ -9,7 +9,7 @@ cloud.init({
 exports.main = async (event, context) => {
   const { text, lang = 'ja' } = event
   
-  console.log(`TTS请求: ${text} (${lang})`)
+  // console.log(`TTS请求: ${text} (${lang})`)
   
   try {
     // 方案1：使用微信小程序的语音合成能力（如果有的话）

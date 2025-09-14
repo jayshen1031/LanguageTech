@@ -311,7 +311,7 @@ async function importVocabulary(clearExisting) {
       await collection.where({
         _id: _.exists(true)
       }).remove();
-      console.log('已清空现有词汇数据');
+      // console.log('已清空现有词汇数据');
     } catch(err) {
       console.error('清空数据失败', err);
     }
