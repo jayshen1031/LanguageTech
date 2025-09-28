@@ -59,14 +59,25 @@ class AudioCache {
   // 检查缓存是否存在且有效
   async checkCache(text, options = {}) {
     const cacheKey = this.generateCacheKey(text, options)
-    const filePath = this.getCacheFilePath(cacheKey)
     
+    // 首先检查缓存索引中是否有base64格式的缓存
+    const indexData = this.getCacheIndex()
+    const cacheRecord = indexData.records.find(record => record.key === cacheKey)
+    
+    if (cacheRecord && cacheRecord.isBase64 && cacheRecord.audioUrl) {
+      // 找到base64格式的缓存
+      // console.log('找到base64缓存:', cacheKey)
+      return cacheRecord.audioUrl
+    }
+    
+    // 检查文件缓存
+    const filePath = this.getCacheFilePath(cacheKey)
     try {
       // 检查文件是否存在
       const stats = this.fs.statSync(filePath)
       
       // 永久缓存，不检查过期时间
-      // console.log('找到永久缓存:', cacheKey)
+      // console.log('找到文件缓存:', cacheKey)
       return filePath
     } catch (e) {
       // 文件不存在或读取失败
@@ -78,6 +89,25 @@ class AudioCache {
   async saveToCache(text, audioUrl, options = {}) {
     const cacheKey = this.generateCacheKey(text, options)
     const filePath = this.getCacheFilePath(cacheKey)
+    
+    // 检查URL格式
+    if (audioUrl.startsWith('data:audio/')) {
+      // Base64数据URL，无需下载，直接记录到索引
+      return new Promise((resolve, reject) => {
+        try {
+          // 更新缓存索引，标记为base64格式
+          this.updateCacheIndex(cacheKey, text, { ...options, isBase64: true, audioUrl })
+          
+          // 清理过期缓存
+          this.cleanupCache()
+          
+          resolve(audioUrl) // 返回原始URL用于播放
+        } catch (err) {
+          console.error('保存base64缓存记录失败:', err)
+          reject(err)
+        }
+      })
+    }
     
     return new Promise((resolve, reject) => {
       // 下载音频文件
@@ -107,22 +137,65 @@ class AudioCache {
     })
   }
 
+  // 获取缓存索引
+  getCacheIndex() {
+    try {
+      const index = wx.getStorageSync(this.indexKey) || {}
+      
+      // 兼容新旧格式
+      if (!index.records) {
+        // 旧格式，转换为新格式
+        const records = Object.keys(index).map(key => ({
+          key: key,
+          text: index[key].text,
+          options: index[key].options,
+          timestamp: index[key].timestamp,
+          size: index[key].size || 0,
+          isBase64: false
+        }))
+        
+        return {
+          version: '2.0',
+          records: records
+        }
+      }
+      
+      return index
+    } catch (e) {
+      console.error('获取缓存索引失败:', e)
+      return { version: '2.0', records: [] }
+    }
+  }
+
   // 更新缓存索引
   updateCacheIndex(cacheKey, text, options) {
     try {
       // 获取现有索引
-      let index = wx.getStorageSync(this.indexKey) || {}
+      let indexData = this.getCacheIndex()
       
-      // 添加新缓存记录
-      index[cacheKey] = {
+      // 查找是否已存在该记录
+      const existingIndex = indexData.records.findIndex(record => record.key === cacheKey)
+      
+      const newRecord = {
+        key: cacheKey,
         text: text.substring(0, 50), // 只保存前50个字符
         options: options,
         timestamp: Date.now(),
-        size: 0 // 可以添加文件大小信息
+        size: 0, // 可以添加文件大小信息
+        isBase64: options.isBase64 || false,
+        audioUrl: options.audioUrl || null
+      }
+      
+      if (existingIndex >= 0) {
+        // 更新现有记录
+        indexData.records[existingIndex] = newRecord
+      } else {
+        // 添加新记录
+        indexData.records.push(newRecord)
       }
       
       // 保存索引
-      wx.setStorageSync(this.indexKey, index)
+      wx.setStorageSync(this.indexKey, indexData)
     } catch (e) {
       console.error('更新缓存索引失败:', e)
     }

@@ -5,6 +5,7 @@ const { azureGPT4o } = require('../../../utils/ai')
 Page({
   data: {
     inputText: '', // 输入的文本
+    originalInputText: '', // 原始完整文本（分批处理时保留）
     imageUrl: '', // 上传的图片（本地临时路径）
     cloudImageUrl: '', // 图片在云存储中的URL（永久保存用）
     userInputTitle: '', // 用户输入的标题（图片模式必填）
@@ -25,7 +26,12 @@ Page({
 
   // 生成友好的标题摘要
   generateTitle(data) {
-    // 如果是图片模式，优先使用用户输入的标题，其次是AI生成的标题
+    // 优先使用用户输入的标题（两种模式都支持）
+    if (data.articleTitle) {
+      return data.articleTitle
+    }
+    
+    // 如果是图片模式，使用AI生成的标题
     if (data.inputMethod === 'image') {
       return this.data.userInputTitle || this.data.articleTitle || '图片解析'
     }
@@ -66,6 +72,13 @@ Page({
   onTextInput(e) {
     this.setData({
       inputText: e.detail.value
+    })
+  },
+
+  // 标题输入变化
+  onTitleInput(e) {
+    this.setData({
+      articleTitle: e.detail.value
     })
   },
 
@@ -202,6 +215,16 @@ Page({
   async startAnalysis() {
     const { inputText, inputMethod, imageUrl } = this.data
     
+    // 检查云开发是否已初始化
+    const app = getApp()
+    if (!app.globalData.cloudReady) {
+      wx.showToast({
+        title: '云服务初始化中，请稍后重试',
+        icon: 'none'
+      })
+      return
+    }
+    
     // 验证输入
     if (inputMethod === 'text' && !inputText.trim()) {
       wx.showToast({
@@ -265,71 +288,365 @@ Page({
         }
         
         // 调用Azure GPT-4o的grammar接口（支持图片识别）
-        const res = await wx.cloud.callFunction({
-          name: 'azure-gpt4o',
-          data: {
-            action: 'grammar',
-            imageUrl: cloudImageUrl,  // 使用前面保存的cloudImageUrl变量
-            userTitle: this.data.userInputTitle // 传递用户输入的标题
-          }
-        })
+        console.log('开始调用云函数进行图片解析...')
+        const functionStartTime = Date.now()
         
-        wx.hideLoading()
-        
-        // 不删除云存储文件，需要永久保存
-        // wx.cloud.deleteFile({
-        //   fileList: [uploadRes.fileID]
-        // })
-        
-        if (res.result.success) {
-          result = res.result.data.analysis
+        try {
+          const res = await wx.cloud.callFunction({
+            name: 'azure-gpt4o',
+            data: {
+              action: 'grammar',
+              imageUrl: cloudImageUrl,  // 使用前面保存的cloudImageUrl变量
+              userTitle: this.data.userInputTitle // 传递用户输入的标题
+            }
+          })
           
-          // 添加调试日志
-          // console.log('图片解析原始返回内容（前1000字符）:', result?.substring(0, 1000))
-          // console.log('图片解析完整返回长度:', result?.length)
+          const functionEndTime = Date.now()
+          console.log('云函数调用完成，耗时:', functionEndTime - functionStartTime, 'ms')
           
-          // 从AI响应中提取识别出的原始文本
-          // AI会返回包含日文原文的解析结果
-          const extractedText = this.extractOriginalTextFromAnalysis(result)
-          if (extractedText) {
-            // 保存提取的原始文本，用于后续存储
-            this.setData({ extractedImageText: extractedText })
+          wx.hideLoading()
+          
+          // 不删除云存储文件，需要永久保存
+          // wx.cloud.deleteFile({
+          //   fileList: [uploadRes.fileID]
+          // })
+          
+          if (res.result.success) {
+            result = res.result.data.analysis
+            console.log('图片解析成功，结果长度:', result?.length || 0)
+          } else {
+            console.error('云函数返回错误:', res.result.error)
+            throw new Error(res.result.error || 'AI解析失败')
           }
-        } else {
-          throw new Error(res.result.error || 'AI解析失败')
+        } catch (functionError) {
+          wx.hideLoading()
+          console.error('云函数调用失败:', functionError)
+          
+          // 提供更详细的错误信息
+          let errorMessage = '图片解析失败：'
+          if (functionError.errCode === -504002) {
+            errorMessage += '云函数超时，请尝试更小的图片'
+          } else if (functionError.errCode === -502001) {
+            errorMessage += '网络连接失败'
+          } else if (functionError.errMsg && functionError.errMsg.includes('timeout')) {
+            errorMessage += '请求超时，请重试'
+          } else {
+            errorMessage += (functionError.message || '未知错误')
+          }
+          
+          wx.showModal({
+            title: '解析失败',
+            content: errorMessage + '\n\n建议：\n1. 检查网络连接\n2. 尝试更小尺寸的图片\n3. 稍后重试',
+            showCancel: false
+          })
+          
+          this.setData({ isAnalyzing: false })
+          return
         }
+        
+        // 添加调试日志
+        // console.log('图片解析原始返回内容（前1000字符）:', result?.substring(0, 1000))
+        // console.log('图片解析完整返回长度:', result?.length)
+        
+        // 从AI响应中提取识别出的原始文本
+        // AI会返回包含日文原文的解析结果
+        const extractedText = this.extractOriginalTextFromAnalysis(result)
+        if (extractedText) {
+          // 保存提取的原始文本，用于后续存储
+          this.setData({ extractedImageText: extractedText })
+        }
+        
+        // 图片模式：直接处理结果
+        await this.handleAnalysisResult(result, extractedText || this.data.userInputTitle || '图片识别', 'image')
+        return
+        
       } else {
         // 文本模式
         const lines = inputText.split('\n').filter(line => line.trim())
         // console.log(`输入文本共${lines.length}行`)
         
-        // 检查是否需要分批处理：行数超过8行 或 总字符数超过800字符
+        // 检查是否需要分批处理：行数超过15行 或 总字符数超过1500字符
         const totalChars = inputText.length
-        const needsBatch = lines.length > 8 || totalChars > 800
+        const needsBatch = lines.length > 15 || totalChars > 1500
         
-        // 如果是歌词格式（包含假名标注），使用分批处理
-        if (inputText.includes('（') || inputText.includes('(')) {
-          // console.log('检测到歌词格式，使用分批处理')
-          await this.batchProcessLyrics(inputText)
+        // 如果文本较长（超过8行），直接自动分段处理
+        if (lines.length > 8) {
+          // 直接自动分段处理，不再提示用户
+          await this.autoSplitAndProcess(inputText, lines, totalChars)
           return
         }
         
+        // 调用文本处理方法
+        await this.processText(inputText, lines, totalChars, needsBatch)
+      }
+    } catch (error) {
+      console.error('解析失败:', error)
+      wx.hideLoading() // 修复：隐藏loading状态
+      wx.showToast({
+        title: '解析失败，请重试',
+        icon: 'none'
+      })
+      this.setData({
+        isAnalyzing: false
+      })
+    }
+  },
+
+  // 自动分段处理方法
+  async autoSplitAndProcess(inputText, lines, totalChars) {
+    try {
+      // 保存原始文本用于显示
+      this.setData({ originalInputText: inputText })
+      
+      // 按句子数分段：每段4行（句子）
+      const maxLinesPerSegment = 4
+      const segmentCount = Math.ceil(lines.length / maxLinesPerSegment)
+      
+      wx.showLoading({ 
+        title: `按句子分段处理中...(${segmentCount}段)`,
+        mask: true 
+      })
+      
+      // 按句子数分段
+      const segments = this.splitTextIntoSegments(inputText, maxLinesPerSegment)
+      
+      console.log(`原文${totalChars}字符，分成${segments.length}段处理`)
+      
+      const allResults = []
+      let successCount = 0
+      
+      // 并行处理所有段落
+      console.log(`🚀 开始并行处理${segments.length}个段落`)
+      
+      wx.showLoading({ 
+        title: `并行处理${segments.length}段中...`,
+        mask: true 
+      })
+      
+      const processingPromises = segments.map(async (segment, i) => {
+        const segmentIndex = i + 1
+        const currentSegmentLines = segment.split('\n').filter(line => line.trim()).length
+        
+        console.log(`开始处理第${segmentIndex}段(${currentSegmentLines}句)`)
+        
+        let retryCount = 0
+        const maxRetries = 2
+        
+        while (retryCount < maxRetries) {
+          try {
+            console.log(`第${segmentIndex}段处理尝试 ${retryCount + 1}/${maxRetries}`)
+            
+            const res = await wx.cloud.callFunction({
+              name: 'azure-gpt4o-batch',
+              data: {
+                sentence: segment
+              }
+            })
+            
+            if (res.result.success) {
+              const segmentResult = this.parseSentenceResponse(res.result.data.analysis)
+              if (segmentResult.sentences && segmentResult.sentences.length > 0) {
+                console.log(`✅ 第${segmentIndex}段处理成功，解析出${segmentResult.sentences.length}句`)
+                console.log(`🔍 第${segmentIndex}段词汇情况:`, segmentResult.sentences.map(s => `第${s.index}句词汇数: ${s.vocabulary?.length || 0}`))
+                return {
+                  success: true,
+                  index: i,
+                  sentences: segmentResult.sentences
+                }
+              } else {
+                throw new Error('AI返回的结果解析失败')
+              }
+            } else {
+              throw new Error(res.result.error || '段落处理失败')
+            }
+            
+          } catch (retryError) {
+            retryCount++
+            console.error(`❌ 第${segmentIndex}段第${retryCount}次尝试失败:`, retryError.message)
+            
+            if (retryCount < maxRetries) {
+              // 等待后重试，添加随机延迟避免同时重试
+              await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
+            }
+          }
+        }
+        
+        // 所有重试都失败，生成降级结果
+        console.error(`💀 第${segmentIndex}段最终处理失败`)
+        const lines = segment.split('\n').filter(line => line.trim())
+        
+        if (lines.length <= 3) {
+          // 短段落：每行生成一个条目
+          const fallbackSentences = lines.map((line, lineIndex) => ({
+            index: 0, // 临时索引，稍后重新编号
+            originalText: line.trim(),
+            romaji: '',
+            translation: `处理失败，请手动处理`,
+            structure: '处理失败',
+            analysis: `第${segmentIndex}段第${lineIndex + 1}行处理失败`,
+            grammar: '云函数调用失败',
+            vocabulary: []
+          }))
+          return {
+            success: false,
+            index: i,
+            sentences: fallbackSentences
+          }
+        } else {
+          // 长段落：生成一个汇总条目
+          return {
+            success: false,
+            index: i,
+            sentences: [{
+              index: 0, // 临时索引，稍后重新编号
+              originalText: segment.substring(0, 100) + (segment.length > 100 ? '...' : ''),
+              romaji: '',
+              translation: `该段共${lines.length}行，处理失败`,
+              structure: '处理失败',
+              analysis: `第${segmentIndex}段处理失败\n\n原文内容：\n${segment}`,
+              grammar: '请检查网络连接或稍后重试',
+              vocabulary: []
+            }]
+          }
+        }
+      })
+      
+      // 等待所有段落处理完成
+      const results = await Promise.all(processingPromises)
+      console.log(`🎉 并行处理完成！`)
+      
+      // 按原始顺序合并结果并重新编号
+      results.sort((a, b) => a.index - b.index)
+      
+      let sentenceIndex = 1
+      results.forEach(result => {
+        result.sentences.forEach(sentence => {
+          sentence.index = sentenceIndex++
+          allResults.push(sentence)
+        })
+        if (result.success) {
+          successCount++
+        }
+      })
+      
+      wx.hideLoading()
+      
+      // 显示处理结果
+      this.setData({
+        analysisResult: allResults,
+        showResult: true,
+        isAnalyzing: false
+      })
+      
+      // 显示处理统计
+      const failCount = segments.length - successCount
+      if (failCount > 0) {
+        wx.showModal({
+          title: '处理完成',
+          content: `共${segments.length}段，成功${successCount}段，失败${failCount}段。失败的段落已保留原文，请手动检查处理。`,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else {
+        wx.showToast({
+          title: '自动分段处理完成',
+          icon: 'success'
+        })
+      }
+      
+      // 自动保存结果
+      const autoSaveData = {
+        inputText: inputText,
+        inputMethod: 'text',
+        imageUrl: '',
+        extractedText: '',
+        articleTitle: this.data.articleTitle || `自动分段处理(${segments.length}段)`,
+        title: '',
+        analysisResult: allResults
+      }
+      
+      this.saveParseResult(autoSaveData)
+      
+    } catch (error) {
+      console.error('自动分段处理失败:', error)
+      wx.hideLoading()
+      wx.showToast({
+        title: '自动分段处理失败',
+        icon: 'none'
+      })
+      this.setData({
+        isAnalyzing: false
+      })
+    }
+  },
+
+  // 将文本分割成段落，按句子数量分段
+  splitTextIntoSegments(text, maxLinesPerSegment = 4) {
+    const segments = []
+    const lines = text.split('\n').filter(line => line.trim())
+    
+    console.log(`原文共${lines.length}行，按每段最多${maxLinesPerSegment}行分段`)
+    
+    // 按固定行数分段 - 就是简单的数学除法
+    for (let i = 0; i < lines.length; i += maxLinesPerSegment) {
+      const segmentLines = lines.slice(i, i + maxLinesPerSegment)
+      const segment = segmentLines.join('\n')
+      segments.push(segment.trim())
+      console.log(`第${segments.length}段：${segmentLines.length}行 (第${i+1}-${Math.min(i+maxLinesPerSegment, lines.length)}行)`)
+    }
+    
+    console.log(`分段完成：${lines.length}行 → ${segments.length}段`)
+    return segments
+  },
+
+  // 文本处理方法
+  async processText(inputText, lines, totalChars, needsBatch) {
+    try {
+      let result
+      
+      // 如果是歌词格式（包含假名标注），使用分批处理
+      if (inputText.includes('（') || inputText.includes('(')) {
+        // console.log('检测到歌词格式，使用分批处理')
+        await this.batchProcessLyrics(inputText)
+        return
+      }
+        
         if (needsBatch) {
+          // 保存原始文本用于显示
+          this.setData({ originalInputText: inputText })
+          
           // console.log(`文本较长，使用分批处理模式：${lines.length}行，${totalChars}字符`)
           wx.showLoading({ title: `分批解析中(${totalChars}字符)...` })
           
-          const res = await wx.cloud.callFunction({
-            name: 'azure-gpt4o-batch',
-            data: {
-              sentence: inputText
+          try {
+            const res = await wx.cloud.callFunction({
+              name: 'azure-gpt4o-batch',
+              data: {
+                sentence: inputText
+              }
+            })
+            
+            if (res.result.success) {
+              result = res.result.data.analysis
+              // console.log(`分批处理完成，共${res.result.data.batches}批，${res.result.data.totalLines}行`)
+            } else {
+              throw new Error(res.result.error || '分批处理失败')
             }
-          })
-          
-          if (res.result.success) {
-            result = res.result.data.analysis
-            // console.log(`分批处理完成，共${res.result.data.batches}批，${res.result.data.totalLines}行`)
-          } else {
-            throw new Error(res.result.error || '分批处理失败')
+          } catch (batchError) {
+            console.error('分批处理失败，自动切换到分段处理:', batchError)
+            wx.hideLoading()
+            
+            // 直接自动分段处理，不再提示用户
+            wx.showToast({
+              title: '自动切换到分段处理模式',
+              icon: 'none',
+              duration: 2000
+            })
+            
+            setTimeout(() => {
+              this.autoSplitAndProcess(inputText, inputText.split('\n').filter(line => line.trim()), inputText.length)
+            }, 500)
+            return
           }
         } else {
           // 行数较少，使用快速模式
@@ -368,7 +685,27 @@ Page({
             result = await azureGPT4o.simpleChat(prompt)
           }
         }
-      }
+      
+      // 处理返回结果
+      await this.handleAnalysisResult(result, inputText, 'text')
+      
+    } catch (error) {
+      console.error('文本处理失败:', error)
+      wx.hideLoading()
+      wx.showToast({
+        title: '处理失败，请重试',
+        icon: 'none'
+      })
+      this.setData({
+        isAnalyzing: false
+      })
+    }
+  },
+
+  // 处理解析结果的通用方法
+  async handleAnalysisResult(result, inputText, inputMethod) {
+    try {
+      wx.hideLoading()
       
       // 解析AI返回的结果
       // console.log('AI返回的原始结果长度:', result ? result.length : 0)
@@ -441,24 +778,32 @@ Page({
           inputMethod,
           imageUrl: inputMethod === 'image' ? (this.data.cloudImageUrl || this.data.imageUrl) : '',  // 优先使用云存储URL
           extractedText: inputMethod === 'image' ? this.data.extractedImageText : '',
-          articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : '',  // 两种模式都可以有标题
+          articleTitle: inputMethod === 'image' ? (this.data.userInputTitle || articleTitle) : this.data.articleTitle,  // 两种模式都可以有标题
           title: '',  // 初始为空，用户可以后续添加
           analysisResult
         }
         
         // console.log('准备自动保存的数据:', {
-          inputMethod,
-          hasImageUrl: !!autoSaveData.imageUrl,
-          articleTitle: autoSaveData.articleTitle,
-          analysisResultCount: analysisResult.length
-        })
+        //   inputMethod,
+        //   hasImageUrl: !!autoSaveData.imageUrl,
+        //   articleTitle: autoSaveData.articleTitle,
+        //   analysisResultCount: analysisResult.length
+        // })
         
         // 自动保存到历史
         this.saveParseResult(autoSaveData)
+        
+        // 保存成功后，自动整合词汇到学习库
+        if (analysisResult && analysisResult.length > 0) {
+          setTimeout(() => {
+            this.integrateVocabularyToLearning(autoSaveData)
+          }, 1000) // 延迟1秒确保保存完成
+        }
       }
       
     } catch (error) {
       console.error('解析失败:', error)
+      wx.hideLoading() // 修复：隐藏loading状态
       wx.showToast({
         title: '解析失败，请重试',
         icon: 'none'
@@ -716,9 +1061,11 @@ Page({
 
   // 解析句子类型的AI响应（原parseAIResponse）
   parseSentenceResponse(response) {
-    // console.log('开始解析AI响应...')
-    // console.log('响应长度:', response?.length)
-    // console.log('响应前200字符:', response?.substring(0, 200))
+    console.log('=== 开始解析AI响应 ===')
+    console.log('响应长度:', response?.length)
+    console.log('完整响应内容:')
+    console.log(response)
+    console.log('=== 响应内容结束 ===')
     
     // 如果响应为空，返回空数组
     if (!response || typeof response !== 'string') {
@@ -737,16 +1084,52 @@ Page({
     // 将AI返回的文本按句子分割并结构化
     const sentences = []
     
-    // 尝试按"---"分割，如果没有，就把整个响应作为一个部分
+    // 首先尝试按"---"分割
     let sections = response.split('---').filter(s => s.trim())
+    console.log('按---分割，找到', sections.length, '个部分')
+    
+    // 如果没有"---"分割符，尝试按"📘 第X句"分割
+    if (sections.length <= 1) {
+      // 使用正则表达式分割句子
+      const sentenceRegex = /(?=📘\s*第\d+句)/g
+      const altSections = response.split(sentenceRegex).filter(s => s.trim())
+      console.log('按📘分割，找到', altSections.length, '个部分')
+      if (altSections.length > 1) {
+        sections = altSections
+      }
+    }
+    
+    // 如果还是只有一个部分，尝试其他分割方式
+    if (sections.length <= 1) {
+      // 尝试按【日文原文】分割（但保留标记）
+      const jpRegex = /(?=【日文原文】)/g
+      const jpSections = response.split(jpRegex).filter(s => s.trim())
+      console.log('按【日文原文】分割，找到', jpSections.length, '个部分')
+      if (jpSections.length > 1) {
+        sections = jpSections
+      }
+    }
+    
+    // 最后的备用方案
     if (sections.length === 0) {
       sections = [response]
     }
     
+    console.log('最终使用的分割结果：', sections.length, '个section')
+    sections.forEach((section, i) => {
+      console.log(`Section ${i + 1} 预览:`, section.substring(0, 100) + '...')
+    })
+    
     // console.log('分割后的sections数量:', sections.length)
     
     sections.forEach((section, sectionIndex) => {
-      // console.log(`处理第${sectionIndex}个section:`, section.substring(0, 100) + '...')
+      console.log(`处理第${sectionIndex + 1}个section:`, section.substring(0, 100) + '...')
+      
+      // 跳过包含文章标题和完整原文的section
+      if (section.includes('【文章标题】') || section.includes('【完整原文】')) {
+        console.log(`跳过第${sectionIndex + 1}个section：包含文章标题或完整原文`)
+        return
+      }
       
       // 更灵活的句子标记检测
       // 检查是否包含句子标记（📘、第X句、【日文原文】等）
@@ -756,13 +1139,7 @@ Page({
         section.includes('【日文原文】') ||
         section.includes('日文原文');
       
-      // console.log(`Section ${sectionIndex} 有句子标记:`, hasSentenceMarker)
-      // console.log(`Section ${sectionIndex} 包含内容:`, {
-        '📘': section.includes('📘'),
-        '第...句': section.includes('第') && section.includes('句'),
-        '【日文原文】': section.includes('【日文原文】'),
-        '日文原文': section.includes('日文原文')
-      })
+      console.log(`Section ${sectionIndex + 1} 有句子标记:`, hasSentenceMarker)
       
       if (hasSentenceMarker) {
         // 尝试提取句子编号
@@ -772,30 +1149,53 @@ Page({
           sentenceIndex = parseInt(indexMatch[1]);
         }
         
+        // 限制section内容，避免包含下一句的内容
+        let limitedSection = section
+        
+        // 如果section包含多个"【日文原文】"，只取第一个句子的内容
+        const japaneseMatches = [...section.matchAll(/【日文原文】([^【\n]+)/g)]
+        if (japaneseMatches.length > 1) {
+          // 找到第二个"【日文原文】"的位置，截取到这里
+          const secondJapaneseIndex = section.indexOf('【日文原文】', section.indexOf('【日文原文】') + 1)
+          if (secondJapaneseIndex > 0) {
+            limitedSection = section.substring(0, secondJapaneseIndex).trim()
+          }
+        }
+        
         const sentenceData = {
           index: sentenceIndex,
-          originalText: this.extractContent(section, '【日文原文】', '\n') || this.extractContent(section, '日文原文', '\n'),
-          romaji: this.extractContent(section, '【罗马音】', '\n') || this.extractContent(section, '罗马音', '\n'),
-          translation: this.extractContent(section, '【中文翻译】', '\n') || this.extractContent(section, '中文翻译', '\n'),
-          structure: this.extractContent(section, '【精简结构】', '\n') || this.extractContent(section, '精简结构', '\n') || this.extractContent(section, '【句子结构】', '\n'),
-          analysis: this.extractContent(section, '【句子结构分析】', '【词汇明细表】') || this.extractContent(section, '句子结构分析', '【词汇明细表】') || this.extractContent(section, '【分析】', '【词汇明细表】'),
-          grammar: this.extractContent(section, '【语法点说明】', '【词汇明细表】') || this.extractContent(section, '语法点说明', '【词汇明细表】') || this.extractContent(section, '【语法】', '【词汇明细表】'),
-          vocabulary: this.extractVocabulary(section)
+          originalText: this.extractContent(limitedSection, '【日文原文】', '\n') || this.extractContent(limitedSection, '日文原文', '\n'),
+          romaji: this.extractContent(limitedSection, '【罗马音】', '\n') || this.extractContent(limitedSection, '罗马音', '\n'),
+          translation: this.extractContent(limitedSection, '【中文翻译】', '\n') || this.extractContent(limitedSection, '中文翻译', '\n'),
+          structure: this.extractContent(limitedSection, '【精简结构】', '\n') || this.extractContent(limitedSection, '精简结构', '\n') || this.extractContent(limitedSection, '【句子结构】', '\n'),
+          analysis: this.extractContent(limitedSection, '【句子结构分析】', '【词汇明细表】') || this.extractContent(limitedSection, '句子结构分析', '【词汇明细表】') || this.extractContent(limitedSection, '【分析】', '【词汇明细表】'),
+          grammar: this.extractContent(limitedSection, '【语法点说明】', '【词汇明细表】') || this.extractContent(limitedSection, '语法点说明', '【词汇明细表】') || this.extractContent(limitedSection, '【语法】', '【词汇明细表】'),
+          vocabulary: this.extractVocabulary(limitedSection)
         }
         
         // console.log(`解析出的句子数据 ${sentenceIndex}:`, {
-          originalText: sentenceData.originalText?.substring(0, 50),
-          romaji: sentenceData.romaji?.substring(0, 50),
-          translation: sentenceData.translation?.substring(0, 50),
-          structure: sentenceData.structure?.substring(0, 50),
-          analysis: sentenceData.analysis?.substring(0, 100),
-          grammar: sentenceData.grammar?.substring(0, 100),
-          vocabularyCount: sentenceData.vocabulary?.length
-        })
+        //   originalText: sentenceData.originalText?.substring(0, 50),
+        //   romaji: sentenceData.romaji?.substring(0, 50),
+        //   translation: sentenceData.translation?.substring(0, 50),
+        //   structure: sentenceData.structure?.substring(0, 50),
+        //   analysis: sentenceData.analysis?.substring(0, 100),
+        //   grammar: sentenceData.grammar?.substring(0, 100),
+        //   vocabularyCount: sentenceData.vocabulary?.length
+        // })
         
-        // 只有当至少有原文时才添加
+        // 只有当至少有原文时才添加，并且避免重复
         if (sentenceData.originalText) {
-          sentences.push(sentenceData)
+          // 检查是否已存在相同的原文
+          const isDuplicate = sentences.some(existing => 
+            existing.originalText === sentenceData.originalText
+          )
+          
+          if (!isDuplicate) {
+            sentences.push(sentenceData)
+            console.log(`添加句子${sentenceIndex}:`, sentenceData.originalText)
+          } else {
+            console.log(`跳过重复句子:`, sentenceData.originalText)
+          }
         }
       } else if (section.length > 50) {
         // 如果没有明显的标记但内容较长，尝试作为整体解析
@@ -913,61 +1313,619 @@ Page({
         endIndex = nextBracket > contentStart ? nextBracket : -1
       }
     } else if (endMarker === '\n') {
-      // 查找下一个【开头的位置或双换行
+      // 对于单行内容，查找换行符或下一个【标记
       const nextBracket = text.indexOf('【', contentStart)
-      const doubleNewline = text.indexOf('\n\n', contentStart)
       const singleNewline = text.indexOf('\n', contentStart)
       
       // 选择最近的作为结束位置
-      const positions = [nextBracket, doubleNewline, singleNewline].filter(p => p > contentStart)
+      const positions = [nextBracket, singleNewline].filter(p => p > contentStart)
       endIndex = positions.length > 0 ? Math.min(...positions) : -1
     } else {
       endIndex = text.indexOf(endMarker, contentStart)
     }
     
+    let content = ''
     if (endIndex === -1) {
-      return text.substring(contentStart).trim()
+      content = text.substring(contentStart).trim()
+    } else {
+      content = text.substring(contentStart, endIndex).trim()
     }
     
-    return text.substring(contentStart, endIndex).trim()
+    // 清理内容：移除多余的标点符号和空格
+    content = content.replace(/^[:：]\s*/, '') // 移除开头的冒号
+    content = content.replace(/^\s*[】]\s*/, '') // 移除开头的右括号
+    
+    return content
   },
 
-  // 提取词汇表
+  // 提取词汇表 - 优先AI，兜底策略备用
   extractVocabulary(text) {
-    // 尝试多种标记
-    let vocabSection = this.extractContent(text, '【词汇明细表】', '---')
-    if (!vocabSection) {
-      vocabSection = this.extractContent(text, '词汇明细表', '\n\n')
+    console.log('🔍 开始提取词汇表')
+    
+    // 先尝试提取AI返回的词汇表
+    const vocabulary = []
+    
+    // 查找词汇明细表部分
+    const vocabMatch = text.match(/【词汇明细表】([\s\S]*?)(?=【|---|$)/i)
+    if (vocabMatch) {
+      const vocabSection = vocabMatch[1]
+      console.log('🔍 找到词汇明细表:', vocabSection.substring(0, 200))
+      
+      // 按行分割，提取词汇
+      const lines = vocabSection.split('\n').filter(line => line.trim())
+      
+      lines.forEach(line => {
+        const trimmed = line.trim()
+        
+        // 跳过表头行和空行
+        if (!trimmed || 
+            trimmed.includes('日语｜罗马音｜中文') ||
+            trimmed.includes('单词｜罗马音｜中文') ||
+            trimmed.includes('日文原文｜日文原文｜词汇')) {
+          return
+        }
+        
+        // 解析格式：日语｜罗马音｜中文
+        const parts = trimmed.split('｜')
+        if (parts.length === 3) {
+          const japanese = parts[0].trim()
+          const romaji = parts[1].trim()
+          const chinese = parts[2].trim()
+          
+          // 验证是否为有效词汇
+          if (japanese && romaji && chinese && 
+              japanese !== '日文原文' && 
+              chinese !== '词汇' &&
+              chinese !== '中文翻译') {
+            vocabulary.push({ japanese, romaji, chinese })
+            console.log(`✅ 提取词汇: ${japanese} | ${romaji} | ${chinese}`)
+          }
+        }
+      })
     }
     
-    if (!vocabSection) {
-      // console.log('未找到词汇表部分')
-      return []
+    // 如果AI词汇表无效，使用兜底策略
+    if (vocabulary.length === 0) {
+      console.log('🚨 AI词汇表无效，使用兜底策略')
+      return this.extractFallbackVocabulary(text)
     }
     
-    // 分割行并过滤包含分隔符的行
-    const lines = vocabSection.split('\n').filter(line => {
-      return line.includes('｜') || line.includes('|') || line.includes('】')
+    console.log('✅ AI词汇表提取成功，数量:', vocabulary.length)
+    return vocabulary.slice(0, 6)
+  },
+
+  // 兜底词汇提取：从实际句子中智能提取
+  extractFallbackVocabulary(text) {
+    console.log('🔄 开始从实际句子智能提取词汇')
+    const vocabulary = []
+    
+    // 🎯 策略1：从【日文原文】字段提取
+    const originalMatches = text.match(/【日文原文】([^【\n]+)/g)
+    if (originalMatches) {
+      console.log('🔍 找到日文原文:', originalMatches.length, '个')
+      
+      originalMatches.slice(0, 3).forEach((match, index) => { // 只处理前3个句子，避免重复
+        const sentence = match.replace('【日文原文】', '').trim()
+        console.log(`📝 处理句子${index + 1}:`, sentence)
+        
+        // 智能分词并提取词汇
+        const words = this.smartExtractWords(sentence)
+        console.log(`🔪 分词结果:`, words)
+        
+        words.forEach(word => {
+          if (word.length >= 2 && word.length <= 6) { // 合理长度的词汇
+            const meaning = this.guessWordMeaning(word, sentence)
+            if (meaning !== null && !vocabulary.some(v => v.japanese === word)) {
+              vocabulary.push({
+                japanese: word,
+                romaji: this.generateBetterRomaji(word),
+                chinese: meaning
+              })
+              console.log(`✅ 添加词汇: ${word} | ${this.generateBetterRomaji(word)} | ${meaning}`)
+            }
+          }
+        })
+      })
+    }
+    
+    // 🎯 策略2：如果词汇不足，从整个文本中提取高频日语词汇
+    if (vocabulary.length < 3) {
+      console.log('⚠️ 词汇不足，从全文提取高频词汇')
+      const allJapanese = text.match(/[一-龯ひ-ゟァ-ヿー]{2,6}/g)
+      if (allJapanese) {
+        // 统计词汇频率并选择高频词汇
+        const wordCount = {}
+        allJapanese.forEach(word => {
+          if (this.isValidJapaneseWord(word)) {
+            wordCount[word] = (wordCount[word] || 0) + 1
+          }
+        })
+        
+        // 按频率排序，选择前几个
+        const sortedWords = Object.entries(wordCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(entry => entry[0])
+        
+        sortedWords.forEach(word => {
+          if (!vocabulary.some(v => v.japanese === word)) {
+            const meaning = this.guessWordMeaning(word, '')
+            if (meaning !== null) {
+              vocabulary.push({
+                japanese: word,
+                romaji: this.generateBetterRomaji(word),
+                chinese: meaning
+              })
+              console.log(`✅ 添加高频词汇: ${word} | ${this.generateBetterRomaji(word)} | ${meaning}`)
+            }
+          }
+        })
+      }
+    }
+    
+    // 🎯 策略3：最后的兜底保障
+    if (vocabulary.length === 0) {
+      console.log('⚠️ 使用默认兜底词汇')
+      vocabulary.push(
+        { japanese: '今日', romaji: 'kyou', chinese: '今天' },
+        { japanese: '自分', romaji: 'jibun', chinese: '自己' },
+        { japanese: '時間', romaji: 'jikan', chinese: '时间' }
+      )
+    }
+    
+    console.log('🔄 最终词汇结果:')
+    vocabulary.slice(0, 6).forEach((vocab, index) => {
+      console.log(`  ${index + 1}. ${vocab.japanese} | ${vocab.romaji} | ${vocab.chinese}`)
     })
     
-    return lines.map(line => {
-      // 支持多种分隔符
-      let parts = []
-      if (line.includes('｜')) {
-        parts = line.split('｜').map(p => p.trim())
-      } else if (line.includes('|')) {
-        parts = line.split('|').map(p => p.trim())
-      } else if (line.includes('】')) {
-        // 处理【日文】【罗马音】【中文】格式
-        parts = line.split('】').map(p => p.replace('【', '').trim()).filter(p => p)
+    return vocabulary.slice(0, 6) // 限制为6个词汇
+  },
+
+  // 智能分词方法
+  smartExtractWords(sentence) {
+    console.log('🎯 智能分词:', sentence)
+    
+    // 基于已知词汇库的分词
+    const words = []
+    let i = 0
+    
+    while (i < sentence.length) {
+      let matched = false
+      
+      // 从长到短匹配
+      for (let len = Math.min(5, sentence.length - i); len >= 1; len--) {
+        const candidate = sentence.substr(i, len)
+        
+        if (this.isKnownWord(candidate) || this.isValidJapaneseWord(candidate)) {
+          words.push(candidate)
+          i += len
+          matched = true
+          break
+        }
       }
       
-      return {
-        japanese: parts[0] || '',
-        romaji: parts[1] || '',
-        chinese: parts[2] || ''
+      if (!matched) {
+        i++
       }
-    }).filter(vocab => vocab.japanese) // 过滤掉空词汇
+    }
+    
+    return words.filter(w => w.length >= 2) // 过滤掉单个字符
+  },
+
+  // 验证是否为有效的日语词汇
+  isValidJapaneseWord(word) {
+    if (!word || word.length < 2) return false
+    
+    // 检查是否包含日语字符
+    const hasJapanese = /[一-龯ひ-ゟァ-ヿー]/.test(word)
+    if (!hasJapanese) return false
+    
+    // 排除纯助词
+    const particles = ['から', 'まで', 'では', 'には', 'とは', 'への', 'での']
+    if (particles.includes(word)) return false
+    
+    // 排除纯标点符号
+    if (/^[。、！？]+$/.test(word)) return false
+    
+    return true
+  },
+
+  // 从单个句子中提取词汇
+  extractWordsFromSentence(sentence) {
+    console.log('🎯 分析句子:', sentence)
+    
+    // 基于常见词汇边界的简单分词
+    const words = []
+    let i = 0
+    
+    while (i < sentence.length) {
+      let matched = false
+      
+      // 从长到短匹配常见词汇
+      for (let len = Math.min(4, sentence.length - i); len >= 1; len--) {
+        const candidate = sentence.substr(i, len)
+        
+        // 检查是否是已知词汇
+        if (this.isKnownWord(candidate)) {
+          words.push(candidate)
+          i += len
+          matched = true
+          break
+        }
+      }
+      
+      // 如果没有匹配到，跳过当前字符
+      if (!matched) {
+        i++
+      }
+    }
+    
+    return words.filter(w => w.length > 0)
+  },
+
+  // 检查是否是已知词汇
+  isKnownWord(word) {
+    const knownWords = new Set([
+      // 基础词汇
+      '私', '僕', '君', '彼', '彼女', 'あなた',
+      
+      // 常用名词
+      '学校', '先生', '学生', '友達', '家族', '家', '会社', '駅', '本', '車', '花', '犬', '猫',
+      '今日', '明日', '昨日', '時間', '映画', '音楽', '料理', '写真', '電話',
+      
+      // 常用动词
+      '行く', '来る', '見る', '聞く', '話す', '読む', '書く', '食べる', '飲む', '寝る', '起きる',
+      '働く', '遊ぶ', '買う', '売る', '作る', '歌う', '踊る', '笑う', '泣く',
+      
+      // 动词变位
+      '行きます', '来ます', '見ます', '聞きます', '話します', '読みます', '書きます',
+      '食べます', '飲みます', '寝ます', '起きます',
+      
+      // 形容词
+      '好き', '嫌い', '新しい', '古い', '大きい', '小さい', '高い', '安い',
+      '美しい', '楽しい', '悲しい', '怖い', '暖かい', '寒い', '忙しい',
+      
+      // 其他
+      '愛', '心', '夢', '希望', '平和', '自由', '幸せ', '健康', '勇気', '力', '声'
+    ])
+    
+    return knownWords.has(word)
+  },
+
+  // 改进的罗马音生成
+  generateBetterRomaji(japanese) {
+    // 首先查找已知词汇的罗马音
+    const knownRomaji = this.getKnownWordRomaji(japanese)
+    if (knownRomaji) {
+      return knownRomaji
+    }
+    
+    // 对于假名，使用转换表
+    return this.kanaToRomaji(japanese)
+  },
+
+  // 获取已知词汇的罗马音
+  getKnownWordRomaji(word) {
+    const wordRomajiMap = {
+      // 人称代词
+      '私': 'watashi',
+      '僕': 'boku', 
+      '君': 'kimi',
+      '彼': 'kare',
+      '彼女': 'kanojo',
+      
+      // 常用名词
+      '学校': 'gakkou',
+      '先生': 'sensei',
+      '学生': 'gakusei',
+      '友達': 'tomodachi',
+      '家族': 'kazoku',
+      '家': 'ie',
+      '会社': 'kaisha',
+      '駅': 'eki',
+      '本': 'hon',
+      '車': 'kuruma',
+      '花': 'hana',
+      '犬': 'inu',
+      '猫': 'neko',
+      '魚': 'sakana',
+      '鳥': 'tori',
+      
+      // 时间词汇
+      '今日': 'kyou',
+      '明日': 'ashita',
+      '昨日': 'kinou',
+      '時間': 'jikan',
+      '朝': 'asa',
+      '昼': 'hiru',
+      '夜': 'yoru',
+      
+      // 地点
+      '図書館': 'toshokan',
+      '公園': 'kouen',
+      '病院': 'byouin',
+      '部屋': 'heya',
+      '教室': 'kyoushitsu',
+      '台所': 'daidokoro',
+      
+      // 物品
+      '映画': 'eiga',
+      '音楽': 'ongaku',
+      '料理': 'ryouri',
+      '電話': 'denwa',
+      '写真': 'shashin',
+      '手紙': 'tegami',
+      
+      // 动词
+      '行く': 'iku',
+      '来る': 'kuru',
+      '見る': 'miru',
+      '聞く': 'kiku',
+      '話す': 'hanasu',
+      '読む': 'yomu',
+      '書く': 'kaku',
+      '食べる': 'taberu',
+      '飲む': 'nomu',
+      '寝る': 'neru',
+      '起きる': 'okiru',
+      '働く': 'hataraku',
+      '遊ぶ': 'asobu',
+      '買う': 'kau',
+      '売る': 'uru',
+      '作る': 'tsukuru',
+      '歌う': 'utau',
+      '踊る': 'odoru',
+      '笑う': 'warau',
+      '泣く': 'naku',
+      
+      // 动词变位
+      '行きます': 'ikimasu',
+      '来ます': 'kimasu',
+      '見ます': 'mimasu',
+      '聞きます': 'kikimasu',
+      '話します': 'hanashimasu',
+      '読みます': 'yomimasu',
+      '書きます': 'kakimasu',
+      '食べます': 'tabemasu',
+      '飲みます': 'nomimasu',
+      '寝ます': 'nemasu',
+      '起きます': 'okimasu',
+      
+      // 形容词
+      '好き': 'suki',
+      '嫌い': 'kirai',
+      '新しい': 'atarashii',
+      '古い': 'furui',
+      '大きい': 'ookii',
+      '小さい': 'chiisai',
+      '高い': 'takai',
+      '安い': 'yasui',
+      '美しい': 'utsukushii',
+      '楽しい': 'tanoshii',
+      '悲しい': 'kanashii',
+      '怖い': 'kowai',
+      '暖かい': 'atatakai',
+      '寒い': 'samui',
+      '忙しい': 'isogashii',
+      
+      // 其他常用词
+      '愛': 'ai',
+      '心': 'kokoro',
+      '夢': 'yume',
+      '希望': 'kibou',
+      '平和': 'heiwa',
+      '自由': 'jiyuu',
+      '力': 'chikara',
+      '声': 'koe',
+      '目': 'me',
+      '手': 'te',
+      '足': 'ashi',
+      
+      // 颜色
+      '赤': 'aka',
+      '青': 'ao',
+      '白': 'shiro',
+      '黒': 'kuro',
+      '緑': 'midori',
+      '黄色': 'kiiro',
+      
+      // 数字
+      '一': 'ichi',
+      '二': 'ni',
+      '三': 'san',
+      '四': 'yon',
+      '五': 'go',
+      '六': 'roku',
+      '七': 'nana',
+      '八': 'hachi',
+      '九': 'kyuu',
+      '十': 'juu'
+    }
+    
+    return wordRomajiMap[word] || null
+  },
+
+  // 假名转罗马音
+  kanaToRomaji(kana) {
+    const kanaMap = {
+      'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
+      'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
+      'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
+      'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
+      'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
+      'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
+      'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
+      'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
+      'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
+      'わ': 'wa', 'を': 'wo', 'ん': 'n',
+      'が': 'ga', 'ぎ': 'gi', 'ぐ': 'gu', 'げ': 'ge', 'ご': 'go',
+      'ざ': 'za', 'じ': 'ji', 'ず': 'zu', 'ぜ': 'ze', 'ぞ': 'zo',
+      'だ': 'da', 'ぢ': 'ji', 'づ': 'zu', 'で': 'de', 'ど': 'do',
+      'ば': 'ba', 'び': 'bi', 'ぶ': 'bu', 'べ': 'be', 'ぼ': 'bo',
+      'ぱ': 'pa', 'ぴ': 'pi', 'ぷ': 'pu', 'ぺ': 'pe', 'ぽ': 'po'
+    }
+    
+    let romaji = ''
+    for (let char of kana) {
+      romaji += kanaMap[char] || char
+    }
+    return romaji || 'romaji'
+  },
+
+  // 词汇意思推测
+  guessWordMeaning(word, wordType) {
+    // 扩大词汇字典
+    const commonWords = {
+      // 人称代词
+      '私': '我', '僕': '我', '俺': '我', '君': '你', '彼': '他', '彼女': '她', 
+      'あなた': '你', 'みんな': '大家', '誰': '谁', '何': '什么',
+      
+      // 时间词汇
+      '今日': '今天', '明日': '明天', '昨日': '昨天', '今': '现在', '時間': '时间',
+      '朝': '早上', '昼': '中午', '夜': '晚上', '毎日': '每天', '週末': '周末',
+      '春': '春天', '夏': '夏天', '秋': '秋天', '冬': '冬天',
+      
+      // 地点场所
+      '学校': '学校', '家': '家', '会社': '公司', '駅': '车站', '病院': '医院',
+      '図書館': '图书馆', '公園': '公园', '店': '店', 'レストラン': '餐厅',
+      '部屋': '房间', '教室': '教室', '台所': '厨房',
+      
+      // 物品
+      '本': '书', '映画': '电影', '音楽': '音乐', '料理': '料理', '車': '车',
+      '電話': '电话', 'コンピュータ': '电脑', '写真': '照片', '手紙': '信',
+      '花': '花', '犬': '狗', '猫': '猫', '魚': '鱼', '鳥': '鸟',
+      
+      // 人物关系
+      '友達': '朋友', '家族': '家族', '先生': '老师', '学生': '学生',
+      '母': '母亲', '父': '父亲', '兄': '哥哥', '姉': '姐姐', '弟': '弟弟', '妹': '妹妹',
+      '子供': '孩子', '赤ちゃん': '婴儿',
+      
+      // 形容词
+      '好き': '喜欢', '嫌い': '讨厌', '大切': '重要', '新しい': '新的', '古い': '旧的',
+      '大きい': '大的', '小さい': '小的', '高い': '高的', '安い': '便宜的',
+      '美しい': '美丽的', '楽しい': '快乐的', '悲しい': '悲伤的', '怖い': '可怕的',
+      '暖かい': '温暖的', '寒い': '寒冷的', '忙しい': '忙碌的',
+      
+      // 动词（去掉语尾变化）
+      '行く': '去', '来る': '来', '見る': '看', '聞く': '听', '話す': '说话',
+      '読む': '读', '書く': '写', '食べる': '吃', '飲む': '喝', '寝る': '睡觉',
+      '起きる': '起床', '勉強する': '学习', '働く': '工作', '遊ぶ': '玩',
+      '買う': '买', '売る': '卖', '作る': '制作', '料理する': '做饭',
+      '歌う': '唱歌', '踊る': '跳舞', '笑う': '笑', '泣く': '哭',
+      
+      // 动词变位（常见形式）
+      '行きます': '去', '来ます': '来', '見ます': '看', '聞きます': '听',
+      '話します': '说话', '読みます': '读', '書きます': '写', '食べます': '吃',
+      '飲みます': '喝', '寝ます': '睡觉', '起きます': '起床',
+      
+      // 颜色
+      '赤': '红色', '青': '蓝色', '黄色': '黄色', '緑': '绿色', '白': '白色', '黒': '黑色',
+      
+      // 数字
+      '一': '一', '二': '二', '三': '三', '四': '四', '五': '五',
+      '六': '六', '七': '七', '八': '八', '九': '九', '十': '十',
+      
+      // 其他常用词
+      '愛': '爱', '心': '心', '夢': '梦想', '希望': '希望', '平和': '和平',
+      '自由': '自由', '幸せ': '幸福', '健康': '健康', '勇気': '勇气',
+      '力': '力量', '声': '声音', '目': '眼睛', '手': '手', '足': '脚'
+    }
+    
+    // 助词列表 - 这些不应该出现在词汇表中
+    const particles = ['に', 'の', 'は', 'が', 'を', 'で', 'と', 'から', 'まで', 'へ', 'より', 'か', 'も', 'だけ', 'ばかり', 'など', 'って', 'という', 'では', 'には', 'との', 'での']
+    
+    // 如果是助词，返回null（表示不包含在词汇表中）
+    if (particles.includes(word)) {
+      return null
+    }
+    
+    // 语法词尾也不包含
+    const grammarEndings = ['です', 'である', 'だ', 'ます', 'た', 'て', 'ない', 'ぬ', 'う', 'る', 'ている', 'ていた']
+    if (grammarEndings.includes(word)) {
+      return null
+    }
+    
+    // 检查常用词汇
+    if (commonWords[word]) {
+      return commonWords[word]
+    }
+    
+    // 词型推测也跳过助词
+    if (wordType && wordType.includes('助词')) {
+      return null
+    }
+    
+    // 根据词性推测
+    if (wordType) {
+      if (wordType.includes('名词')) return '名词'
+      if (wordType.includes('动词')) return '动词'
+      if (wordType.includes('形容词')) return '形容词'
+      if (wordType.includes('副词')) return '副词'
+    }
+    
+    // 最后的兜底，但不是"待查词典"
+    return '词汇'
+  },
+
+  // 简化的日语词汇提取 - 基于常见词汇模式
+  segmentJapaneseSentence(sentence) {
+    console.log('🔪 开始分词:', sentence)
+    const words = []
+    
+    // 预定义常见词汇模式，按长度排序（长的优先匹配）
+    const commonPatterns = [
+      // 4字及以上
+      '学校', '先生', '学生', '友達', '家族', '会社', '時間', '今日', '明日', '昨日',
+      '映画', '音楽', '料理', '電話', '写真', '手紙', '図書館', '公園', 'レストラン',
+      '美しい', '楽しい', '悲しい', '新しい', '古い', '大きい', '小さい', '暖かい', '寒い', '忙しい',
+      '勉強する', '料理する', '行きます', '来ます', '見ます', '聞きます', '話します', '読みます', '書きます',
+      '食べます', '飲みます', '寝ます', '起きます', 'コンピュータ',
+      
+      // 3字词汇
+      '私', '僕', '君', '彼', '本', '車', '家', '花', '犬', '猫', '魚', '鳥', '母', '父', '兄', '姉', '弟', '妹',
+      '部屋', '教室', '台所', '病院', '駅', '店', '赤', '青', '白', '黒', '緑', '愛', '心', '夢', '声', '目', '手', '足',
+      '行く', '来る', '見る', '聞く', '読む', '書く', '話す', '食べる', '飲む', '寝る', '起きる', '働く', '遊ぶ',
+      '買う', '売る', '作る', '歌う', '踊る', '笑う', '泣く', '好き', '嫌い', '高い', '安い', '怖い',
+      
+      // 2字词汇
+      '今', '朝', '昼', '夜', '春', '夏', '秋', '冬', '力', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'
+    ]
+    
+    let remaining = sentence
+    let position = 0
+    
+    while (position < sentence.length) {
+      let matched = false
+      
+      // 尝试匹配常见词汇模式
+      for (const pattern of commonPatterns) {
+        if (remaining.startsWith(pattern)) {
+          words.push(pattern)
+          remaining = remaining.substring(pattern.length)
+          position += pattern.length
+          matched = true
+          break
+        }
+      }
+      
+      // 如果没有匹配到预定义词汇，单字符处理
+      if (!matched) {
+        const char = sentence[position]
+        if (/[一-龯ひ-ゟァ-ヿー]/.test(char)) {
+          words.push(char)
+        }
+        remaining = remaining.substring(1)
+        position++
+      }
+    }
+    
+    console.log('🔪 分词结果:', words)
+    return words.filter(w => w && w.trim().length > 0)
+  },
+
+  // 简单罗马音生成（兼容旧代码）
+  generateSimpleRomaji(japanese) {
+    return this.generateBetterRomaji(japanese)
   },
 
   // 复制解析结果
@@ -1066,6 +2024,7 @@ Page({
   clearContent() {
     this.setData({
       inputText: '',
+      originalInputText: '', // 清空原始文本
       imageUrl: '',
       cloudImageUrl: '', // 清空云存储URL
       userInputTitle: '',
@@ -1076,47 +2035,6 @@ Page({
     })
   },
 
-  // 手动保存到历史
-  async manualSaveToHistory() {
-    const { inputText, inputMethod, imageUrl, analysisResult, extractedImageText, articleTitle } = this.data
-    
-    // console.log('手动保存到历史，当前数据:', {
-      inputText,
-      inputMethod,
-      imageUrl: imageUrl ? '有图片' : '无图片',
-      extractedImageText,
-      articleTitle,
-      analysisResultLength: analysisResult?.length
-    })
-    
-    if (!analysisResult || analysisResult.length === 0) {
-      wx.showToast({
-        title: '没有可保存的内容',
-        icon: 'none'
-      })
-      return
-    }
-    
-    wx.showModal({
-      title: '保存确认',
-      content: '是否保存当前解析结果到历史记录？',
-      success: async (res) => {
-        if (res.confirm) {
-          const saveData = {
-            inputText: inputMethod === 'text' ? inputText : (extractedImageText || articleTitle || '图片识别'),
-            inputMethod,
-            imageUrl: inputMethod === 'image' ? (this.data.cloudImageUrl || imageUrl) : '',  // 优先使用云存储URL
-            extractedText: inputMethod === 'image' ? extractedImageText : '',
-            articleTitle: inputMethod === 'image' ? articleTitle : '',
-            analysisResult
-          }
-          
-          // console.log('准备保存的数据:', saveData)
-          await this.saveParseResult(saveData)
-        }
-      }
-    })
-  },
 
   // 保存解析结果到数据库
   async saveParseResult(data) {
@@ -1185,11 +2103,11 @@ Page({
       // console.log('云数据库保存成功:', res)
       // console.log('保存的记录ID:', res._id)
       // console.log('保存的数据摘要:', {
-        inputMethod: saveData.inputMethod,
-        hasImageUrl: !!saveData.imageUrl,
-        title: saveData.title,
-        sentencesCount: saveData.sentences?.length
-      })
+      //   inputMethod: saveData.inputMethod,
+      //   hasImageUrl: !!saveData.imageUrl,
+      //   title: saveData.title,
+      //   sentencesCount: saveData.sentences?.length
+      // })
       
       wx.showToast({
         title: '已保存到历史',
@@ -1259,13 +2177,20 @@ Page({
         // 文本输入：检查输入文本
         query.inputText = data.inputText.trim()
         query.inputMethod = 'text'
-      } else if (data.inputMethod === 'image' && data.analysisResult && data.analysisResult.length > 0) {
-        // 图片输入：检查第一个句子的原文
-        const firstSentence = data.analysisResult[0].originalText
-        if (firstSentence) {
-          // 在sentences数组中查找匹配的记录
-          query['sentences.0.originalText'] = firstSentence
+      } else if (data.inputMethod === 'image') {
+        // 图片输入：检查用户输入的标题或提取的文本
+        const imageIdentifier = data.articleTitle || data.extractedText || data.inputText
+        if (imageIdentifier) {
+          // 使用图片标识进行重复检测
+          query.articleTitle = imageIdentifier.trim()
           query.inputMethod = 'image'
+        } else if (data.analysisResult && data.analysisResult.length > 0) {
+          // 备用方案：检查第一个句子的原文
+          const firstSentence = data.analysisResult[0].originalText
+          if (firstSentence) {
+            query['sentences.0.originalText'] = firstSentence
+            query.inputMethod = 'image'
+          }
         }
       }
       
@@ -1304,12 +2229,12 @@ Page({
       const limitMB = (storageInfo.limitSize / 1024).toFixed(2)
       
       // console.log('本地存储信息:', {
-        currentSize: storageInfo.currentSize,
-        limitSize: storageInfo.limitSize,
-        keys: storageInfo.keys.length,
-        usedMB,
-        limitMB
-      })
+      //   currentSize: storageInfo.currentSize,
+      //   limitSize: storageInfo.limitSize,
+      //   keys: storageInfo.keys.length,
+      //   usedMB,
+      //   limitMB
+      // })
       
       // 如果存储空间超过8MB（留2MB余量），清理旧数据
       if (storageInfo.currentSize > 8 * 1024) {
@@ -1389,12 +2314,12 @@ Page({
       delete saveData.analysisResult
       
       // console.log('准备保存到本地的数据:', {
-        id: saveData._id,
-        inputMethod: saveData.inputMethod,
-        hasImageUrl: !!saveData.imageUrl,
-        title: saveData.title,
-        sentencesCount: saveData.sentences?.length
-      })
+      //   id: saveData._id,
+      //   inputMethod: saveData.inputMethod,
+      //   hasImageUrl: !!saveData.imageUrl,
+      //   title: saveData.title,
+      //   sentencesCount: saveData.sentences?.length
+      // })
       
       localHistory.unshift(saveData) // 添加到开头
       
@@ -1481,6 +2406,94 @@ Page({
       }
     } catch (error) {
       console.error('清理本地存储失败:', error)
+    }
+  },
+
+  // 简化处理方法 - 当批处理超时时使用
+  async simplifiedProcessing(inputText) {
+    try {
+      // 保存原始文本用于显示
+      this.setData({ originalInputText: inputText })
+      
+      wx.showLoading({ title: '简化处理中...' })
+      
+      // 只取前面部分文本进行处理（避免超时）
+      const lines = inputText.split('\n').filter(line => line.trim())
+      const maxLines = 10  // 最多处理10行
+      const simplifiedText = lines.slice(0, maxLines).join('\n')
+      
+      if (lines.length > maxLines) {
+        wx.showToast({
+          title: `已简化为前${maxLines}行处理`,
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      
+      // 使用快速云函数处理简化文本
+      const res = await wx.cloud.callFunction({
+        name: 'azure-gpt4o',
+        data: {
+          action: 'grammar',
+          sentence: simplifiedText
+        }
+      })
+      
+      let result
+      if (res.result.success) {
+        result = res.result.data.analysis
+      } else {
+        throw new Error(res.result.error || '简化处理失败')
+      }
+      
+      // 解析结果
+      const inputType = this.detectInputType(simplifiedText)
+      let analysisResult, articleTitle = ''
+      
+      if (inputType === 'word' || inputType === 'wordlist') {
+        analysisResult = this.parseWordResponse(result)
+      } else {
+        const parseResult = this.parseSentenceResponse(result)
+        analysisResult = parseResult.sentences
+        articleTitle = parseResult.title
+      }
+      
+      // 显示结果
+      this.setData({
+        analysisResult: analysisResult || [],
+        showResult: true,
+        isAnalyzing: false
+      })
+      
+      // 保存到历史（标记为简化处理）
+      const saveData = {
+        inputText: simplifiedText,
+        inputMethod: 'text',
+        imageUrl: '',
+        extractedText: '',
+        articleTitle: this.data.articleTitle || articleTitle,
+        title: '简化处理结果',
+        analysisResult: analysisResult || []
+      }
+      
+      this.saveParseResult(saveData)
+      
+      wx.hideLoading()
+      wx.showToast({
+        title: '简化处理完成',
+        icon: 'success'
+      })
+      
+    } catch (error) {
+      console.error('简化处理失败:', error)
+      wx.hideLoading()
+      wx.showToast({
+        title: '简化处理失败',
+        icon: 'none'
+      })
+      this.setData({
+        isAnalyzing: false
+      })
     }
   },
   
@@ -1582,15 +2595,16 @@ Page({
 
   // 分批处理歌词
   async batchProcessLyrics(text) {
+    // 先保存原始文本
+    this.setData({ originalInputText: text })
+    
     const lines = text.split('\n').filter(line => line.trim())
     const BATCH_SIZE = 4 // 每批处理4行
-    const batches = []
     
-    // 将歌词分批
-    for (let i = 0; i < lines.length; i += BATCH_SIZE) {
-      const batch = lines.slice(i, i + BATCH_SIZE)
-      batches.push(batch.join('\n'))
-    }
+    console.log(`歌词分批处理：共${lines.length}行，每批${BATCH_SIZE}行`)
+    
+    // 使用统一的分段函数
+    const batches = this.splitTextIntoSegments(text, BATCH_SIZE)
     
     // console.log(`歌词共${lines.length}行，分成${batches.length}批处理`)
     
@@ -1598,7 +2612,7 @@ Page({
     let successCount = 0
     let failCount = 0
     
-    // 逐批处理
+    // 简化的逐批处理
     for (let i = 0; i < batches.length; i++) {
       wx.showLoading({ 
         title: `解析中 ${i + 1}/${batches.length}`,
@@ -1606,8 +2620,6 @@ Page({
       })
       
       try {
-        // console.log(`处理第${i + 1}批，内容：`, batches[i].substring(0, 50) + '...')
-        
         const res = await wx.cloud.callFunction({
           name: 'azure-gpt4o',
           data: {
@@ -1616,28 +2628,21 @@ Page({
           }
         })
         
-        if (res.result.success) {
-          const parsedBatch = this.parseBatchResult(res.result.data.analysis, batches[i])
-          allSentences.push(...parsedBatch)
-          successCount++
-          // console.log(`第${i + 1}批解析成功`)
-        } else {
-          console.error(`第${i + 1}批解析失败:`, res.result.error)
-          // 失败的批次使用本地解析
-          const localParsed = this.parseLocalBatch(batches[i])
-          allSentences.push(...localParsed)
-          failCount++
-        }
+        // 简化聚合：成功则解析，失败则本地处理
+        const batchResult = res.result.success 
+          ? this.parseBatchResult(res.result.data.analysis, batches[i])
+          : this.parseLocalBatch(batches[i])
+        
+        allSentences.push(...batchResult)
+        res.result.success ? successCount++ : failCount++
         
       } catch (error) {
         console.error(`第${i + 1}批处理出错:`, error)
-        // 出错的批次使用本地解析
-        const localParsed = this.parseLocalBatch(batches[i])
-        allSentences.push(...localParsed)
+        allSentences.push(...this.parseLocalBatch(batches[i]))
         failCount++
       }
       
-      // 每批之间稍微延迟，避免请求过快
+      // 批次间延迟
       if (i < batches.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
@@ -1676,96 +2681,51 @@ Page({
     
     this.setData({
       isAnalyzing: false,
-      analysisResult
+      analysisResult: analysisResult.sentences, // 只保存句子数组
+      showResult: true,
+      // 保留原始输入文本，确保不被覆盖
+      originalInputText: text // 新增：保存原始完整文本
     })
   },
   
-  // 解析批次结果
+  // 解析批次结果 - 简化版
   parseBatchResult(analysisText, originalText) {
-    // 将GPT返回的结果按句子分割
-    const sentences = []
-    const sections = analysisText.split(/📘|第\d+句/).filter(s => s.trim())
+    // 简单策略：直接使用现有的parseSentenceResponse方法
+    const parsed = this.parseSentenceResponse(analysisText)
     
-    for (let section of sections) {
-      if (!section.trim()) continue
-      
-      const sentence = {
-        originalText: '',
-        romaji: '',
-        translation: '',
-        structure: '',
-        analysis: '',
-        grammar: '',
-        vocabulary: []
-      }
-      
-      // 提取各部分内容
-      const lines = section.split('\n')
-      for (let line of lines) {
-        if (line.includes('【日文原文】') || line.includes('日文原文')) {
-          sentence.originalText = line.replace(/.*[】】]/, '').trim()
-        } else if (line.includes('【罗马音】') || line.includes('罗马音')) {
-          sentence.romaji = line.replace(/.*[】】]/, '').trim()
-        } else if (line.includes('【中文翻译】') || line.includes('中文翻译')) {
-          sentence.translation = line.replace(/.*[】】]/, '').trim()
-        } else if (line.includes('【精简结构】') || line.includes('精简结构')) {
-          sentence.structure = line.replace(/.*[】】]/, '').trim()
-        } else if (line.includes('【句子结构分析】') || line.includes('句子结构分析')) {
-          sentence.analysis = section.substring(section.indexOf('句子结构分析'))
-        } else if (line.includes('【语法点说明】') || line.includes('语法点说明')) {
-          sentence.grammar = section.substring(section.indexOf('语法点说明'))
-        }
-      }
-      
-      // 提取词汇
-      const vocabSection = section.match(/【词汇明细表】[\s\S]*?(?=\n\n|$)/);
-      if (vocabSection) {
-        const vocabLines = vocabSection[0].split('\n').slice(1)
-        for (let vocabLine of vocabLines) {
-          if (vocabLine.includes('｜')) {
-            const parts = vocabLine.split('｜')
-            if (parts.length >= 3) {
-              sentence.vocabulary.push({
-                japanese: parts[0].trim(),
-                romaji: parts[1].trim(),
-                chinese: parts[2].trim()
-              })
-            }
-          }
-        }
-      }
-      
-      if (sentence.originalText) {
-        sentences.push(sentence)
-      }
+    // 如果解析成功，直接返回句子
+    if (parsed && parsed.sentences && parsed.sentences.length > 0) {
+      return parsed.sentences
     }
     
-    // 如果解析失败，返回原始文本
-    if (sentences.length === 0) {
-      sentences.push({
-        originalText: originalText,
-        romaji: this.extractFurigana(originalText),
-        translation: '解析中...',
-        structure: '',
-        analysis: analysisText,
-        grammar: ''
-      })
-    }
-    
-    return sentences
+    // 如果解析失败，使用简单的行分割
+    const lines = originalText.split('\n').filter(line => line.trim())
+    return lines.map((line, index) => ({
+      index: index + 1,
+      originalText: line,
+      romaji: this.extractFurigana(line),
+      translation: `需要翻译: ${line}`,
+      structure: '歌词行',
+      analysis: `第${index + 1}行歌词`,
+      grammar: '',
+      vocabulary: []
+    }))
   },
   
-  // 本地解析批次（降级方案）
+  // 本地解析批次（降级方案）- 简化版
   parseLocalBatch(text) {
+    // 直接按行分割，每行作为一个句子
     const lines = text.split('\n').filter(line => line.trim())
-    return [{
-      originalText: text,
-      romaji: this.extractFurigana(text),
-      translation: '需要人工翻译',
-      structure: '歌词段落',
-      analysis: lines.map(l => `• ${l}`).join('\n'),
-      grammar: '云函数暂时不可用'
-    }]
+    return lines.map((line, index) => ({
+      index: index + 1,
+      originalText: line,
+      romaji: this.extractFurigana(line),
+      translation: '云函数不可用，需手动翻译',
+      structure: '歌词行',
+      analysis: `离线处理第${index + 1}行`,
+      grammar: '',
+      vocabulary: []
+    }))
   },
   
   // 本地歌词解析（云函数不可用时的备用方案）
@@ -1910,6 +2870,41 @@ Page({
     }
   },
   
+  // 词汇整合到学习库
+  async integrateVocabularyToLearning(parseData) {
+    try {
+      console.log('🧠 开始整合词汇到学习库...')
+      
+      // 调用词汇整合云函数
+      const result = await wx.cloud.callFunction({
+        name: 'vocabulary-integration',
+        data: {
+          action: 'integrate_new_record',
+          recordId: parseData.recordId || parseData._id
+        }
+      })
+      
+      if (result.result.success) {
+        console.log('✅ 词汇整合成功:', result.result)
+        
+        // 显示成功提示
+        if (result.result.addedCount > 0 || result.result.updatedCount > 0) {
+          wx.showToast({
+            title: `已整合${result.result.addedCount + result.result.updatedCount}个词汇`,
+            icon: 'success',
+            duration: 2000
+          })
+        }
+      } else {
+        console.warn('⚠️ 词汇整合失败:', result.result.error)
+      }
+      
+    } catch (error) {
+      console.error('❌ 词汇整合调用失败:', error)
+      // 不显示错误提示，静默失败
+    }
+  },
+
   // 分享
   onShareAppMessage() {
     return {

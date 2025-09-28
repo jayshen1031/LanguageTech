@@ -120,9 +120,9 @@ Page({
       // 语音对话流程
       const result = await voiceService.voiceConversation(tempFilePath, {
         lang: this.data.language,
-        onRecognized: (text) => {
+        onRecognized: (text, isMock = false) => {
           // 添加用户消息
-          this.addUserMessage(text)
+          this.addUserMessage(text, isMock)
         },
         onResponse: async (userText) => {
           // 获取AI回复
@@ -174,17 +174,27 @@ Page({
   },
 
   // 添加用户消息
-  addUserMessage(text) {
+  addUserMessage(text, isMock = false) {
     const message = {
       id: Date.now(),
       type: 'user',
       text: text,
-      time: this.formatTime(new Date())
+      time: this.formatTime(new Date()),
+      isMock: isMock // 标记是否为模拟数据
     }
     
     this.setData({
       messages: [...this.data.messages, message]
     })
+    
+    // 如果是模拟数据，显示提示
+    if (isMock) {
+      wx.showToast({
+        title: '开发工具模拟数据',
+        icon: 'none',
+        duration: 1500
+      })
+    }
     
     // 滚动到底部
     this.scrollToBottom()
@@ -220,6 +230,12 @@ Page({
         lang: this.data.language,
         autoPlay: true
       })
+      
+      // 检查是否在开发者工具环境中被禁用
+      if (result.disabled) {
+        console.log('开发者工具环境：跳过音频播放')
+        return
+      }
       
       // 更新音频URL
       if (result.success && result.audioUrl) {

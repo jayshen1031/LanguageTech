@@ -82,6 +82,29 @@
   flex-direction: column;
 }
 
+/* 标题输入区域 */
+.title-input-section {
+  margin-bottom: 24rpx;
+}
+
+.title-input {
+  width: 100%;
+  padding: 24rpx 24rpx;
+  background: #fff;
+  border: 2rpx solid #667eea;
+  border-radius: 12rpx;
+  font-size: 32rpx;
+  box-sizing: border-box;
+  color: #333;
+  min-height: 88rpx;
+  line-height: 1.4;
+}
+
+.title-input::placeholder {
+  color: #999;
+  font-size: 28rpx;
+}
+
 .text-input {
   width: 100%;
   flex: 1;
@@ -181,22 +204,27 @@
 .user-title {
   display: flex;
   align-items: center;
-  margin-top: 20rpx;
-  padding: 20rpx;
-  background: #f5f5f5;
-  border-radius: 8rpx;
+  margin-top: 24rpx;
+  padding: 24rpx 24rpx;
+  background: #fff;
+  border: 2rpx solid #667eea;
+  border-radius: 12rpx;
+  min-height: 88rpx;
+  line-height: 1.4;
 }
 
 .title-label {
   font-size: 28rpx;
-  color: #666;
-  margin-right: 10rpx;
+  color: #667eea;
+  margin-right: 12rpx;
+  font-weight: 500;
 }
 
 .title-text {
-  font-size: 30rpx;
+  font-size: 32rpx;
   color: #333;
   font-weight: bold;
+  flex: 1;
 }
 
 /* 文章标题 */
@@ -213,6 +241,50 @@
   color: #fff;
   text-align: center;
   display: block;
+}
+
+/* 原始内容容器 */
+.original-content-container {
+  margin: 20rpx 0;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #667eea;
+}
+
+.original-content-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+  gap: 12rpx;
+}
+
+.original-content-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.original-content-info {
+  font-size: 24rpx;
+  color: #666;
+  background: #e9ecef;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+}
+
+.original-content-text {
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #444;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 400rpx;
+  overflow-y: auto;
+  background: #fff;
+  padding: 16rpx;
+  border-radius: 8rpx;
+  border: 1px solid #e9ecef;
 }
 
 /* 复习入口 */
@@ -416,6 +488,18 @@
 
 .vocab-table-flat {
   flex: 1;
+}
+
+.vocab-header-flat {
+  margin-bottom: 10rpx;
+  padding-bottom: 8rpx;
+  border-bottom: 1rpx solid #e0e0e0;
+}
+
+.vocab-header-text {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: 500;
 }
 
 .vocab-row-flat {

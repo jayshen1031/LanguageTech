@@ -1,0 +1,11 @@
+{
+  "name": "vocabulary-integration",
+  "version": "1.0.0",
+  "description": "词汇整合云函数 - 从解析历史中提取并去重词汇",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -29,16 +29,34 @@
     <view class="input-area">
       <!-- 文本输入 -->
       <view wx:if="{{inputMethod === 'text'}}" class="text-mode">
+        <!-- 标题输入 -->
+        <view class="title-input-section">
+          <input 
+            class="title-input"
+            placeholder="为这篇文本添加标题（可选）"
+            placeholder-class="placeholder"
+            value="{{articleTitle}}"
+            bindinput="onTitleInput"
+            maxlength="50"
+          />
+        </view>
+        
         <textarea 
           class="text-input"
           placeholder="请输入日语文本（如：私は学生です）"
           placeholder-class="placeholder"
           value="{{inputText}}"
           bindinput="onTextInput"
-          maxlength="500"
+          maxlength="1000"
         />
         <view class="input-footer">
-          <text class="char-count">{{inputText.length}}/500</text>
+          <text class="char-count">{{inputText.length}}/1000</text>
+        </view>
+        
+        <!-- 显示用户输入的标题 -->
+        <view wx:if="{{articleTitle && inputMethod === 'text'}}" class="user-title">
+          <text class="title-label">标题：</text>
+          <text class="title-text">{{articleTitle}}</text>
         </view>
       </view>
 
@@ -90,7 +108,6 @@
     <view class="result-header">
       <text class="result-title">解析结果</text>
       <view class="result-actions">
-        <text class="save-btn" bindtap="manualSaveToHistory">保存到历史</text>
         <text class="copy-btn" bindtap="copyResult">复制全部</text>
       </view>
     </view>
@@ -98,6 +115,15 @@
     <!-- 文章标题（仅图片模式） -->
     <view wx:if="{{articleTitle && inputMethod === 'image'}}" class="article-title-container">
       <text class="article-title">{{articleTitle}}</text>
+    </view>
+
+    <!-- 原始输入内容展示（分批处理时保留原始格式） -->
+    <view wx:if="{{originalInputText}}" class="original-content-container">
+      <view class="original-content-header">
+        <text class="original-content-title">📄 原始内容</text>
+        <text class="original-content-info">（共{{originalInputText.split('\n').length}}行，{{originalInputText.length}}字符）</text>
+      </view>
+      <view class="original-content-text">{{originalInputText}}</view>
     </view>
 
     <!-- 平铺展示解析结果 -->
@@ -242,6 +268,11 @@
         <view class="result-row align-top">
           <text class="row-label">【词汇明细表】</text>
           <view class="vocab-table-flat">
+            <!-- 表头 -->
+            <view class="vocab-header-flat">
+              <text class="vocab-header-text">单词｜罗马音｜中文翻译</text>
+            </view>
+            <!-- 词汇列表 -->
             <view wx:for="{{item.vocabulary}}" wx:for-item="vocab" wx:key="index" class="vocab-row-flat">
               <text class="vocab-cell">{{vocab.japanese}}｜{{vocab.romaji}}｜{{vocab.chinese}}</text>
             </view>

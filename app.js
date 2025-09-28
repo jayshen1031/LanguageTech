@@ -54,24 +54,50 @@ App({
       return
     }
 
+    // 先检查登录状态
+    wx.checkSession({
+      success: () => {
+        // 会话未过期，可以初始化云开发
+        this.doCloudInit()
+      },
+      fail: () => {
+        // 会话过期，先登录再初始化云开发
+        wx.login({
+          success: () => {
+            this.doCloudInit()
+          },
+          fail: (error) => {
+            console.error('微信登录失败:', error)
+            // 即使登录失败，也尝试初始化云开发（不追踪用户）
+            this.doCloudInit(false)
+          }
+        })
+      }
+    })
+  },
+
+  // 执行云开发初始化
+  doCloudInit(traceUser = true) {
     try {
       wx.cloud.init({
         env: 'cloud1-2g49srond2b01891',
-        traceUser: true,
+        traceUser: traceUser,
       })
       // 云开发环境初始化成功
       this.globalData.cloudReady = true
+      console.log('云开发初始化成功')
     } catch (error) {
       console.error('云开发初始化失败:', error)
-      // 重试初始化
+      // 重试初始化（不追踪用户）
       setTimeout(() => {
         try {
           wx.cloud.init({
             env: 'cloud1-2g49srond2b01891',
-            traceUser: true,
+            traceUser: false,
           })
           // 云开发环境重试初始化成功
           this.globalData.cloudReady = true
+          console.log('云开发重试初始化成功')
         } catch (retryError) {
           console.error('云开发重试初始化失败:', retryError)
           this.globalData.cloudReady = false

@@ -132,8 +132,10 @@ Page({
           if (item.inputMethod === 'image' && (item.articleTitle || item.title)) {
             // 标题会单独显示，所以预览显示句子内容
             if (item.sentences && item.sentences.length > 0) {
-              item.preview = item.sentences[0].originalText
-              if (item.sentences.length > 1) {
+              // 确保只显示第一个句子，限制长度为50字符
+              const firstSentence = item.sentences[0].originalText || ''
+              item.preview = firstSentence.substring(0, 50)
+              if (firstSentence.length > 50 || item.sentences.length > 1) {
                 item.preview += '...'
               }
             } else if (item.extractedText) {
@@ -146,8 +148,9 @@ Page({
             }
           } else if (item.sentences && item.sentences.length > 0) {
             // 文本模式或没有标题的情况，显示第一个句子
-            item.preview = item.sentences[0].originalText
-            if (item.sentences.length > 1) {
+            const firstSentence = item.sentences[0].originalText || ''
+            item.preview = firstSentence.substring(0, 50)
+            if (firstSentence.length > 50 || item.sentences.length > 1) {
               item.preview += '...'
             }
           } else if (item.inputText) {

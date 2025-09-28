@@ -390,12 +390,12 @@ class AudioService {
       if (cachedFilePath) {
         // console.log('✅ 使用假名缓存:', cachedFilePath)
         return this.playAudio(cachedFilePath, {
-          onPlay: () => // console.log('🔊 假名音频开始播放'),
+          onPlay: () => {}, // console.log('🔊 假名音频开始播放'),
           onError: (err) => {
             console.error('❌ 假名音频播放失败:', err)
             this.showKanaFallback(kana)
           },
-          onEnded: () => // console.log('✅ 假名音频播放完成')
+          onEnded: () => {} // console.log('✅ 假名音频播放完成')
         })
       }
       
@@ -425,12 +425,12 @@ class AudioService {
           })
         
         return this.playAudio(audioUrl, {
-          onPlay: () => // console.log('🔊 假名音频开始播放'),
+          onPlay: () => {}, // console.log('🔊 假名音频开始播放'),
           onError: (err) => {
             console.error('❌ 假名音频播放失败:', err)
             this.showKanaFallback(kana)
           },
-          onEnded: () => // console.log('✅ 假名音频播放完成')
+          onEnded: () => {} // console.log('✅ 假名音频播放完成')
         }, alternatives)
       } else {
         this.showKanaFallback(kana)

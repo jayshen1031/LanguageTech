@@ -103,6 +103,7 @@ async function recognizeSpeech(audioData, format, lang) {
     // 构建请求参数
     const params = {
       EngineModelType: engineModelType,
+      EngSerViceType: engineModelType, // 服务类型，与引擎模型类型保持一致
       ChannelNum: 1,
       ResTextFormat: 0,
       SourceType: 1,
@@ -112,6 +113,7 @@ async function recognizeSpeech(audioData, format, lang) {
     
     // console.log('调用腾讯云ASR:', {
       EngineModelType: engineModelType,
+      EngSerViceType: engineModelType,
       DataLen: params.DataLen
     })
     

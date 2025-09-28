@@ -34,6 +34,23 @@ class VoiceService {
     try {
       // console.log(`🔊 TTS: "${text}" (${lang})`)
       
+      // 检测运行环境
+      const systemInfo = wx.getSystemInfoSync()
+      const isDevTool = systemInfo.platform === 'devtools'
+      
+      if (isDevTool) {
+        // 开发者工具环境 - 禁用音频播放
+        console.warn('开发者工具环境：音频播放功能受限')
+        
+        return {
+          success: true,
+          audioUrl: null,
+          alternatives: [],
+          cached: false,
+          disabled: true // 标记为禁用状态
+        }
+      }
+      
       // 生成音频
       const result = await audioService.generateAudio(text, lang, voice)
       
@@ -67,6 +84,32 @@ class VoiceService {
     
     try {
       // console.log(`🎙️ ASR: ${tempFilePath} (${lang})`)
+      
+      // 检测运行环境
+      const systemInfo = wx.getSystemInfoSync()
+      const isDevTool = systemInfo.platform === 'devtools'
+      
+      if (isDevTool) {
+        // 开发者工具环境 - 使用模拟数据
+        console.warn('开发者工具环境：语音识别功能受限，返回模拟数据')
+        
+        // 根据语言返回不同的模拟文本
+        const mockTexts = {
+          'ja': 'こんにちは、元気ですか？',
+          'zh': '你好，最近怎么样？',
+          'en': 'Hello, how are you?'
+        }
+        
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        return {
+          success: true,
+          text: mockTexts[lang] || mockTexts['ja'],
+          confidence: 0.85,
+          mock: true // 标记为模拟数据
+        }
+      }
       
       // 1. 先上传文件到云存储
       const fileID = await this.uploadAudioFile(tempFilePath)
@@ -201,7 +244,7 @@ class VoiceService {
       
       // 触发识别完成回调
       if (onRecognized) {
-        onRecognized(userText)
+        onRecognized(userText, asrResult.mock)
       }
       
       // 2. 获取AI回复（需要外部传入）

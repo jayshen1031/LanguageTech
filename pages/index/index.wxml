@@ -26,40 +26,71 @@
     </view>
   </view>
 
-  <!-- 学习数据卡片 -->
+  <!-- 词汇库统计卡片 -->
   <view class="stats-card">
     <view class="stats-item">
-      <text class="stats-value">{{totalWords}}</text>
-      <text class="stats-label">总词汇</text>
+      <text class="stats-value">{{totalWordsInLibrary}}</text>
+      <text class="stats-label">总词汇量</text>
     </view>
     <view class="stats-divider"></view>
     <view class="stats-item primary">
-      <text class="stats-value">{{masteredWords}}</text>
-      <text class="stats-label">已掌握</text>
+      <text class="stats-value">{{newWordsAvailable}}</text>
+      <text class="stats-label">新词汇</text>
     </view>
     <view class="stats-divider"></view>
     <view class="stats-item">
-      <text class="stats-value">{{progressPercent}}%</text>
-      <text class="stats-label">掌握率</text>
+      <text class="stats-value">{{reviewWordsAvailable}}</text>
+      <text class="stats-label">复习词汇</text>
     </view>
   </view>
 
-  <!-- 快速学习入口 -->
-  <view class="quick-actions">
-    <view class="action-card primary" bindtap="goToLearn">
-      <view class="action-header">
-        <text class="action-title">开始今日学习</text>
-        <text class="action-count">{{todayWords}}个新词</text>
+  <!-- 今日学习计划 -->
+  <view class="learning-plan">
+    <view class="plan-header">
+      <text class="plan-title">学习计划设置</text>
+      <view class="plan-settings" bindtap="showStudyAmountSelection">
+        <text class="settings-text">{{selectedTotal}}个</text>
+        <text class="settings-icon">⚙️</text>
       </view>
-      <view class="action-icon">📚</view>
     </view>
     
-    <view class="action-card secondary" bindtap="goToReview">
-      <view class="action-header">
-        <text class="action-title">复习巩固</text>
-        <text class="action-count">{{reviewCount}}个待复习</text>
+    <!-- 学习量说明 -->
+    <view class="plan-summary">
+      <text class="summary-text">当前计划：{{selectedTotal}}个词汇 (新学{{newWordsCount}} + 复习{{reviewWordsCount}})</text>
+      <text class="summary-ratio">复习75% + 新学25%</text>
+    </view>
+    
+    <!-- 学习计划卡片 -->
+    <view class="plan-cards">
+      <view class="plan-card new-words" bindtap="goToNewWords">
+        <view class="card-header">
+          <text class="card-title">新学词汇</text>
+          <view class="card-icon">📘</view>
+        </view>
+        <view class="card-count">{{newWordsCount}}</view>
+        <view class="card-desc">25% · 掌握新词</view>
       </view>
-      <view class="action-icon">🔄</view>
+      
+      <view class="plan-card review-words" bindtap="goToReviewWords">
+        <view class="card-header">
+          <text class="card-title">复习巩固</text>
+          <view class="card-icon">🔄</view>
+        </view>
+        <view class="card-count">{{reviewWordsCount}}</view>
+        <view class="card-desc">75% · 强化记忆</view>
+      </view>
+    </view>
+    
+    <!-- 智能学习按钮 -->
+    <view class="smart-plan-btn" bindtap="goToSmartPlan">
+      <view class="btn-content">
+        <text class="btn-icon">🧠</text>
+        <view class="btn-text">
+          <text class="btn-title">开始学习</text>
+          <text class="btn-desc">智能混合计划 · 共{{selectedTotal}}个词汇</text>
+        </view>
+      </view>
+      <text class="btn-arrow">▶</text>
     </view>
   </view>
 

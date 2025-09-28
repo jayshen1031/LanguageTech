@@ -1,0 +1,14 @@
+{
+  "functions": [
+    {
+      "name": "azure-gpt4o-batch",
+      "timeout": 120,
+      "envVariables": {},
+      "installDependency": true,
+      "ignore": [
+        "node_modules/**/*",
+        ".git/**/*"
+      ]
+    }
+  ]
+}

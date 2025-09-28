@@ -130,14 +130,25 @@ const azureGPT4o = {
   // 简化的对话接口
   simpleChat: async (message) => {
     try {
-      // 使用超简化云函数
+      // 将消息转换为标准的messages格式
+      const messages = [{
+        role: 'user',
+        content: message
+      }]
+      
+      // 使用标准的chat接口
       const res = await wx.cloud.callFunction({
         name: 'azure-gpt4o',
-        data: { prompt: message }
+        data: {
+          action: 'chat',
+          messages: messages,
+          temperature: 0.7,
+          maxTokens: 2000
+        }
       })
       
       if (res.result.success) {
-        return res.result.content
+        return res.result.data.content
       } else {
         throw new Error(res.result.error || 'AI调用失败')
       }
