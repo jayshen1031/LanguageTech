@@ -10,7 +10,8 @@
     "pages/register/register",
     "pages/approval-status/approval-status",
     "pages/admin-debug/admin-debug",
-    "pages/user-management/user-management"
+    "pages/user-management/user-management",
+    "pages/study-settings/study-settings"
   ],
   "subPackages": [
     {

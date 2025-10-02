@@ -1,0 +1,169 @@
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">学习设置</text>
+    <text class="page-desc">自定义你的学习计划和目标</text>
+  </view>
+
+  <!-- 词汇学习设置 -->
+  <view class="settings-section">
+    <view class="section-header">
+      <view class="section-icon">📚</view>
+      <view class="section-info">
+        <text class="section-title">词汇学习</text>
+        <text class="section-desc">设置每日词汇学习数量和比例</text>
+      </view>
+    </view>
+
+    <!-- 词汇数量设置 -->
+    <view class="setting-item">
+      <view class="setting-label">
+        <text class="label-text">每日词汇数量</text>
+        <text class="label-value">{{vocabularySettings.totalCount}}个</text>
+      </view>
+      <slider 
+        class="setting-slider"
+        min="5" 
+        max="50" 
+        step="5"
+        value="{{vocabularySettings.totalCount}}"
+        block-color="#667eea"
+        activeColor="#667eea"
+        backgroundColor="#f0f0f0"
+        bindchange="onVocabularyCountChange"
+      />
+      <view class="slider-labels">
+        <text>5</text>
+        <text>50</text>
+      </view>
+    </view>
+
+    <!-- 新学比例设置 -->
+    <view class="setting-item">
+      <view class="setting-label">
+        <text class="label-text">新学词汇比例</text>
+        <text class="label-value">{{vocabularySettings.newWordPercent}}%</text>
+      </view>
+      <slider 
+        class="setting-slider"
+        min="20" 
+        max="80" 
+        step="10"
+        value="{{vocabularySettings.newWordPercent}}"
+        block-color="#667eea"
+        activeColor="#667eea"
+        backgroundColor="#f0f0f0"
+        bindchange="onNewWordPercentChange"
+      />
+      <view class="slider-labels">
+        <text>20%</text>
+        <text>80%</text>
+      </view>
+    </view>
+
+    <!-- 词汇分配预览 -->
+    <view class="breakdown-preview">
+      <view class="breakdown-item new">
+        <text class="breakdown-number">{{Math.floor(vocabularySettings.totalCount * vocabularySettings.newWordPercent / 100)}}</text>
+        <text class="breakdown-label">新学</text>
+      </view>
+      <view class="breakdown-divider">+</view>
+      <view class="breakdown-item review">
+        <text class="breakdown-number">{{vocabularySettings.totalCount - Math.floor(vocabularySettings.totalCount * vocabularySettings.newWordPercent / 100)}}</text>
+        <text class="breakdown-label">复习</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 语法结构学习设置 -->
+  <view class="settings-section">
+    <view class="section-header">
+      <view class="section-icon">🔗</view>
+      <view class="section-info">
+        <text class="section-title">语法结构</text>
+        <text class="section-desc">设置每日语法结构学习数量</text>
+      </view>
+    </view>
+
+    <!-- 结构数量设置 -->
+    <view class="setting-item">
+      <view class="setting-label">
+        <text class="label-text">每日结构数量</text>
+        <text class="label-value">{{structureSettings.totalCount}}个</text>
+      </view>
+      <slider 
+        class="setting-slider"
+        min="3" 
+        max="15" 
+        step="1"
+        value="{{structureSettings.totalCount}}"
+        block-color="#9c27b0"
+        activeColor="#9c27b0"
+        backgroundColor="#f0f0f0"
+        bindchange="onStructureCountChange"
+      />
+      <view class="slider-labels">
+        <text>3</text>
+        <text>15</text>
+      </view>
+    </view>
+
+    <!-- 新学结构比例 -->
+    <view class="setting-item">
+      <view class="setting-label">
+        <text class="label-text">新学结构比例</text>
+        <text class="label-value">{{structureSettings.newStructurePercent}}%</text>
+      </view>
+      <slider 
+        class="setting-slider"
+        min="40" 
+        max="80" 
+        step="10"
+        value="{{structureSettings.newStructurePercent}}"
+        block-color="#9c27b0"
+        activeColor="#9c27b0"
+        backgroundColor="#f0f0f0"
+        bindchange="onNewStructurePercentChange"
+      />
+      <view class="slider-labels">
+        <text>40%</text>
+        <text>80%</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 学习统计 -->
+  <view class="stats-section">
+    <view class="section-header">
+      <view class="section-icon">📊</view>
+      <view class="section-info">
+        <text class="section-title">学习库统计</text>
+        <text class="section-desc">当前学习资源概览</text>
+      </view>
+    </view>
+
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalVocabulary}}</text>
+        <text class="stat-label">总词汇</text>
+        <text class="stat-detail">已掌握{{stats.masteredVocabulary}}</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalStructures}}</text>
+        <text class="stat-label">总结构</text>
+        <text class="stat-detail">已掌握{{stats.masteredStructures}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="action-btn secondary" bindtap="resetToDefault">
+      恢复默认
+    </button>
+    <button class="action-btn primary" bindtap="saveSettings">
+      保存设置
+    </button>
+  </view>
+</view>

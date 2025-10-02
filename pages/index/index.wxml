@@ -70,23 +70,56 @@
   <!-- 今日学习 -->
   <view class="today-learning">
     <view class="learning-header">
-      <text class="learning-title">今日学习</text>
-      <view class="learning-config" bindtap="showStudyAmountSelection">
-        <text class="config-text">{{selectedTotal}}个词汇</text>
+      <text class="learning-title">今日学习计划</text>
+      <view class="learning-config" bindtap="goToStudySettings">
+        <text class="config-text">设置</text>
         <text class="config-icon">⚙️</text>
       </view>
     </view>
     
-    <!-- 一键开始学习 -->
-    <view class="start-learning-btn" bindtap="goToSmartPlan">
-      <view class="start-content">
-        <view class="start-icon">🎯</view>
-        <view class="start-text">
-          <text class="start-title">开始学习</text>
-          <text class="start-desc">新学{{newWordsCount}}个 + 复习{{reviewWordsCount}}个</text>
+    <!-- 学习项目 -->
+    <view class="learning-items">
+      <!-- 词汇学习 -->
+      <view class="learning-item vocabulary" bindtap="goToVocabularyLearning">
+        <view class="item-header">
+          <view class="item-icon">📚</view>
+          <view class="item-info">
+            <text class="item-title">词汇学习</text>
+            <text class="item-desc">新学{{newWordsCount}}个 + 复习{{reviewWordsCount}}个</text>
+          </view>
+        </view>
+        <view class="item-action">
+          <text class="action-text">开始</text>
+          <text class="action-arrow">▶</text>
         </view>
       </view>
-      <text class="start-arrow">▶</text>
+      
+      <!-- 语法结构学习 -->
+      <view class="learning-item structure" bindtap="goToStructureLearning">
+        <view class="item-header">
+          <view class="item-icon">🔗</view>
+          <view class="item-info">
+            <text class="item-title">语法结构</text>
+            <text class="item-desc">新学{{newStructuresCount}}个 + 复习{{reviewStructuresCount}}个</text>
+          </view>
+        </view>
+        <view class="item-action">
+          <text class="action-text">开始</text>
+          <text class="action-arrow">▶</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 智能混合学习 -->
+    <view class="smart-learning-btn" bindtap="goToSmartPlan">
+      <view class="smart-content">
+        <view class="smart-icon">🎯</view>
+        <view class="smart-text">
+          <text class="smart-title">智能学习</text>
+          <text class="smart-desc">词汇 + 语法结构混合学习</text>
+        </view>
+      </view>
+      <text class="smart-arrow">▶</text>
     </view>
   </view>
 

@@ -38,18 +38,29 @@ Page({
     
     // 今日学习计划
     selectedTotal: 10,          // 用户选择的总学习量
-    newWordsCount: 2,           // 新学词汇数（25%）
-    reviewWordsCount: 8,        // 复习词汇数（75%）
+    newWordsCount: 7,           // 新学词汇数（70%）
+    reviewWordsCount: 3,        // 复习词汇数（30%）
+    
+    // 语法结构学习计划
+    selectedStructures: 5,      // 用户选择的总结构量
+    newStructuresCount: 3,      // 新学结构数（60%）
+    reviewStructuresCount: 2,   // 复习结构数（40%）
     
     progressPercent: 0,
     showDevTools: true,
     gridCols: 4,
     
-    // 学习计划配置（75%复习 + 25%新学）
+    // 学习计划配置
     studyPlanConfig: {
-      newWordPercent: 25,      // 新学占比25%
-      reviewPercent: 75,       // 复习占比75%
-      availableTotals: [10, 20, 30, 40, 50]  // 可选学习量
+      // 词汇配置
+      newWordPercent: 70,      // 新学占比70%
+      reviewPercent: 30,       // 复习占比30%
+      availableTotals: [5, 10, 15, 20, 30],  // 可选学习量
+      
+      // 语法结构配置
+      newStructurePercent: 60, // 新学结构占比60%
+      reviewStructurePercent: 40, // 复习结构占比40%
+      availableStructureTotals: [3, 5, 8, 10, 15]  // 可选结构学习量
     }
   },
 
@@ -853,7 +864,66 @@ Page({
     })
   },
 
-  // 学习量选择
+  // 跳转到学习设置页面
+  goToStudySettings() {
+    wx.navigateTo({
+      url: '/pages/study-settings/study-settings'
+    })
+  },
+
+  // 词汇学习
+  goToVocabularyLearning() {
+    const { selectedTotal, newWordsCount, reviewWordsCount, totalWordsInLibrary } = this.data
+    
+    if (totalWordsInLibrary === 0) {
+      wx.showModal({
+        title: '词汇库为空',
+        content: '请先去"日语解析"页面解析一些内容',
+        confirmText: '去解析',
+        cancelText: '了解',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/packageB/pages/japanese-parser/japanese-parser'
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    wx.navigateTo({
+      url: `/pages/learn/learn?count=${selectedTotal}&type=vocabulary&new=${newWordsCount}&review=${reviewWordsCount}`
+    })
+  },
+
+  // 语法结构学习
+  goToStructureLearning() {
+    const { selectedStructures, newStructuresCount, reviewStructuresCount, totalStructures } = this.data
+    
+    if (totalStructures === 0) {
+      wx.showModal({
+        title: '语法结构库为空',
+        content: '请先去"日语解析"页面解析一些内容，建立语法结构库',
+        confirmText: '去解析',
+        cancelText: '了解',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/packageB/pages/japanese-parser/japanese-parser'
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    wx.navigateTo({
+      url: `/pages/learn/learn?count=${selectedStructures}&type=structure&new=${newStructuresCount}&review=${reviewStructuresCount}`
+    })
+  },
+
+  // 学习量选择（保留兼容性）
   showStudyAmountSelection() {
     const { totalWordsInLibrary, newWordsAvailable, reviewWordsAvailable, studyPlanConfig } = this.data
     
@@ -985,9 +1055,35 @@ Page({
   loadUserPreferences() {
     try {
       const gridCols = wx.getStorageSync('gridCols') || 4;
-      this.setData({ gridCols });
+      
+      // 加载学习计划配置
+      const studyPlanConfig = wx.getStorageSync('studyPlanConfig') || this.data.studyPlanConfig;
+      const userPreferences = wx.getStorageSync('userPreferences') || {};
+      
+      // 计算词汇分配
+      const selectedTotal = studyPlanConfig.selectedTotal || 10;
+      const newWordPercent = studyPlanConfig.newWordPercent || 70;
+      const newWordsCount = Math.floor(selectedTotal * newWordPercent / 100);
+      const reviewWordsCount = selectedTotal - newWordsCount;
+      
+      // 计算语法结构分配
+      const selectedStructures = userPreferences.structureSettings?.totalCount || 5;
+      const newStructurePercent = userPreferences.structureSettings?.newStructurePercent || 60;
+      const newStructuresCount = Math.floor(selectedStructures * newStructurePercent / 100);
+      const reviewStructuresCount = selectedStructures - newStructuresCount;
+      
+      this.setData({ 
+        gridCols,
+        studyPlanConfig,
+        selectedTotal,
+        newWordsCount,
+        reviewWordsCount,
+        selectedStructures,
+        newStructuresCount,
+        reviewStructuresCount
+      });
     } catch (error) {
-      // 加载用户偏好失败
+      console.error('加载用户偏好失败:', error);
     }
   },
 

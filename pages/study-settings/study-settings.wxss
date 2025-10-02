@@ -1,0 +1,244 @@
+/* 页面容器 */
+.container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding-bottom: 40rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60rpx 30rpx 40rpx;
+  color: white;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.page-desc {
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
+/* 设置区块 */
+.settings-section {
+  margin: 30rpx 20rpx;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.section-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+
+.section-info {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.section-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 设置项 */
+.setting-item {
+  margin-bottom: 30rpx;
+}
+
+.setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.label-value {
+  font-size: 26rpx;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.setting-slider {
+  width: 100%;
+  margin: 15rpx 0;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+/* 分配预览 */
+.breakdown-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 25rpx;
+  margin-top: 20rpx;
+}
+
+.breakdown-item {
+  text-align: center;
+  flex: 1;
+}
+
+.breakdown-number {
+  font-size: 36rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.breakdown-item.new .breakdown-number {
+  color: #667eea;
+}
+
+.breakdown-item.review .breakdown-number {
+  color: #f093fb;
+}
+
+.breakdown-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.breakdown-divider {
+  font-size: 28rpx;
+  color: #999;
+  margin: 0 30rpx;
+  font-weight: bold;
+}
+
+/* 统计区块 */
+.stats-section {
+  margin: 30rpx 20rpx;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.stats-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 20rpx 0;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #667eea;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 26rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.stat-detail {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.stat-divider {
+  width: 2rpx;
+  height: 80rpx;
+  background: #f0f0f0;
+  margin: 0 30rpx;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin: 40rpx 20rpx 0;
+}
+
+.action-btn {
+  flex: 1;
+  height: 90rpx;
+  border-radius: 20rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.3);
+}
+
+.action-btn.secondary {
+  background: white;
+  color: #666;
+  border: 2rpx solid #e0e0e0;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
+/* 响应式适配 */
+@media (max-width: 360px) {
+  .settings-section {
+    margin: 20rpx 15rpx;
+    padding: 25rpx;
+  }
+  
+  .breakdown-preview {
+    padding: 20rpx;
+  }
+  
+  .breakdown-number {
+    font-size: 32rpx;
+  }
+}
