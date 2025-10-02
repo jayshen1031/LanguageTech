@@ -102,10 +102,10 @@
         <text class="quick-desc">AI智能分析</text>
       </view>
       
-      <view class="quick-card" bindtap="goToParserHistory">
-        <view class="quick-icon">📚</view>
+      <view class="quick-card" bindtap="goToLearningProgress">
+        <view class="quick-icon">📈</view>
         <text class="quick-title">学习历史</text>
-        <text class="quick-desc">解析记录</text>
+        <text class="quick-desc">学习轨迹</text>
       </view>
       
       <view class="quick-card" bindtap="goToKanaMerged">
@@ -126,10 +126,10 @@
         <text class="quick-desc">口语练习</text>
       </view>
       
-      <view class="quick-card" bindtap="goToProfile">
-        <view class="quick-icon">👤</view>
-        <text class="quick-title">个人中心</text>
-        <text class="quick-desc">设置管理</text>
+      <view class="quick-card" bindtap="goToParserHistory">
+        <view class="quick-icon">📚</view>
+        <text class="quick-title">解析历史</text>
+        <text class="quick-desc">解析记录</text>
       </view>
     </view>
   </view>
