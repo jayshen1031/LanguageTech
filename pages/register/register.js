@@ -212,7 +212,7 @@ Page({
           icon: 'success'
         })
         setTimeout(() => {
-          wx.switchTab({
+          wx.reLaunch({
             url: '/pages/index/index'
           })
         }, 1500)
@@ -461,7 +461,7 @@ Page({
 
   // 跳过注册
   onSkipRegister() {
-    wx.switchTab({
+    wx.reLaunch({
       url: '/pages/index/index'
     })
   },

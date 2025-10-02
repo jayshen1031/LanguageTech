@@ -218,7 +218,7 @@ Page({
 
   // 跳转到首页
   goToHome() {
-    wx.switchTab({
+    wx.reLaunch({
       url: '/pages/index/index'
     })
   },

@@ -483,9 +483,7 @@ Page({
 
   // 结束学习
   goBack() {
-    wx.switchTab({
-      url: '/pages/index/index'
-    })
+    wx.navigateBack()
   },
 
   // 跳转到日语解析页面

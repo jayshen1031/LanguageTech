@@ -88,7 +88,7 @@ const authGuard = {
         }
         
         setTimeout(() => {
-          wx.switchTab({ url: '/pages/profile/profile' })
+          wx.navigateTo({ url: '/pages/profile/profile' })
           setTimeout(() => {
             wx.navigateTo({ url: '/pages/register/register' })
           }, 100)
@@ -135,7 +135,7 @@ const authGuard = {
           if (result.redirectTo.includes('approval-status')) {
             wx.redirectTo({ url: result.redirectTo })
           } else {
-            wx.switchTab({ url: '/pages/profile/profile' })
+            wx.navigateTo({ url: '/pages/profile/profile' })
             setTimeout(() => {
               wx.navigateTo({ url: result.redirectTo })
             }, 100)
@@ -175,7 +175,7 @@ const authGuard = {
       cancelText: '稍后',
       success: (res) => {
         if (res.confirm) {
-          wx.switchTab({ url: '/pages/profile/profile' })
+          wx.navigateTo({ url: '/pages/profile/profile' })
           setTimeout(() => {
             wx.navigateTo({ url: '/pages/register/register' })
           }, 100)

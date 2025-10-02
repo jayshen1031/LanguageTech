@@ -64,7 +64,7 @@ Page({
         content: '查看学习进度需要登录，是否前往登录？',
         success: (res) => {
           if (res.confirm) {
-            wx.switchTab({ url: '/pages/profile/profile' })
+            wx.navigateTo({ url: '/pages/profile/profile' })
           } else {
             wx.navigateBack()
           }

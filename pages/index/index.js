@@ -805,7 +805,7 @@ Page({
       return
     }
     
-    wx.switchTab({
+    wx.navigateTo({
       url: `/pages/learn/learn?count=${newWordsCount}&type=new`
     })
   },
@@ -848,7 +848,7 @@ Page({
       return
     }
     
-    wx.switchTab({
+    wx.navigateTo({
       url: `/pages/learn/learn?count=${selectedTotal}&type=mixed`
     })
   },
@@ -1030,7 +1030,7 @@ Page({
         cancelText: '稍后',
         success: (res) => {
           if (res.confirm) {
-            wx.switchTab({ url: '/pages/profile/profile' })
+            wx.navigateTo({ url: '/pages/profile/profile' })
             setTimeout(() => {
               wx.navigateTo({ url: '/pages/register/register' })
             }, 100)
@@ -1676,7 +1676,7 @@ Page({
 
   // 跳转到个人中心
   goToProfile() {
-    wx.switchTab({
+    wx.navigateTo({
       url: '/pages/profile/profile'
     })
   },
@@ -1786,9 +1786,6 @@ Page({
 
   // 跳转到注册页面
   goToRegister() {
-    wx.switchTab({ url: '/pages/profile/profile' })
-    setTimeout(() => {
-      wx.navigateTo({ url: '/pages/register/register' })
-    }, 100)
+    wx.navigateTo({ url: '/pages/register/register' })
   }
 })

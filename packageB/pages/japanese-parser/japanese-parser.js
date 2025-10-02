@@ -2290,7 +2290,7 @@ Page({
         success: (res) => {
           if (res.confirm) {
             // 跳转到历史页面
-            wx.switchTab({
+            wx.navigateTo({
               url: '/pages/parser-history/parser-history'
             })
           }
@@ -2320,7 +2320,7 @@ Page({
 
   // 查看历史记录
   viewHistory() {
-    wx.switchTab({
+    wx.navigateTo({
       url: '/pages/parser-history/parser-history'
     })
   },
