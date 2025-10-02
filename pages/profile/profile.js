@@ -10,6 +10,7 @@ Page({
     userInfo: null,
     userProfile: null,
     isLoggedIn: false,
+    isAdmin: false,
     learningStats: {
       studyDays: 0,
       totalWords: 0,
@@ -42,6 +43,139 @@ Page({
     this.loadUserInfo()
     this.loadLearningStats()
   },
+
+  // 跳转到学习进度页面
+  goToLearningProgress() {
+    wx.navigateTo({
+      url: '/pages/learning-progress/learning-progress'
+    })
+  },
+
+  // 显示学习管理选项
+  showLearningManagement() {
+    wx.showActionSheet({
+      itemList: [
+        '重置词汇掌握状态',
+        '重置句子结构掌握状态', 
+        '清理重复数据',
+        '导出学习数据'
+      ],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.resetVocabularyMastery()
+            break
+          case 1:
+            this.resetStructureMastery()
+            break
+          case 2:
+            this.cleanDuplicateData()
+            break
+          case 3:
+            this.exportLearningData()
+            break
+        }
+      }
+    })
+  },
+
+  // 重置词汇掌握状态
+  async resetVocabularyMastery() {
+    wx.showModal({
+      title: '重置词汇掌握状态',
+      content: '确定要将所有已掌握的词汇重新标记为未掌握吗？此操作无法撤销。',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({ title: '重置中...' })
+            
+            const db = wx.cloud.database()
+            const _ = db.command
+            const result = await db.collection('vocabulary_integrated')
+              .where({ totalOccurrences: _.gte(3) })
+              .update({
+                data: {
+                  totalOccurrences: 1,
+                  masteryReset: true,
+                  masteryResetTime: new Date()
+                }
+              })
+
+            wx.showToast({
+              title: `已重置 ${result.stats.updated} 个词汇`,
+              icon: 'success'
+            })
+          } catch (error) {
+            console.error('重置失败:', error)
+            wx.showToast({ title: '重置失败', icon: 'none' })
+          } finally {
+            wx.hideLoading()
+          }
+        }
+      }
+    })
+  },
+
+  // 重置句子结构掌握状态
+  async resetStructureMastery() {
+    wx.showModal({
+      title: '重置句子结构掌握状态', 
+      content: '确定要将所有已掌握的句子结构重新标记为未掌握吗？此操作无法撤销。',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({ title: '重置中...' })
+            
+            const db = wx.cloud.database()
+            const _ = db.command
+            const result = await db.collection('sentence_structures_integrated')
+              .where({ totalOccurrences: _.gte(3) })
+              .update({
+                data: {
+                  totalOccurrences: 1,
+                  masteryReset: true,
+                  masteryResetTime: new Date()
+                }
+              })
+
+            wx.showToast({
+              title: `已重置 ${result.stats.updated} 个结构`,
+              icon: 'success'
+            })
+          } catch (error) {
+            console.error('重置失败:', error)
+            wx.showToast({ title: '重置失败', icon: 'none' })
+          } finally {
+            wx.hideLoading()
+          }
+        }
+      }
+    })
+  },
+
+  // 清理重复数据
+  cleanDuplicateData() {
+    wx.showModal({
+      title: '数据清理',
+      content: '这是维护功能，会清理系统中的重复数据。确定要执行吗？',
+      success: (res) => {
+        if (res.confirm) {
+          wx.showToast({
+            title: '功能开发中',
+            icon: 'none'
+          })
+        }
+      }
+    })
+  },
+
+  // 导出学习数据
+  exportLearningData() {
+    wx.showToast({
+      title: '导出功能开发中',
+      icon: 'none'
+    })
+  },
   
   // 加载用户信息
   loadUserInfo() {
@@ -49,10 +183,14 @@ Page({
       const userInfo = wx.getStorageSync('userInfo')
       const userProfile = wx.getStorageSync('userProfile')
       
+      // 检查是否为管理员
+      const isAdmin = this.checkIfAdmin(userInfo)
+      
       this.setData({
         userInfo: userInfo,
         userProfile: userProfile,
-        isLoggedIn: !!userInfo
+        isLoggedIn: !!userInfo,
+        isAdmin: isAdmin
       })
     } catch (error) {
       console.error('加载用户信息失败:', error)
@@ -187,6 +325,42 @@ Page({
           }
         }
       }
+    })
+  },
+
+  // 检查是否为管理员
+  checkIfAdmin(userInfo) {
+    if (!userInfo) return false
+    
+    const adminNicknames = [
+      '项目负责人', 
+      '管理员',
+      'Jay',
+      'Admin'
+    ]
+    
+    if (adminNicknames.includes(userInfo.nickName)) {
+      return true
+    }
+    
+    if (userInfo.openid && userInfo.openid.includes('temp_')) {
+      return true
+    }
+    
+    return false
+  },
+
+  // 用户管理
+  goToUserManagement() {
+    wx.navigateTo({
+      url: '/pages/user-management/user-management'
+    })
+  },
+
+  // 管理员调试（隐藏功能，长按触发）
+  goToAdminDebug() {
+    wx.navigateTo({
+      url: '/pages/admin-debug/admin-debug'
     })
   }
 })

@@ -1,0 +1,130 @@
+<!-- 审批状态页面 -->
+<view class="container">
+  <!-- 状态显示区域 -->
+  <view class="status-section">
+    <view class="status-card">
+      <!-- 状态图标 -->
+      <view class="status-icon-wrapper">
+        <text class="status-icon" style="color: {{statusConfig[userStatus].color}}">
+          {{statusConfig[userStatus].icon}}
+        </text>
+      </view>
+      
+      <!-- 状态标题 -->
+      <text class="status-title" style="color: {{statusConfig[userStatus].color}}">
+        {{statusConfig[userStatus].title}}
+      </text>
+      
+      <!-- 状态描述 -->
+      <text class="status-description">{{statusMessage}}</text>
+      
+      <!-- 用户信息 -->
+      <view wx:if="{{userInfo}}" class="user-info-brief">
+        <text class="user-name">{{userInfo.nickname || userInfo.realName}}</text>
+        <text class="register-time">注册时间：{{userInfo.registerTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态说明 -->
+  <view class="info-section">
+    <view class="info-card">
+      <view wx:if="{{userStatus === 'pending'}}" class="pending-info">
+        <text class="info-title">审核中</text>
+        <text class="info-text">• 我们正在审核您的申请资料</text>
+        <text class="info-text">• 通常在1-3个工作日内完成审核</text>
+        <text class="info-text">• 审核结果会及时通知您</text>
+        <text class="info-text">• 您可以随时查看审核状态</text>
+      </view>
+      
+      <view wx:elif="{{userStatus === 'approved'}}" class="approved-info">
+        <text class="info-title">审核通过</text>
+        <text class="info-text">• 恭喜！您已成功通过审核</text>
+        <text class="info-text">• 现在可以正常使用所有功能</text>
+        <text class="info-text">• 开始您的学习之旅吧</text>
+        <view class="success-animation">
+          <text class="celebrate-icon">🎉</text>
+        </view>
+      </view>
+      
+      <view wx:elif="{{userStatus === 'rejected'}}" class="rejected-info">
+        <text class="info-title">审核未通过</text>
+        <text class="info-text">• 很抱歉，您的申请未通过审核</text>
+        <text class="info-text">• 可能原因：资料不完整或不符合要求</text>
+        <text class="info-text">• 您可以完善资料后重新申请</text>
+        <text class="info-text">• 如有疑问请联系客服</text>
+      </view>
+      
+      <view wx:elif="{{userStatus === 'suspended'}}" class="suspended-info">
+        <text class="info-title">账户暂停</text>
+        <text class="info-text">• 您的账户已被暂停使用</text>
+        <text class="info-text">• 可能原因：违反使用条款</text>
+        <text class="info-text">• 请联系客服了解详情</text>
+        <text class="info-text">• 申请恢复账户使用权限</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮区域 -->
+  <view class="action-section">
+    <!-- 审核通过时的按钮 -->
+    <view wx:if="{{userStatus === 'approved'}}" class="approved-actions">
+      <button class="primary-btn" bindtap="goToHome">
+        <text class="btn-icon">🚀</text>
+        开始使用
+      </button>
+    </view>
+    
+    <!-- 其他状态的按钮 -->
+    <view wx:else class="common-actions">
+      <!-- 刷新状态按钮 -->
+      <button class="secondary-btn" bindtap="onRefreshStatus">
+        <text class="btn-icon">🔄</text>
+        刷新状态
+      </button>
+      
+      <!-- 重新申请按钮（仅rejected状态显示） -->
+      <button wx:if="{{statusConfig[userStatus].showRetry && retryCount < maxRetry}}" 
+              class="primary-btn" bindtap="retryApplication">
+        <text class="btn-icon">📝</text>
+        重新申请 ({{retryCount}}/{{maxRetry}})
+      </button>
+      
+      <!-- 联系客服按钮 -->
+      <button wx:if="{{statusConfig[userStatus].showContact}}" 
+              class="outline-btn" bindtap="showContact">
+        <text class="btn-icon">💬</text>
+        联系客服
+      </button>
+    </view>
+  </view>
+
+  <!-- 帮助信息 -->
+  <view class="help-section">
+    <view class="help-tips">
+      <text class="help-title">常见问题</text>
+      
+      <view class="tip-item">
+        <text class="tip-question">Q: 审核需要多长时间？</text>
+        <text class="tip-answer">A: 通常在1-3个工作日内完成，节假日可能延长。</text>
+      </view>
+      
+      <view class="tip-item">
+        <text class="tip-question">Q: 审核不通过怎么办？</text>
+        <text class="tip-answer">A: 请完善资料后重新申请，或联系客服了解详情。</text>
+      </view>
+      
+      <view class="tip-item">
+        <text class="tip-question">Q: 如何联系客服？</text>
+        <text class="tip-answer">A: 点击"联系客服"按钮，或发送邮件到support@languagetech.com。</text>
+      </view>
+    </view>
+    
+    <!-- 页面底部链接 -->
+    <view class="footer-links">
+      <text class="link-text" bindtap="showTerms">使用条款</text>
+      <text class="link-divider">|</text>
+      <text class="link-text" bindtap="goToRegister">重新注册</text>
+    </view>
+  </view>
+</view>

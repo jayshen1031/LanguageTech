@@ -10,6 +10,59 @@
   margin-bottom: 30rpx;
 }
 
+/* 快捷功能入口 */
+.quick-actions {
+  margin-bottom: 30rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.action-item {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  padding: 30rpx;
+  border-radius: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.action-item:active {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(0.98);
+}
+
+.action-icon {
+  font-size: 48rpx;
+  margin-right: 24rpx;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.action-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.action-arrow {
+  font-size: 24rpx;
+  color: #999;
+}
+
 /* 已登录用户信息 */
 .user-info {
   background: rgba(255, 255, 255, 0.95);
@@ -273,4 +326,109 @@
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 20rpx;
   text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+/* 管理员功能区 */
+.admin-section {
+  background: white;
+  margin: 30rpx 20rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(255, 69, 58, 0.1);
+  border: 2rpx solid #ff453a;
+}
+
+.admin-section .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  background: linear-gradient(135deg, #ff453a, #ff6b6b);
+  color: white;
+}
+
+.admin-section .title-text {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.admin-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.admin-section .function-list {
+  background: white;
+}
+
+.admin-section .function-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  background: white;
+  transition: background-color 0.3s;
+}
+
+.admin-section .function-item:last-child {
+  border-bottom: none;
+}
+
+.admin-section .function-item:active {
+  background: #fff5f5;
+}
+
+.admin-section .function-content {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.admin-section .function-icon {
+  font-size: 48rpx;
+  width: 80rpx;
+  text-align: center;
+}
+
+.admin-section .function-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.admin-section .function-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.admin-section .function-desc {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.admin-section .function-arrow {
+  color: #999;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 版本信息（管理员调试入口） */
+.version-info {
+  position: fixed;
+  bottom: 30rpx;
+  right: 30rpx;
+  padding: 10rpx 20rpx;
+  background: rgba(255,255,255,0.8);
+  border-radius: 20rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.version-text {
+  font-size: 20rpx;
+  color: #999;
 }

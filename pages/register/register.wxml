@@ -28,7 +28,7 @@
         </view>
       </view>
       
-      <button class="wechat-login-btn" bindtap="onWechatLogin">
+      <button class="wechat-login-btn" open-type="getUserInfo" bindgetuserinfo="onWechatLogin">
         <text class="wechat-icon">👤</text>
         微信快速登录
       </button>
@@ -101,7 +101,28 @@
         </radio-group>
       </view>
       
-      <button class="complete-btn" bindtap="onCompleteProfile">开始我的学习之旅</button>
+      <!-- 服务条款确认 -->
+      <view class="terms-section">
+        <checkbox-group bindchange="onTermsChange">
+          <label class="checkbox-wrapper">
+            <checkbox value="agree" checked="{{agreedToTerms}}" color="#4A90E2" />
+            <text class="checkbox-text">我已阅读并同意</text>
+            <text class="link-text" bindtap="showUserAgreement">《用户协议》</text>
+            <text class="checkbox-text">和</text>
+            <text class="link-text" bindtap="showPrivacyPolicy">《隐私政策》</text>
+          </label>
+        </checkbox-group>
+      </view>
+      
+      <button class="complete-btn" bindtap="onCompleteProfile" disabled="{{!agreedToTerms}}">
+        提交申请
+      </button>
+      
+      <view class="register-tips">
+        <text class="tip-text">• 提交后需要审核，通常1-3个工作日</text>
+        <text class="tip-text">• 请确保信息真实有效</text>
+        <text class="tip-text">• 审核结果将及时通知</text>
+      </view>
     </view>
   </view>
 

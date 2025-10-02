@@ -134,9 +134,6 @@
           <!-- 词汇编号 -->
           <view class="result-row">
             <text class="row-label">📘 词汇{{item.index}}</text>
-            <view class="result-actions">
-              <text class="save-link" bindtap="saveWordToWordbook" data-word="{{item}}">保存到生词本</text>
-            </view>
           </view>
           
           <!-- 日文 -->
@@ -223,9 +220,6 @@
           <!-- 句子编号 -->
           <view class="result-row">
             <text class="row-label">📘 第{{item.index}}句</text>
-            <view class="result-actions">
-              <text class="save-link" bindtap="saveToWordbook" data-sentence="{{item}}">保存词汇</text>
-            </view>
           </view>
         
         <!-- 日文原文 -->

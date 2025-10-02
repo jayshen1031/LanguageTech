@@ -1,0 +1,72 @@
+<!-- 管理员调试页面 -->
+<view class="container">
+  <view class="debug-header">
+    <text class="debug-title">🛠️ 管理员调试工具</text>
+    <text class="debug-subtitle">用于设置管理员权限和调试登录问题</text>
+  </view>
+
+  <!-- OpenID 信息 -->
+  <view class="info-card">
+    <view class="card-title">🔑 您的 OpenID</view>
+    <view class="openid-display">
+      <text class="openid-text">{{openid || '获取中...'}}</text>
+      <button wx:if="{{openid}}" class="copy-btn" size="mini" bindtap="copyOpenid">复制</button>
+    </view>
+    <view class="info-tips">
+      <text class="tip-text">• 这是您微信的唯一标识</text>
+      <text class="tip-text">• 需要添加到云函数管理员白名单中</text>
+    </view>
+  </view>
+
+  <!-- 管理员状态 -->
+  <view class="status-card">
+    <view class="card-title">👑 管理员状态</view>
+    <view class="status-row">
+      <text class="status-label">当前状态:</text>
+      <text class="status-value {{isAdmin ? 'admin' : 'normal'}}">
+        {{isAdmin ? '✅ 管理员' : '❌ 普通用户'}}
+      </text>
+    </view>
+    
+    <view wx:if="{{userInfo}}" class="status-row">
+      <text class="status-label">账户状态:</text>
+      <text class="status-value">{{userInfo.status || '未注册'}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-section">
+    <button wx:if="{{!isAdmin}}" class="action-btn primary" bindtap="setAdminPermission">
+      设置管理员权限
+    </button>
+    
+    <button class="action-btn secondary" bindtap="testUserRegister">
+      测试用户注册
+    </button>
+    
+    <button class="action-btn secondary" bindtap="showDetails">
+      查看详细信息
+    </button>
+    
+    <button class="action-btn secondary" bindtap="refresh">
+      刷新状态
+    </button>
+  </view>
+
+  <!-- 说明信息 -->
+  <view class="help-section">
+    <view class="help-title">📖 使用说明</view>
+    <view class="help-content">
+      <text class="help-text">1. 首次使用请先"设置管理员权限"</text>
+      <text class="help-text">2. 管理员账户登录后自动审核通过</text>
+      <text class="help-text">3. 可以使用所有功能包括句子解析</text>
+      <text class="help-text">4. 如果登录失败，请检查云函数是否部署</text>
+    </view>
+  </view>
+
+  <!-- 技术信息 -->
+  <view class="tech-info">
+    <text class="tech-text">云环境: cloud1-2g49srond2b01891</text>
+    <text class="tech-text">版本: v1.0.0</text>
+  </view>
+</view>

@@ -128,9 +128,6 @@
     <button class="btn-action" bindtap="toggleExample">
       {{showExample ? '隐藏例句' : '显示例句'}}
     </button>
-    <button class="btn-action" bindtap="addToWordbook">
-      <text class="{{inWordbook ? 'added' : ''}}">{{inWordbook ? '已添加' : '加入生词本'}}</text>
-    </button>
   </view>
 
   <!-- 掌握状态按钮 -->

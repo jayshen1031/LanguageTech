@@ -271,31 +271,6 @@ Page({
     }
   },
 
-  // 保存到生词本
-  saveToWordbook() {
-    const { currentSentence } = this.data
-    
-    if (currentSentence && currentSentence.vocabulary) {
-      const words = currentSentence.vocabulary.map(vocab => ({
-        word: vocab.japanese,
-        reading: vocab.romaji,
-        meaning: vocab.chinese,
-        example: currentSentence.originalText,
-        source: 'parser-review',
-        createTime: new Date()
-      }))
-      
-      // 保存到本地存储（实际应该保存到数据库）
-      const wordbook = wx.getStorageSync('wordbook') || []
-      wordbook.push(...words)
-      wx.setStorageSync('wordbook', wordbook)
-      
-      wx.showToast({
-        title: '已添加到生词本',
-        icon: 'success'
-      })
-    }
-  },
 
   // 返回上一页
   navigateBack() {

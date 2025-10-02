@@ -117,9 +117,9 @@ exports.main = async (event, context) => {
   try {
     // console.log('混元AI云函数被调用，action:', action)
     // console.log('密钥配置状态:', {
-      SECRET_ID: SECRET_ID ? SECRET_ID.substring(0, 10) + '...' : '未配置',
-      SECRET_KEY: SECRET_KEY ? '已配置' : '未配置'
-    })
+    //   SECRET_ID: SECRET_ID ? SECRET_ID.substring(0, 10) + '...' : '未配置',
+    //   SECRET_KEY: SECRET_KEY ? '已配置' : '未配置'
+    // })
     
     if (!SECRET_ID || !SECRET_KEY) {
       console.error('密钥未配置')
@@ -154,9 +154,9 @@ exports.main = async (event, context) => {
       case 'grammar':
         // 语法分析 - 支持文本或图片
         // console.log('处理grammar请求，参数:', { 
-          sentence: event.sentence, 
-          imageUrl: event.imageUrl 
-        })
+        //   sentence: event.sentence, 
+        //   imageUrl: event.imageUrl 
+        // })
         
         let grammarMessages = []
         

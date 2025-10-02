@@ -1,5 +1,6 @@
 // 日语解析工具页面
 const { azureGPT4o } = require('../../../utils/ai')
+const authGuard = require('../../../utils/authGuard')
 
 
 Page({
@@ -18,7 +19,13 @@ Page({
     // 历史记录相关功能已移至独立页面
   },
 
-  onLoad() {
+  async onLoad() {
+    // 检查高级功能认证（需要审核通过）
+    const isAdvancedUser = await authGuard.requireAdvancedAuth(this)
+    if (!isAdvancedUser) {
+      return
+    }
+    
     // 页面加载时初始化云数据库
     this.db = wx.cloud.database()
   },
@@ -793,10 +800,11 @@ Page({
         // 自动保存到历史
         this.saveParseResult(autoSaveData)
         
-        // 保存成功后，自动整合词汇到学习库
+        // 保存成功后，自动整合词汇和句子结构到学习库
         if (analysisResult && analysisResult.length > 0) {
           setTimeout(() => {
             this.integrateVocabularyToLearning(autoSaveData)
+            this.integrateStructuresToLearning(autoSaveData)
           }, 1000) // 延迟1秒确保保存完成
         }
       }
@@ -1959,66 +1967,6 @@ Page({
     })
   },
 
-  // 保存到生词本
-  saveToWordbook(e) {
-    const { sentence } = e.currentTarget.dataset
-    
-    // 将句子中的词汇添加到生词本
-    const words = sentence.vocabulary.map(vocab => ({
-      word: vocab.japanese,
-      reading: vocab.romaji,
-      meaning: vocab.chinese,
-      example: sentence.originalText,
-      source: 'parser',
-      createTime: new Date()
-    }))
-    
-    // 保存到本地存储（实际应该保存到数据库）
-    const wordbook = wx.getStorageSync('wordbook') || []
-    wordbook.push(...words)
-    wx.setStorageSync('wordbook', wordbook)
-    
-    wx.showToast({
-      title: '已添加到生词本',
-      icon: 'success'
-    })
-  },
-
-  // 保存单词到生词本
-  saveWordToWordbook(e) {
-    const { word } = e.currentTarget.dataset
-    
-    // 构建生词本数据
-    const wordData = {
-      word: word.word,
-      reading: word.kana,
-      romaji: word.romaji,
-      meaning: word.meaning,
-      partOfSpeech: word.partOfSpeech,
-      source: 'parser',
-      createTime: new Date()
-    }
-    
-    // 保存到本地存储（实际应该保存到数据库）
-    const wordbook = wx.getStorageSync('wordbook') || []
-    
-    // 检查是否已存在
-    const exists = wordbook.some(w => w.word === wordData.word)
-    if (!exists) {
-      wordbook.push(wordData)
-      wx.setStorageSync('wordbook', wordbook)
-      
-      wx.showToast({
-        title: '已添加到生词本',
-        icon: 'success'
-      })
-    } else {
-      wx.showToast({
-        title: '该词已在生词本中',
-        icon: 'none'
-      })
-    }
-  },
 
   // 清空内容
   clearContent() {
@@ -2903,6 +2851,217 @@ Page({
       console.error('❌ 词汇整合调用失败:', error)
       // 不显示错误提示，静默失败
     }
+  },
+
+  // 句子结构增量整合到学习库
+  async integrateStructuresToLearning(parseData) {
+    try {
+      console.log('📖 开始增量整合句子结构到学习库...')
+      
+      if (!parseData.analysisResult || parseData.analysisResult.length === 0) {
+        console.log('📖 没有解析结果，跳过句子结构整合')
+        return
+      }
+      
+      const db = wx.cloud.database()
+      const structureMap = new Map()
+      const currentTime = new Date()
+      
+      // 提取当前解析结果中的句子结构
+      parseData.analysisResult.forEach((sentence, sentenceIndex) => {
+        // 提取句子结构
+        if (sentence.structure && sentence.structure.trim() && 
+            sentence.structure !== '处理失败' && sentence.structure.length > 2) {
+          const structureKey = sentence.structure.trim()
+          
+          if (!structureMap.has(structureKey)) {
+            structureMap.set(structureKey, {
+              structure: structureKey,
+              examples: [],
+              category: this.categorizeStructure(structureKey),
+              difficulty: this.calculateDifficulty(structureKey),
+              tags: ['句子结构'],
+              currentExample: {
+                jp: sentence.originalText,
+                romaji: sentence.romaji || '',
+                cn: sentence.translation,
+                source: parseData.articleTitle || '解析记录',
+                sentenceIndex: sentenceIndex
+              }
+            })
+          }
+        }
+        
+        // 提取语法点
+        if (sentence.grammar) {
+          const grammarPoints = this.extractGrammarPoints(sentence.grammar)
+          
+          grammarPoints.forEach(grammarPoint => {
+            const grammarKey = grammarPoint.trim()
+            
+            if (grammarKey && grammarKey.length > 2) {
+              if (!structureMap.has(grammarKey)) {
+                structureMap.set(grammarKey, {
+                  structure: grammarKey,
+                  examples: [],
+                  category: 'grammar_point',
+                  difficulty: this.calculateDifficulty(grammarKey),
+                  tags: ['语法要点'],
+                  currentExample: {
+                    jp: sentence.originalText,
+                    romaji: sentence.romaji || '',
+                    cn: sentence.translation,
+                    source: parseData.articleTitle || '解析记录',
+                    sentenceIndex: sentenceIndex
+                  }
+                })
+              }
+            }
+          })
+        }
+      })
+      
+      console.log(`📖 提取到${structureMap.size}个句子结构`)
+      
+      // 逐个处理句子结构
+      let updatedCount = 0
+      let addedCount = 0
+      
+      for (const [structureKey, newStructureData] of structureMap) {
+        try {
+          // 检查是否已存在
+          const existingRes = await db.collection('sentence_structures_integrated')
+            .where({ structure: structureKey })
+            .limit(1)
+            .get()
+          
+          if (existingRes.data.length > 0) {
+            // 已存在，智能合并更新
+            const existing = existingRes.data[0]
+            const updatedExamples = [...(existing.examples || [])]
+            const updatedSources = new Set([...(existing.sources || [])])
+            
+            // 添加新例句（严格去重）
+            const newExample = newStructureData.currentExample
+            const isExampleExists = updatedExamples.some(ex => 
+              ex.jp === newExample.jp && ex.cn === newExample.cn
+            )
+            
+            if (!isExampleExists) {
+              updatedExamples.push(newExample)
+            }
+            
+            // 更新来源（如果有recordId）
+            if (newExample.recordId) {
+              updatedSources.add(newExample.recordId)
+            }
+            
+            await db.collection('sentence_structures_integrated')
+              .doc(existing._id)
+              .update({
+                data: {
+                  examples: updatedExamples,
+                  sources: Array.from(updatedSources),
+                  totalOccurrences: updatedExamples.length,
+                  lastSeen: currentTime,
+                  // 保持原有的firstSeen
+                  firstSeen: existing.firstSeen || currentTime
+                }
+              })
+            
+            updatedCount++
+            console.log(`📖 智能合并更新: ${structureKey} (${updatedExamples.length}个例句)`)
+            
+          } else {
+            // 不存在，新增
+            const newStructure = {
+              structure: structureKey,
+              examples: [newStructureData.currentExample],
+              sources: [],
+              totalOccurrences: 1,
+              firstSeen: currentTime,
+              lastSeen: currentTime,
+              category: newStructureData.category,
+              difficulty: newStructureData.difficulty,
+              tags: newStructureData.tags
+            }
+            
+            await db.collection('sentence_structures_integrated').add({
+              data: newStructure
+            })
+            
+            addedCount++
+            console.log(`📖 新增句子结构: ${structureKey}`)
+          }
+          
+        } catch (error) {
+          console.error(`📖 处理句子结构失败: ${structureKey}`, error)
+        }
+      }
+      
+      console.log(`📖 句子结构增量整合完成: 新增${addedCount}个, 更新${updatedCount}个`)
+      
+      // 显示成功提示
+      if (addedCount > 0 || updatedCount > 0) {
+        wx.showToast({
+          title: `已整合${addedCount + updatedCount}个句子结构`,
+          icon: 'success',
+          duration: 1500
+        })
+      }
+      
+      // 通知首页刷新统计
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        const indexPage = pages.find(page => page.route === 'pages/index/index')
+        if (indexPage && indexPage.loadStructureStats) {
+          indexPage.loadStructureStats()
+        }
+      }, 1000)
+      
+    } catch (error) {
+      console.error('📖 句子结构增量整合失败:', error)
+    }
+  },
+
+  // 辅助方法：分类句子结构
+  categorizeStructure(structure) {
+    if (structure.includes('は') || structure.includes('が') || structure.includes('を')) {
+      return 'sentence_structure'
+    }
+    if (structure.includes('形') || structure.includes('动词') || structure.includes('名词')) {
+      return 'grammar_point'
+    }
+    if (structure.includes('修饰') || structure.includes('连接') || structure.includes('表示')) {
+      return 'analysis_point'
+    }
+    return 'sentence_structure'
+  },
+
+  // 辅助方法：计算难度
+  calculateDifficulty(structure) {
+    const length = structure.length
+    if (length <= 10) return 'basic'
+    if (length <= 25) return 'intermediate'
+    return 'advanced'
+  },
+
+  // 辅助方法：提取语法点
+  extractGrammarPoints(grammarText) {
+    if (!grammarText) return []
+    
+    const points = []
+    const lines = grammarText.split(/[。\n•・]/g)
+      .filter(line => line.trim())
+      .map(line => line.trim())
+    
+    lines.forEach(line => {
+      if (line.length > 2 && line.length < 100) {
+        points.push(line)
+      }
+    })
+    
+    return points
   },
 
   // 分享

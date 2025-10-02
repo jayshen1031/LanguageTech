@@ -4,6 +4,27 @@ class UserService {
     this.userInfo = null
     this.userProfile = null
     this.isLoggedIn = false
+    
+    // 初始化云开发
+    this.initCloud()
+  }
+
+  // 初始化云开发环境
+  initCloud() {
+    if (!wx.cloud) {
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
+      return
+    }
+    
+    try {
+      wx.cloud.init({
+        env: 'cloud1-2g49srond2b01891',
+        traceUser: true
+      })
+      console.log('✅ UserService 云开发初始化成功')
+    } catch (error) {
+      console.error('❌ UserService 云开发初始化失败:', error)
+    }
   }
 
   // 初始化用户服务
@@ -21,8 +42,12 @@ class UserService {
           this.userProfile = userProfile
         }
         
-        // 尝试从云端同步最新数据
-        await this.syncFromCloud()
+        // 尝试从云端同步最新数据（如果云函数存在）
+        try {
+          await this.syncFromCloud()
+        } catch (error) {
+          console.log('云端同步跳过:', error.message)
+        }
       }
     } catch (error) {
       console.error('初始化用户服务失败:', error)
@@ -210,6 +235,16 @@ class UserService {
       }
     } catch (error) {
       console.error('从云端同步数据失败:', error)
+      
+      // 如果是云函数不存在，不视为错误
+      if (error.errCode === -501000) {
+        console.log('📝 user-auth 云函数不存在，跳过云端同步')
+        return {
+          success: true,
+          data: null
+        }
+      }
+      
       return {
         success: false,
         error: '同步失败'

@@ -1,0 +1,134 @@
+<!-- pages/vocabulary-list/vocabulary-list.wxml -->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="title-section">
+      <text class="page-title">{{pageTitle}}</text>
+      <text class="word-count">共 {{totalCount}} 个词汇</text>
+      <text wx:if="{{vocabularyList.length < totalCount}}" class="load-hint">
+        当前显示 {{vocabularyList.length}} 个，向下滑动加载更多
+      </text>
+      <button wx:if="{{vocabularyList.length < totalCount && hasMore}}" class="load-all-btn" bindtap="loadAllVocabulary">
+        一次性加载全部
+      </button>
+    </view>
+  </view>
+
+  <!-- 词汇列表 -->
+  <scroll-view class="vocabulary-list" scroll-y enable-back-to-top>
+    <view wx:for="{{vocabularyList}}" wx:key="_id" class="vocabulary-item">
+      <!-- 基本信息 -->
+      <view class="item-header">
+        <view class="item-main">
+          <text class="word">{{item.word}}</text>
+          <text class="reading">{{item.romaji}}</text>
+        </view>
+        <view class="item-status">
+          <text wx:if="{{item.totalOccurrences >= 3}}" class="status-badge mastered">已掌握</text>
+          <text wx:else class="status-badge learning">学习中</text>
+        </view>
+      </view>
+
+      <!-- 含义 -->
+      <view class="item-meaning">
+        <text class="meaning-text">{{item.meaning}}</text>
+      </view>
+
+      <!-- 学习统计 -->
+      <view class="item-stats">
+        <text class="stat-item">出现 {{item.totalOccurrences}} 次</text>
+        <text wx:if="{{item.examples && item.examples.length > 0}}" class="stat-item">例句 {{item.examples.length}} 个</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="item-actions">
+        <button class="action-btn play-btn" bindtap="playAudio" data-text="{{item.word}}">
+          🔊 发音
+        </button>
+        <button class="action-btn detail-btn" bindtap="showDetail" data-index="{{index}}">
+          📖 详情
+        </button>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view wx:if="{{!hasMore && vocabularyList.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && vocabularyList.length === 0}}" class="empty">
+      <text class="empty-icon">📚</text>
+      <text class="empty-text">暂无{{pageTitle}}</text>
+      <text class="empty-hint">去解析更多内容来丰富词汇库</text>
+      <button class="empty-action" bindtap="goToParser">开始解析</button>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 词汇详情弹窗 -->
+<view wx:if="{{showDetailModal}}" class="modal-mask" bindtap="hideDetail">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">词汇详情</text>
+      <text class="modal-close" bindtap="hideDetail">×</text>
+    </view>
+    
+    <view wx:if="{{selectedWord}}" class="modal-body">
+      <!-- 词汇基本信息 -->
+      <view class="word-info">
+        <text class="word-main">{{selectedWord.word}}</text>
+        <text class="word-reading">{{selectedWord.romaji}}</text>
+        <text class="word-meaning">{{selectedWord.meaning}}</text>
+      </view>
+
+      <!-- 学习统计 -->
+      <view class="word-stats">
+        <view class="stat-row">
+          <text class="stat-label">出现次数：</text>
+          <text class="stat-value">{{selectedWord.totalOccurrences}} 次</text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-label">学习状态：</text>
+          <text class="stat-value {{selectedWord.totalOccurrences >= 3 ? 'mastered' : 'learning'}}">
+            {{selectedWord.totalOccurrences >= 3 ? '已掌握' : '学习中'}}
+          </text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-label">词汇级别：</text>
+          <text class="stat-value">{{selectedWord.level}}</text>
+        </view>
+      </view>
+
+      <!-- 例句 -->
+      <view wx:if="{{selectedWord.examples && selectedWord.examples.length > 0}}" class="examples-section">
+        <text class="section-title">例句</text>
+        <view wx:for="{{selectedWord.examples}}" wx:key="*this" class="example-item">
+          <text class="example-jp">{{item.jp}}</text>
+          <text class="example-cn">{{item.cn}}</text>
+          <button class="play-example" bindtap="playAudio" data-text="{{item.jp}}">🔊</button>
+        </view>
+      </view>
+
+      <!-- 来源标签 -->
+      <view wx:if="{{selectedWord.tags && selectedWord.tags.length > 0}}" class="tags-section">
+        <text class="section-title">标签</text>
+        <view class="tag-list">
+          <text wx:for="{{selectedWord.tags}}" wx:key="*this" class="tag">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <button class="modal-btn play-btn" bindtap="playAudio" data-text="{{selectedWord.word}}">
+        🔊 播放发音
+      </button>
+      <button class="modal-btn close-btn" bindtap="hideDetail">关闭</button>
+    </view>
+  </view>
+</view>

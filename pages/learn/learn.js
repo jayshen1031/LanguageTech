@@ -1,5 +1,6 @@
 const app = getApp()
 const audioMCP = require('../../utils/audioMCP')
+const authGuard = require('../../utils/authGuard')
 
 const db = wx.cloud.database()
 
@@ -9,7 +10,6 @@ Page({
     currentIndex: 0,
     currentWord: {},
     showExample: true,
-    inWordbook: false,
     showComplete: false,
     showSetup: true, // 显示设置界面
     selectedCount: 10, // 默认学习数量
@@ -27,7 +27,13 @@ Page({
   timers: [], // 存储所有定时器
   isPageUnloaded: false, // 页面是否已卸载
 
-  onLoad(options) {
+  async onLoad(options) {
+    // 检查基础登录状态（只需要微信授权）
+    const isAuthenticated = await authGuard.requireBasicAuth(this)
+    if (!isAuthenticated) {
+      return
+    }
+    
     // 检查MCP服务（可选）
     // this.checkMCPService()
     
@@ -414,23 +420,6 @@ Page({
     })
   },
 
-  // 添加到生词本
-  addToWordbook() {
-    const { currentWord } = this.data
-    if (!currentWord || !currentWord.word) {
-      return
-    }
-
-    // 这里可以调用云函数或直接操作数据库
-    wx.showToast({
-      title: '已添加到生词本',
-      icon: 'success'
-    })
-    
-    this.setData({
-      inWordbook: true
-    })
-  },
 
   // 标记掌握状态
   markStatus(e) {

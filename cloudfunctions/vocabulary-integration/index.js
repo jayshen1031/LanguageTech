@@ -284,11 +284,11 @@ async function rebuildVocabularyTable() {
   
   // 4. 批量插入到数据库
   let insertedCount = 0
-  const batchSize = 20
+  const insertBatchSize = 20
   const wordArray = Array.from(wordMap.values())
   
-  for (let i = 0; i < wordArray.length; i += batchSize) {
-    const batch = wordArray.slice(i, i + batchSize)
+  for (let i = 0; i < wordArray.length; i += insertBatchSize) {
+    const batch = wordArray.slice(i, i + insertBatchSize)
     
     for (const wordData of batch) {
       // 限制例句数量
@@ -303,7 +303,7 @@ async function rebuildVocabularyTable() {
       insertedCount++
     }
     
-    console.log(`📤 已插入${Math.min(i + batchSize, wordArray.length)}/${wordArray.length}个词汇`)
+    console.log(`📤 已插入${Math.min(i + insertBatchSize, wordArray.length)}/${wordArray.length}个词汇`)
   }
   
   return {

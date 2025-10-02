@@ -24,9 +24,30 @@
     </view>
   </view>
 
+  <!-- 快捷功能入口 -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="goToLearningProgress">
+      <view class="action-icon">📊</view>
+      <view class="action-content">
+        <text class="action-title">学习进度</text>
+        <text class="action-desc">查看学习轨迹和成就</text>
+      </view>
+      <text class="action-arrow">＞</text>
+    </view>
+    
+    <view class="action-item" bindtap="showLearningManagement">
+      <view class="action-icon">⚙️</view>
+      <view class="action-content">
+        <text class="action-title">学习管理</text>
+        <text class="action-desc">重置掌握状态和数据管理</text>
+      </view>
+      <text class="action-arrow">＞</text>
+    </view>
+  </view>
+
   <!-- 学习统计卡片 -->
   <view class="stats-section">
-    <view class="section-title">学习统计</view>
+    <view class="section-title">学习概览</view>
     <view class="stats-grid">
       <view class="stat-card" bindtap="goToMasteryStats">
         <text class="stat-number">{{learningStats.studyDays}}</text>
@@ -101,5 +122,30 @@
         <text class="progress-text">{{learningStats.todayStudyTime}}/{{userProfile.studyTimePerDay}}分钟</text>
       </view>
     </view>
+  </view>
+
+  <!-- 管理员功能区（仅管理员可见） -->
+  <view wx:if="{{isAdmin}}" class="admin-section">
+    <view class="section-title">
+      <text class="title-text">管理员功能</text>
+      <text class="admin-badge">ADMIN</text>
+    </view>
+    <view class="function-list">
+      <view class="function-item" bindtap="goToUserManagement">
+        <view class="function-content">
+          <view class="function-icon">👥</view>
+          <view class="function-info">
+            <text class="function-name">用户管理</text>
+            <text class="function-desc">审核注册申请，管理用户</text>
+          </view>
+        </view>
+        <view class="function-arrow">></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 隐藏的管理员调试入口（长按版本号触发） -->
+  <view class="version-info" bindlongpress="goToAdminDebug">
+    <text class="version-text">语伴君 v1.0.0</text>
   </view>
 </view>

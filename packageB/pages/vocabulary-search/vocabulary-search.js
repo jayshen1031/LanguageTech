@@ -106,7 +106,6 @@ Page({
         const list = res.result.data.map(item => ({
           ...item,
           showDetail: false,
-          isInWordbook: false // 后续可以检查是否已在生词本中
         }));
 
         this.setData({
@@ -115,8 +114,6 @@ Page({
           hasMore: this.data.page < res.result.totalPages
         });
 
-        // 检查是否已在生词本中
-        this.checkWordbook(list);
       }
     } catch (err) {
       console.error('搜索失败:', err);
@@ -129,35 +126,6 @@ Page({
     }
   },
 
-  // 检查词汇是否已在生词本中
-  async checkWordbook(list) {
-    const db = wx.cloud.database();
-    const openid = wx.getStorageSync('openid');
-    
-    if (!openid) return;
-
-    const words = list.map(item => item.word);
-    
-    try {
-      const res = await db.collection('user_vocabulary')
-        .where({
-          _openid: openid,
-          word: db.command.in(words)
-        })
-        .get();
-
-      const wordbookWords = new Set(res.data.map(item => item.word));
-      
-      const updatedList = this.data.vocabularyList.map(item => ({
-        ...item,
-        isInWordbook: wordbookWords.has(item.word)
-      }));
-
-      this.setData({ vocabularyList: updatedList });
-    } catch (err) {
-      console.error('检查生词本失败:', err);
-    }
-  },
 
   // 输入关键词
   onKeywordInput(e) {
@@ -231,131 +199,7 @@ Page({
     });
   },
 
-  // 添加到生词本
-  async addToWordbook(e) {
-    const { item } = e.currentTarget.dataset;
-    const openid = wx.getStorageSync('openid');
-    
-    if (!openid) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-      return;
-    }
 
-    wx.showLoading({ title: '添加中...' });
-
-    try {
-      const db = wx.cloud.database();
-      
-      // 检查是否已存在
-      const checkRes = await db.collection('user_vocabulary')
-        .where({
-          _openid: openid,
-          word: item.word
-        })
-        .get();
-
-      if (checkRes.data.length > 0) {
-        wx.showToast({
-          title: '已在生词本中',
-          icon: 'none'
-        });
-        return;
-      }
-
-      // 添加到生词本
-      await db.collection('user_vocabulary').add({
-        data: {
-          word: item.word,
-          reading: item.reading,
-          meanings: item.meanings,
-          partOfSpeech: item.partOfSpeech,
-          level: item.level,
-          category: item.category,
-          examples: item.examples,
-          notes: '',
-          tags: item.tags || [],
-          masteryLevel: 0,
-          reviewCount: 0,
-          lastReviewTime: null,
-          nextReviewTime: new Date(),
-          source: 'n2_vocabulary',
-          createTime: new Date(),
-          updateTime: new Date()
-        }
-      });
-
-      // 更新UI
-      const index = this.data.vocabularyList.findIndex(v => v.word === item.word);
-      if (index !== -1) {
-        const key = `vocabularyList[${index}].isInWordbook`;
-        this.setData({ [key]: true });
-      }
-
-      wx.showToast({
-        title: '添加成功',
-        icon: 'success'
-      });
-    } catch (err) {
-      console.error('添加失败:', err);
-      wx.showToast({
-        title: '添加失败',
-        icon: 'none'
-      });
-    } finally {
-      wx.hideLoading();
-    }
-  },
-
-  // 从生词本移除
-  async removeFromWordbook(e) {
-    const { item } = e.currentTarget.dataset;
-    const openid = wx.getStorageSync('openid');
-    
-    if (!openid) return;
-
-    wx.showModal({
-      title: '确认移除',
-      content: `确定要从生词本中移除「${item.word}」吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '移除中...' });
-          
-          try {
-            const db = wx.cloud.database();
-            await db.collection('user_vocabulary')
-              .where({
-                _openid: openid,
-                word: item.word
-              })
-              .remove();
-
-            // 更新UI
-            const index = this.data.vocabularyList.findIndex(v => v.word === item.word);
-            if (index !== -1) {
-              const key = `vocabularyList[${index}].isInWordbook`;
-              this.setData({ [key]: false });
-            }
-
-            wx.showToast({
-              title: '移除成功',
-              icon: 'success'
-            });
-          } catch (err) {
-            console.error('移除失败:', err);
-            wx.showToast({
-              title: '移除失败',
-              icon: 'none'
-            });
-          } finally {
-            wx.hideLoading();
-          }
-        }
-      }
-    });
-  },
 
   // 播放发音
   playAudio(e) {

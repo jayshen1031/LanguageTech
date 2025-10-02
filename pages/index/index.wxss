@@ -6,6 +6,74 @@
   padding-bottom: 20rpx;
 }
 
+/* 登录提示样式 */
+.login-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40rpx;
+}
+
+.login-prompt-card {
+  background: white;
+  border-radius: 30rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
+  box-shadow: 0 20rpx 60rpx rgba(0,0,0,0.15);
+  max-width: 500rpx;
+  width: 100%;
+}
+
+.prompt-icon {
+  font-size: 100rpx;
+  margin-bottom: 30rpx;
+}
+
+.prompt-title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.prompt-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 40rpx;
+}
+
+.prompt-benefits {
+  text-align: left;
+  margin-bottom: 50rpx;
+}
+
+.benefit-item {
+  display: block;
+  font-size: 26rpx;
+  color: #555;
+  margin-bottom: 12rpx;
+  line-height: 1.5;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #4A90E2, #667eea);
+  color: white;
+  border-radius: 50rpx;
+  height: 90rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 8rpx 20rpx rgba(74,144,226,0.3);
+}
+
 /* 顶部背景装饰 */
 .header-bg {
   position: absolute;
@@ -42,19 +110,29 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 80rpx 15rpx 40rpx;
+  padding: 60rpx 15rpx 30rpx;
   color: #fff;
+  margin: 20rpx 15rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.clickable-section:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.98);
 }
 
 .user-avatar {
-  width: 120rpx;
-  height: 120rpx;
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 30rpx;
+  margin-right: 24rpx;
   overflow: hidden;
 }
 
@@ -64,7 +142,7 @@
 }
 
 .avatar-icon {
-  font-size: 60rpx;
+  font-size: 50rpx;
   color: #fff;
 }
 
@@ -73,15 +151,27 @@
 }
 
 .user-name {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 600;
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: 8rpx;
 }
 
-.user-badges {
+.user-subtitle {
   display: flex;
-  gap: 20rpx;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-stats {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.goto-arrow {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.6);
+  margin-left: 10rpx;
 }
 
 .badge {
@@ -91,6 +181,16 @@
   padding: 8rpx 16rpx;
   border-radius: 20rpx;
   font-size: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.badge.clickable {
+  cursor: pointer;
+}
+
+.badge.clickable:active {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(0.95);
 }
 
 .badge.completed {
@@ -100,6 +200,230 @@
 .badge-icon {
   font-size: 24rpx;
   margin-right: 8rpx;
+}
+
+/* 学习仪表板 */
+.dashboard {
+  margin: 20rpx 15rpx 30rpx;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.dashboard-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.dashboard-subtitle {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.data-overview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.overview-item {
+  flex: 1;
+  text-align: center;
+  padding: 15rpx 5rpx;
+  transition: all 0.3s ease;
+}
+
+.overview-item:active {
+  transform: scale(0.95);
+}
+
+.overview-number {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #667eea;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.overview-label {
+  font-size: 24rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.overview-detail {
+  font-size: 22rpx;
+  color: #666;
+  line-height: 1.3;
+}
+
+.overview-divider {
+  width: 2rpx;
+  height: 60rpx;
+  background: #f0f0f0;
+  margin: 0 20rpx;
+}
+
+/* 今日学习 */
+.today-learning {
+  margin: 0 15rpx 30rpx;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.learning-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.learning-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.learning-config {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: #f8f9fa;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.learning-config:active {
+  background: #e9ecef;
+}
+
+.config-text {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.config-icon {
+  font-size: 20rpx;
+}
+
+.start-learning-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.start-learning-btn:active {
+  transform: scale(0.98);
+}
+
+.start-content {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.start-icon {
+  font-size: 48rpx;
+}
+
+.start-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.start-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 4rpx;
+}
+
+.start-desc {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.start-arrow {
+  font-size: 28rpx;
+  color: white;
+}
+
+/* 快捷功能区 */
+.quick-functions {
+  margin: 0 15rpx 30rpx;
+}
+
+.section-header {
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15rpx;
+}
+
+.quick-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.quick-card.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.quick-card:active {
+  transform: scale(0.95);
+}
+
+.quick-icon {
+  font-size: 36rpx;
+  margin-bottom: 12rpx;
+}
+
+.quick-title {
+  font-size: 22rpx;
+  font-weight: bold;
+  margin-bottom: 4rpx;
+}
+
+.quick-desc {
+  font-size: 18rpx;
+  opacity: 0.7;
 }
 
 /* 学习数据卡片 */
@@ -118,6 +442,35 @@
 .stats-item {
   text-align: center;
   flex: 1;
+  padding: 10rpx;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stats-item:active {
+  background: #f8f9fa;
+  transform: scale(0.95);
+}
+
+.stats-header {
+  text-align: center;
+  padding-bottom: 15rpx;
+  margin-bottom: 15rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stats-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 .stats-value {
@@ -378,10 +731,6 @@
   color: #4caf50;
 }
 
-.feature-icon.wordbook {
-  background: #fff8e1;
-  color: #ffc107;
-}
 
 .feature-icon.review {
   background: #e3f2fd;
@@ -406,6 +755,16 @@
   background: #f5f5f5;
   color: #999;
   font-weight: bold;
+}
+
+.feature-icon.management {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.feature-icon.clean {
+  background: #ffe6e6;
+  color: #e74c3c;
 }
 
 .feature-name {

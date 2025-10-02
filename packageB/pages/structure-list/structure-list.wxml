@@ -1,0 +1,200 @@
+<!-- pages/structure-list/structure-list.wxml -->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view class="title-section">
+      <text class="page-title">{{pageTitle}}</text>
+      <text class="structure-count">共 {{totalCount}} 个句子结构</text>
+      <text wx:if="{{structureList.length < totalCount}}" class="load-hint">
+        当前显示 {{structureList.length}} 个，向下滑动加载更多
+      </text>
+      <view class="header-actions">
+        <button wx:if="{{structureList.length < totalCount && hasMore}}" class="load-all-btn" bindtap="loadAllStructures">
+          一次性加载全部
+        </button>
+        <button wx:if="{{type === 'mastered'}}" class="batch-reset-btn" bindtap="batchResetMastery">
+          🔄 批量重置
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选器 -->
+  <view class="filter-bar">
+    <view class="filter-item" bindtap="showCategoryFilter">
+      <text class="filter-text">{{selectedCategoryName}}</text>
+      <text class="filter-arrow">▼</text>
+    </view>
+    <view class="filter-item" bindtap="showDifficultyFilter">
+      <text class="filter-text">{{selectedDifficultyName}}</text>
+      <text class="filter-arrow">▼</text>
+    </view>
+  </view>
+
+  <!-- 句子结构列表 -->
+  <scroll-view class="structure-list" scroll-y enable-back-to-top>
+    <view wx:for="{{structureList}}" wx:key="_id" class="structure-item">
+      <!-- 基本信息 -->
+      <view class="item-header">
+        <view class="item-main">
+          <text class="structure-text">{{item.structure}}</text>
+          <view class="item-meta">
+            <text class="category-tag {{item.category}}">{{getCategoryName(item.category)}}</text>
+            <text class="difficulty-tag {{item.difficulty}}">{{getDifficultyName(item.difficulty)}}</text>
+          </view>
+        </view>
+        <view class="item-status">
+          <text wx:if="{{item.totalOccurrences >= 3}}" class="status-badge mastered">已掌握</text>
+          <text wx:else class="status-badge learning">学习中</text>
+        </view>
+      </view>
+
+      <!-- 学习统计 -->
+      <view class="item-stats">
+        <text class="stat-item">出现 {{item.totalOccurrences}} 次</text>
+        <text wx:if="{{item.examples && item.examples.length > 0}}" class="stat-item">例句 {{item.examples.length}} 个</text>
+        <text wx:if="{{item.tags && item.tags.length > 0}}" class="stat-item">{{item.tags[0]}}</text>
+      </view>
+
+      <!-- 第一个例句预览 -->
+      <view wx:if="{{item.examples && item.examples.length > 0}}" class="item-example">
+        <text class="example-jp">{{item.examples[0].jp}}</text>
+        <text class="example-cn">{{item.examples[0].cn}}</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="item-actions">
+        <button class="action-btn example-btn" bindtap="playAudio" data-text="{{item.examples[0].jp}}">
+          🔊 发音
+        </button>
+        <button class="action-btn detail-btn" bindtap="showDetail" data-index="{{index}}">
+          📖 详情
+        </button>
+        <button class="action-btn learn-btn" bindtap="addToLearningPlan" data-index="{{index}}">
+          ➕ 学习
+        </button>
+        <button wx:if="{{item.totalOccurrences >= 3}}" class="action-btn reset-btn" bindtap="resetMasteryStatus" data-index="{{index}}">
+          🔄 重置
+        </button>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view wx:if="{{!hasMore && structureList.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && structureList.length === 0}}" class="empty">
+      <text class="empty-icon">📖</text>
+      <text class="empty-text">暂无{{pageTitle}}</text>
+      <text class="empty-hint">去解析更多内容来丰富句子结构库</text>
+      <button class="empty-action" bindtap="goToParser">开始解析</button>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 句子结构详情弹窗 -->
+<view wx:if="{{showDetailModal}}" class="modal-mask" bindtap="hideDetail">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">句子结构详情</text>
+      <text class="modal-close" bindtap="hideDetail">×</text>
+    </view>
+    
+    <view wx:if="{{selectedStructure}}" class="modal-body">
+      <!-- 结构基本信息 -->
+      <view class="structure-info">
+        <text class="structure-main">{{selectedStructure.structure}}</text>
+        <view class="structure-tags">
+          <text class="tag category-tag {{selectedStructure.category}}">{{getCategoryName(selectedStructure.category)}}</text>
+          <text class="tag difficulty-tag {{selectedStructure.difficulty}}">{{getDifficultyName(selectedStructure.difficulty)}}</text>
+        </view>
+      </view>
+
+      <!-- 学习统计 -->
+      <view class="structure-stats">
+        <view class="stat-row">
+          <text class="stat-label">出现次数：</text>
+          <text class="stat-value">{{selectedStructure.totalOccurrences}} 次</text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-label">学习状态：</text>
+          <text class="stat-value {{selectedStructure.totalOccurrences >= 3 ? 'mastered' : 'learning'}}">
+            {{selectedStructure.totalOccurrences >= 3 ? '已掌握' : '学习中'}}
+          </text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-label">难度级别：</text>
+          <text class="stat-value">{{getDifficultyName(selectedStructure.difficulty)}}</text>
+        </view>
+      </view>
+
+      <!-- 例句 -->
+      <view wx:if="{{selectedStructure.examples && selectedStructure.examples.length > 0}}" class="examples-section">
+        <text class="section-title">例句</text>
+        <view wx:for="{{selectedStructure.examples}}" wx:key="*this" class="example-item" wx:for-item="example">
+          <text class="example-jp">{{example.jp}}</text>
+          <text class="example-romaji" wx:if="{{example.romaji}}">{{example.romaji}}</text>
+          <text class="example-cn">{{example.cn}}</text>
+          <button class="play-example" bindtap="playAudio" data-text="{{example.jp}}">🔊</button>
+        </view>
+      </view>
+
+      <!-- 来源标签 -->
+      <view wx:if="{{selectedStructure.tags && selectedStructure.tags.length > 0}}" class="tags-section">
+        <text class="section-title">标签</text>
+        <view class="tag-list">
+          <text wx:for="{{selectedStructure.tags}}" wx:key="*this" class="tag">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <button class="modal-btn learn-btn" bindtap="addSelectedToLearningPlan">
+        ➕ 加入学习计划
+      </button>
+      <button wx:if="{{selectedStructure.totalOccurrences >= 3}}" class="modal-btn reset-btn" bindtap="resetSelectedMasteryStatus">
+        🔄 重置掌握状态
+      </button>
+      <button class="modal-btn close-btn" bindtap="hideDetail">关闭</button>
+    </view>
+  </view>
+</view>
+
+<!-- 类别筛选弹窗 -->
+<view wx:if="{{showCategoryModal}}" class="modal-mask" bindtap="hideCategoryFilter">
+  <view class="filter-modal" catchtap="stopPropagation">
+    <view class="filter-header">
+      <text class="filter-title">选择类别</text>
+    </view>
+    <view class="filter-options">
+      <view wx:for="{{categoryOptions}}" wx:key="value" class="filter-option {{selectedCategory === item.value ? 'selected' : ''}}" 
+            bindtap="selectCategory" data-value="{{item.value}}" data-name="{{item.name}}">
+        <text class="option-text">{{item.name}}</text>
+        <text wx:if="{{selectedCategory === item.value}}" class="option-check">✓</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 难度筛选弹窗 -->
+<view wx:if="{{showDifficultyModal}}" class="modal-mask" bindtap="hideDifficultyFilter">
+  <view class="filter-modal" catchtap="stopPropagation">
+    <view class="filter-header">
+      <text class="filter-title">选择难度</text>
+    </view>
+    <view class="filter-options">
+      <view wx:for="{{difficultyOptions}}" wx:key="value" class="filter-option {{selectedDifficulty === item.value ? 'selected' : ''}}" 
+            bindtap="selectDifficulty" data-value="{{item.value}}" data-name="{{item.name}}">
+        <text class="option-text">{{item.name}}</text>
+        <text wx:if="{{selectedDifficulty === item.value}}" class="option-check">✓</text>
+      </view>
+    </view>
+  </view>
+</view>

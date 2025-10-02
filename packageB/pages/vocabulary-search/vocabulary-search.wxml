@@ -92,23 +92,6 @@
           <text class="iconfont icon-sound"></text> 发音
         </button>
         
-        <button 
-          wx:if="{{!item.isInWordbook}}"
-          class="action-btn add-btn" 
-          bindtap="addToWordbook" 
-          data-item="{{item}}"
-        >
-          <text class="iconfont icon-add"></text> 加入生词本
-        </button>
-        
-        <button 
-          wx:else
-          class="action-btn remove-btn" 
-          bindtap="removeFromWordbook" 
-          data-item="{{item}}"
-        >
-          <text class="iconfont icon-check"></text> 已在生词本
-        </button>
       </view>
 
       <!-- 详细信息（展开时显示） -->

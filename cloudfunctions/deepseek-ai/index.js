@@ -82,9 +82,9 @@ exports.main = async (event, context) => {
       case 'grammar':
         // 日语语法分析 - 支持图片
         // // console.log('处理grammar请求，参数:', { 
-          sentence: event.sentence, 
-          imageUrl: event.imageUrl 
-        })
+        //   sentence: event.sentence, 
+        //   imageUrl: event.imageUrl 
+        // })
         
         let analysisMessages = []
         

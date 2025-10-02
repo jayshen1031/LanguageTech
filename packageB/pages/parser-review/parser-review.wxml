@@ -137,7 +137,6 @@
 
     <!-- 底部工具栏 -->
     <view class="toolbar">
-      <text class="tool-btn" bindtap="saveToWordbook">📝 保存词汇</text>
       <text class="tool-btn" bindtap="hideAnswer">👁️ 隐藏答案</text>
     </view>
   </view>

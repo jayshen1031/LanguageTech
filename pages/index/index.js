@@ -1,4 +1,5 @@
 const app = getApp()
+const authGuard = require('../../utils/authGuard')
 
 // 初始化云开发
 if (!wx.cloud) {
@@ -18,10 +19,22 @@ Page({
     studyDays: 0,
     todayCompleted: false,
     
+    // 认证状态
+    isAuthenticated: false,
+    showLoginPrompt: false,
+    currentUser: null,
+    userProfile: null,
+    userStatus: null,
+    
     // 词汇库统计
     totalWordsInLibrary: 0,     // 词汇库总量
-    newWordsAvailable: 0,       // 可新学词汇数
-    reviewWordsAvailable: 0,    // 可复习词汇数
+    masteredWords: 0,           // 已掌握词汇数
+    unmasteredWords: 0,         // 未掌握词汇数
+    
+    // 句子结构统计
+    totalStructures: 0,         // 总句子结构数
+    masteredStructures: 0,      // 已掌握结构数
+    unmasteredStructures: 0,    // 未掌握结构数
     
     // 今日学习计划
     selectedTotal: 10,          // 用户选择的总学习量
@@ -40,24 +53,73 @@ Page({
     }
   },
 
-  onLoad() {
+  async onLoad() {
+    // 检查基础登录状态（只需要微信授权）
+    const isAuthenticated = await authGuard.requireBasicAuth(this, { showToast: false })
+    
+    if (!isAuthenticated) {
+      // 如果未认证，显示登录提示界面
+      this.setData({
+        showLoginPrompt: true,
+        isAuthenticated: false
+      })
+      return
+    }
+    
     this.getUserInfo()
     this.loadStudyData()
     this.loadUserPreferences()
+    
+    // 检查是否需要清理重复数据
+    setTimeout(() => {
+      this.checkAndCleanDuplicates()
+    }, 2000) // 延迟2秒执行，让页面先加载
   },
 
   onShow() {
-    // 页面显示时刷新数据
+    // 页面显示时刷新数据（包括句子结构统计和用户信息）
+    this.getUserInfo()
     this.loadStudyData()
   },
 
   getUserInfo() {
-    // 获取用户信息
-    const userInfo = app.globalData.userInfo
-    if (userInfo) {
-      this.setData({ userInfo })
-    } else {
-      // 使用默认用户信息
+    try {
+      // 优先从本地存储获取用户资料
+      const userProfile = wx.getStorageSync('userProfile') || app.globalData.userProfile
+      const userInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
+      
+      console.log('🔍 获取用户信息:', { 
+        localProfile: wx.getStorageSync('userProfile'),
+        globalProfile: app.globalData.userProfile,
+        localInfo: wx.getStorageSync('userInfo'),
+        globalInfo: app.globalData.userInfo,
+        finalProfile: userProfile,
+        finalInfo: userInfo
+      })
+      
+      if (userProfile && userProfile.nickname) {
+        // 如果有用户资料，优先使用资料中的昵称
+        const finalUserInfo = {
+          nickName: userProfile.nickname,
+          avatarUrl: userInfo ? userInfo.avatarUrl : ''
+        }
+        console.log('✅ 使用用户资料昵称:', finalUserInfo)
+        this.setData({ userInfo: finalUserInfo })
+      } else if (userInfo && userInfo.nickName) {
+        // 如果没有资料但有基础用户信息，使用微信昵称
+        console.log('✅ 使用微信用户信息:', userInfo)
+        this.setData({ userInfo })
+      } else {
+        // 都没有时使用默认
+        const defaultUserInfo = {
+          nickName: '语伴君用户',
+          avatarUrl: ''
+        }
+        console.log('✅ 使用默认用户信息:', defaultUserInfo)
+        this.setData({ userInfo: defaultUserInfo })
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
       this.setData({
         userInfo: {
           nickName: '语伴君用户',
@@ -74,6 +136,7 @@ Page({
       // 加载真实的学习统计数据
       await Promise.all([
         this.loadVocabularyStats(),
+        this.loadStructureStats(),
         this.loadTodayPlan(),
         this.loadStudyDays()
       ])
@@ -113,26 +176,33 @@ Page({
         return
       }
       
-      // 尝试查询词汇整合表
-      console.log('🔍 尝试查询 vocabulary_integrated 表...')
+      // 统计词汇库数量
+      console.log('🔍 统计词汇库数量...')
       try {
-        const allWords = await db.collection('vocabulary_integrated').get()
-        console.log(`📊 vocabulary_integrated 查询结果: ${allWords.data.length}条记录`)
+        // 获取总数
+        const totalCount = await db.collection('vocabulary_integrated').count()
+        console.log(`📊 词汇库总数: ${totalCount.total}条记录`)
         
-        if (allWords.data.length > 0) {
-          // 按掌握程度分类词汇
-          const newWords = allWords.data.filter(word => word.totalOccurrences <= 1)
-          const reviewWords = allWords.data.filter(word => word.totalOccurrences > 1)
-          
+        // 获取已掌握词汇数量（出现3次以上认为已掌握）
+        const masteredCount = await db.collection('vocabulary_integrated')
+          .where({ totalOccurrences: db.command.gte(3) })
+          .count()
+        
+        // 获取未掌握词汇数量（出现1-2次认为未掌握）
+        const unmasteredCount = await db.collection('vocabulary_integrated')
+          .where({ totalOccurrences: db.command.lt(3) })
+          .count()
+        
+        if (totalCount.total > 0) {
           this.setData({
-            totalWordsInLibrary: allWords.data.length,
-            newWordsAvailable: newWords.length,
-            reviewWordsAvailable: reviewWords.length,
-            progressPercent: allWords.data.length > 0 ? 
-              Math.round((reviewWords.length / allWords.data.length) * 100) : 0
+            totalWordsInLibrary: totalCount.total,
+            masteredWords: masteredCount.total,
+            unmasteredWords: unmasteredCount.total,
+            progressPercent: totalCount.total > 0 ? 
+              Math.round((masteredCount.total / totalCount.total) * 100) : 0
           })
           
-          console.log(`📊 词汇库统计: 总计${allWords.data.length}个, 新词${newWords.length}个, 复习词${reviewWords.length}个`)
+          console.log(`📊 词汇库统计: 总计${totalCount.total}个, 已掌握${masteredCount.total}个, 未掌握${unmasteredCount.total}个`)
         } else {
           // 词汇整合表存在但为空，启动前端整合
           console.log('💡 词汇整合表为空，启动前端自动整合...')
@@ -151,6 +221,266 @@ Page({
         newWordsAvailable: 0,
         reviewWordsAvailable: 0,
         progressPercent: 0
+      })
+    }
+  },
+
+  // 加载句子结构统计数据
+  async loadStructureStats() {
+    try {
+      console.log('🔍 开始加载句子结构统计数据...')
+      
+      // 首先检查是否有解析历史
+      const historyRes = await db.collection('japanese_parser_history').count()
+      console.log(`📚 解析历史记录查询结果: ${historyRes.total}条`)
+      
+      if (historyRes.total === 0) {
+        // 没有任何解析记录
+        this.setData({
+          totalStructures: 0,
+          masteredStructures: 0,
+          unmasteredStructures: 0
+        })
+        console.log('📝 还没有解析过任何内容，句子结构为空')
+        return
+      }
+      
+      // 统计句子结构数量
+      console.log('🔍 统计句子结构数量...')
+      try {
+        // 获取总数
+        const totalCount = await db.collection('sentence_structures_integrated').count()
+        console.log(`📊 句子结构总数: ${totalCount.total}条记录`)
+        
+        // 获取已掌握结构数量（出现3次以上认为已掌握）
+        const masteredCount = await db.collection('sentence_structures_integrated')
+          .where({ totalOccurrences: db.command.gte(3) })
+          .count()
+        
+        // 获取未掌握结构数量（出现1-2次认为未掌握）
+        const unmasteredCount = await db.collection('sentence_structures_integrated')
+          .where({ totalOccurrences: db.command.lt(3) })
+          .count()
+        
+        if (totalCount.total > 0) {
+          this.setData({
+            totalStructures: totalCount.total,
+            masteredStructures: masteredCount.total,
+            unmasteredStructures: unmasteredCount.total
+          })
+          
+          console.log(`📊 句子结构统计: 总计${totalCount.total}个, 已掌握${masteredCount.total}个, 未掌握${unmasteredCount.total}个`)
+        } else {
+          // 句子结构整合表存在但为空，启动前端整合
+          console.log('💡 句子结构整合表为空，启动前端自动整合...')
+          this.frontendStructureIntegration(historyRes.total)
+        }
+      } catch (integrationError) {
+        // 句子结构整合表不存在，启动前端整合
+        console.log('💡 句子结构整合表不存在，启动前端自动整合...')
+        this.frontendStructureIntegration(historyRes.total)
+      }
+      
+    } catch (error) {
+      console.error('加载句子结构统计失败:', error)
+      this.setData({
+        totalStructures: 0,
+        masteredStructures: 0,
+        unmasteredStructures: 0
+      })
+    }
+  },
+
+  // 前端句子结构整合（替代云函数）
+  async frontendStructureIntegration(historyCount) {
+    console.log(`🚀 前端句子结构整合开始，共${historyCount}条记录`)
+    
+    // 先设置加载状态
+    this.setData({
+      totalStructures: 0,
+      masteredStructures: 0,
+      unmasteredStructures: 0
+    })
+    
+    try {
+      // 获取所有解析历史（分批处理）
+      let historyRes = { data: [] }
+      let hasMore = true
+      let skip = 0
+      const batchSize = 50
+      
+      console.log('📊 开始分批获取所有解析记录...')
+      
+      while (hasMore) {
+        const batchRes = await db.collection('japanese_parser_history')
+          .orderBy('createTime', 'desc')
+          .skip(skip)
+          .limit(batchSize)
+          .get()
+        
+        if (batchRes.data.length > 0) {
+          historyRes.data.push(...batchRes.data)
+          skip += batchSize
+          console.log(`📥 已获取${historyRes.data.length}条记录...`)
+        } else {
+          hasMore = false
+        }
+      }
+      
+      console.log(`📥 获取到${historyRes.data.length}条解析记录`)
+      
+      const structureMap = new Map()
+      
+      // 提取句子结构
+      historyRes.data.forEach(record => {
+        if (record.sentences && Array.isArray(record.sentences)) {
+          record.sentences.forEach((sentence, sentenceIndex) => {
+            
+            // 提取句子结构
+            if (sentence.structure && sentence.structure.trim() && 
+                sentence.structure !== '处理失败' && sentence.structure.length > 2) {
+              const structureKey = sentence.structure.trim()
+              
+              if (!structureMap.has(structureKey)) {
+                structureMap.set(structureKey, {
+                  structure: structureKey,
+                  examples: [],
+                  sources: [],
+                  totalOccurrences: 0,
+                  firstSeen: record.createTime || new Date(),
+                  lastSeen: record.createTime || new Date(),
+                  category: this.categorizeStructure(structureKey),
+                  difficulty: this.calculateDifficulty(structureKey),
+                  tags: ['句子结构']
+                })
+              }
+              
+              const structureData = structureMap.get(structureKey)
+              
+              // 添加例句
+              // 严格去重：检查是否已有相同的例句
+              const newExample = {
+                jp: sentence.originalText,
+                romaji: sentence.romaji || '',
+                cn: sentence.translation,
+                source: record.title || '解析记录',
+                recordId: record._id,
+                sentenceIndex: sentenceIndex
+              }
+              
+              const isDuplicateExample = structureData.examples.some(ex => 
+                ex.jp === newExample.jp && ex.cn === newExample.cn
+              )
+              
+              if (!isDuplicateExample) {
+                structureData.examples.push(newExample)
+                
+                // 更新来源记录
+                if (!structureData.sources.includes(record._id)) {
+                  structureData.sources.push(record._id)
+                }
+                
+                structureData.totalOccurrences = structureData.examples.length
+                
+                if (record.createTime > structureData.lastSeen) {
+                  structureData.lastSeen = record.createTime
+                }
+              }
+            }
+            
+            // 提取语法点
+            if (sentence.grammar) {
+              const grammarPoints = this.extractGrammarPoints(sentence.grammar)
+              
+              grammarPoints.forEach(grammarPoint => {
+                const grammarKey = grammarPoint.trim()
+                
+                if (grammarKey && grammarKey.length > 2) {
+                  if (!structureMap.has(grammarKey)) {
+                    structureMap.set(grammarKey, {
+                      structure: grammarKey,
+                      examples: [],
+                      sources: [],
+                      totalOccurrences: 0,
+                      firstSeen: record.createTime || new Date(),
+                      lastSeen: record.createTime || new Date(),
+                      category: 'grammar_point',
+                      difficulty: this.calculateDifficulty(grammarKey),
+                      tags: ['语法要点']
+                    })
+                  }
+                  
+                  const grammarData = structureMap.get(grammarKey)
+                  
+                  // 严格去重：检查是否已有相同的例句
+                  const newGrammarExample = {
+                    jp: sentence.originalText,
+                    romaji: sentence.romaji || '',
+                    cn: sentence.translation,
+                    source: record.title || '解析记录',
+                    recordId: record._id,
+                    sentenceIndex: sentenceIndex
+                  }
+                  
+                  const isDuplicateGrammarExample = grammarData.examples.some(ex => 
+                    ex.jp === newGrammarExample.jp && ex.cn === newGrammarExample.cn
+                  )
+                  
+                  if (!isDuplicateGrammarExample) {
+                    grammarData.examples.push(newGrammarExample)
+                    
+                    // 更新来源记录
+                    if (!grammarData.sources.includes(record._id)) {
+                      grammarData.sources.push(record._id)
+                    }
+                    
+                    grammarData.totalOccurrences = grammarData.examples.length
+                    
+                    if (record.createTime > grammarData.lastSeen) {
+                      grammarData.lastSeen = record.createTime
+                    }
+                  }
+                }
+              })
+            }
+          })
+        }
+      })
+      
+      console.log(`📝 提取到${structureMap.size}个不重复句子结构`)
+      
+      // 分批插入到数据库
+      const structureArray = Array.from(structureMap.values())
+      let insertedCount = 0
+      
+      for (const structureData of structureArray) {
+        try {
+          await db.collection('sentence_structures_integrated').add({
+            data: structureData
+          })
+          insertedCount++
+          
+          if (insertedCount % 5 === 0) {
+            console.log(`✅ 已插入${insertedCount}/${structureArray.length}个句子结构`)
+          }
+        } catch (error) {
+          console.error(`❌ 插入句子结构失败: ${structureData.structure}`, error)
+        }
+      }
+      
+      console.log(`🎉 前端句子结构整合完成! 成功插入${insertedCount}个结构`)
+      
+      // 重新加载统计
+      setTimeout(() => {
+        this.loadStructureStats()
+      }, 500)
+      
+    } catch (error) {
+      console.error('前端句子结构整合失败:', error)
+      this.setData({
+        totalStructures: 0,
+        masteredStructures: 0,
+        unmasteredStructures: 0
       })
     }
   },
@@ -407,15 +737,47 @@ Page({
       if (historyRes.data.length > 0) {
         // 统计不同日期的学习记录
         const dates = new Set()
+        const today = new Date().toDateString()
+        let hasToday = false
+        
         historyRes.data.forEach(record => {
           if (record.createTime) {
             const date = new Date(record.createTime).toDateString()
             dates.add(date)
+            if (date === today) {
+              hasToday = true
+            }
           }
         })
         
-        this.setData({ studyDays: dates.size })
-        console.log(`📈 已学习${dates.size}天`)
+        // 计算连续学习天数
+        let consecutiveDays = 0
+        const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a))
+        let currentDate = new Date()
+        
+        for (let i = 0; i < 365; i++) { // 最多检查365天
+          const dateStr = currentDate.toDateString()
+          if (sortedDates.includes(dateStr)) {
+            consecutiveDays++
+            currentDate.setDate(currentDate.getDate() - 1)
+          } else if (dateStr === today && !hasToday) {
+            // 今天没学习，检查昨天
+            currentDate.setDate(currentDate.getDate() - 1)
+          } else {
+            break
+          }
+        }
+        
+        this.setData({ 
+          studyDays: consecutiveDays,
+          todayCompleted: hasToday
+        })
+        console.log(`📈 连续学习${consecutiveDays}天, 今日${hasToday ? '已完成' : '待开始'}`)
+      } else {
+        this.setData({ 
+          studyDays: 0,
+          todayCompleted: false
+        })
       }
     } catch (error) {
       console.error('加载学习天数失败:', error)
@@ -619,13 +981,6 @@ Page({
     })
   },
   
-  // 跳转到生词本
-  goToWordbook() {
-    wx.switchTab({
-      url: '/pages/wordbook/wordbook'
-    })
-  },
-  
   // 加载用户偏好设置
   loadUserPreferences() {
     try {
@@ -659,8 +1014,32 @@ Page({
     });
   },
 
-  // 跳转到日语解析工具
-  goToParser() {
+  // 跳转到日语解析工具（需要高级认证）
+  async goToParser() {
+    // 检查高级功能权限
+    const hasAdvancedAuth = await authGuard.requireAdvancedAuth(this, {
+      showToast: false
+    })
+    
+    if (!hasAdvancedAuth) {
+      // 显示特殊提示
+      wx.showModal({
+        title: '功能提示',
+        content: '句子解析功能需要完成用户认证，是否前往完善资料？',
+        confirmText: '去认证',
+        cancelText: '稍后',
+        success: (res) => {
+          if (res.confirm) {
+            wx.switchTab({ url: '/pages/profile/profile' })
+            setTimeout(() => {
+              wx.navigateTo({ url: '/pages/register/register' })
+            }, 100)
+          }
+        }
+      })
+      return
+    }
+    
     wx.navigateTo({
       url: '/packageB/pages/japanese-parser/japanese-parser'
     })
@@ -673,11 +1052,560 @@ Page({
     })
   },
 
+  // 辅助方法：分类句子结构
+  categorizeStructure(structure) {
+    // 根据结构内容判断类别
+    if (structure.includes('は') || structure.includes('が') || structure.includes('を')) {
+      return 'sentence_structure'
+    }
+    if (structure.includes('形') || structure.includes('动词') || structure.includes('名词')) {
+      return 'grammar_point'
+    }
+    if (structure.includes('修饰') || structure.includes('连接') || structure.includes('表示')) {
+      return 'analysis_point'
+    }
+    return 'sentence_structure' // 默认分类
+  },
+
+  // 辅助方法：计算难度
+  calculateDifficulty(structure) {
+    const length = structure.length
+    if (length <= 10) return 'basic'
+    if (length <= 25) return 'intermediate'
+    return 'advanced'
+  },
+
+  // 辅助方法：提取语法点
+  extractGrammarPoints(grammarText) {
+    if (!grammarText) return []
+    
+    // 按常见分隔符分割
+    const points = []
+    const lines = grammarText.split(/[。\n•・]/g)
+      .filter(line => line.trim())
+      .map(line => line.trim())
+    
+    lines.forEach(line => {
+      if (line.length > 2 && line.length < 100) {
+        points.push(line)
+      }
+    })
+    
+    return points
+  },
+
+  // 检查并清理重复数据（智能判断是否需要清理）
+  async checkAndCleanDuplicates() {
+    try {
+      console.log('🔍 检查是否存在重复句子结构...')
+      
+      // 检查是否已经清理过
+      const hasCleanedDuplicates = wx.getStorageSync('hasCleanedDuplicates')
+      const lastCleanTime = wx.getStorageSync('lastCleanTime')
+      const now = Date.now()
+      
+      // 如果最近24小时内清理过，跳过
+      if (hasCleanedDuplicates && lastCleanTime && (now - lastCleanTime < 24 * 60 * 60 * 1000)) {
+        console.log('✅ 最近已清理过，跳过检查')
+        return
+      }
+      
+      // 快速检查是否有重复（只取前100条记录检查）
+      const sampleRes = await db.collection('sentence_structures_integrated')
+        .limit(100)
+        .get()
+      
+      if (sampleRes.data.length < 10) {
+        console.log('📊 数据量太少，无需检查重复')
+        return
+      }
+      
+      // 检查样本中是否有重复
+      const structures = new Set()
+      let hasDuplicates = false
+      
+      for (const item of sampleRes.data) {
+        const key = item.structure.trim()
+        if (structures.has(key)) {
+          hasDuplicates = true
+          break
+        }
+        structures.add(key)
+      }
+      
+      if (hasDuplicates) {
+        console.log('⚠️ 发现重复数据，启动自动清理...')
+        await this.cleanDuplicateStructures()
+      } else {
+        console.log('✅ 样本检查未发现明显重复')
+        // 即使没发现重复也标记检查过，避免频繁检查
+        wx.setStorageSync('hasCleanedDuplicates', true)
+        wx.setStorageSync('lastCleanTime', now)
+      }
+      
+    } catch (error) {
+      console.error('❌ 检查重复失败:', error)
+    }
+  },
+
+  // 清理重复的句子结构（临时方法，执行一次后自动禁用）
+  async cleanDuplicateStructures() {
+    try {
+      console.log('🧹 开始自动清理重复句子结构...')
+      
+      // 先尝试云函数方式
+      try {
+        const result = await wx.cloud.callFunction({
+          name: 'clean-duplicate-structures'
+        })
+        
+        if (result.result.success) {
+          console.log('✅ 云函数清理完成:', result.result)
+          
+          // 标记已清理，避免重复执行
+          wx.setStorageSync('hasCleanedDuplicates', true)
+          wx.setStorageSync('lastCleanTime', Date.now())
+          
+          // 重新加载统计数据
+          setTimeout(() => {
+            this.loadStructureStats()
+          }, 1000)
+          
+          // 显示清理结果（可选）
+          if (result.result.deletedCount > 0) {
+            wx.showToast({
+              title: `已自动清理${result.result.deletedCount}条重复记录`,
+              icon: 'success',
+              duration: 2000
+            })
+          }
+          return
+        }
+      } catch (cloudError) {
+        console.log('⚠️ 云函数清理失败，切换到前端清理方式:', cloudError.message)
+      }
+      
+      // 云函数失败时，使用前端清理方式
+      await this.forceCleanDuplicatesLocal()
+      
+    } catch (error) {
+      console.error('❌ 调用清理功能失败:', error)
+      // 静默失败，不影响用户体验
+    }
+  },
+
+  // 强制前端清理重复记录
+  async forceCleanDuplicatesLocal() {
+    try {
+      console.log('🧹 开始前端强制清理重复句子结构...')
+      
+      // 1. 获取所有记录
+      let allStructures = []
+      let hasMore = true
+      let skip = 0
+      const batchSize = 100
+      
+      while (hasMore) {
+        const res = await db.collection('sentence_structures_integrated')
+          .skip(skip)
+          .limit(batchSize)
+          .get()
+        
+        if (res.data.length > 0) {
+          allStructures.push(...res.data)
+          skip += batchSize
+          console.log(`📥 已获取${allStructures.length}条记录...`)
+        } else {
+          hasMore = false
+        }
+      }
+      
+      console.log(`📊 总共获取到${allStructures.length}条记录`)
+      
+      // 2. 按structure分组
+      const structureGroups = new Map()
+      
+      allStructures.forEach(item => {
+        const key = item.structure.trim()
+        if (!structureGroups.has(key)) {
+          structureGroups.set(key, [])
+        }
+        structureGroups.get(key).push(item)
+      })
+      
+      // 3. 找出重复的组
+      const duplicateGroups = []
+      structureGroups.forEach((group, structure) => {
+        if (group.length > 1) {
+          duplicateGroups.push({ structure, items: group })
+        }
+      })
+      
+      console.log(`🔍 发现${duplicateGroups.length}个重复的句子结构`)
+      
+      if (duplicateGroups.length === 0) {
+        console.log('✅ 没有发现重复记录')
+        wx.setStorageSync('hasCleanedDuplicates', true)
+        return
+      }
+      
+      // 4. 开始清理（限制处理数量，避免超时）
+      let mergedCount = 0
+      let deletedCount = 0
+      const maxProcess = Math.min(duplicateGroups.length, 20) // 每次最多处理20个重复组
+      
+      for (let i = 0; i < maxProcess; i++) {
+        const group = duplicateGroups[i]
+        try {
+          console.log(`🔄 处理重复结构: ${group.structure} (${group.items.length}条)`)
+          
+          // 选择保留的记录（examples最多的）
+          const keepItem = group.items.reduce((best, current) => {
+            const bestExamples = best.examples ? best.examples.length : 0
+            const currentExamples = current.examples ? current.examples.length : 0
+            return currentExamples > bestExamples ? current : best
+          })
+          
+          // 合并所有examples
+          const allExamples = []
+          const seenExamples = new Set()
+          
+          group.items.forEach(item => {
+            if (item.examples && Array.isArray(item.examples)) {
+              item.examples.forEach(example => {
+                const exampleKey = `${example.jp}|||${example.cn}`
+                if (!seenExamples.has(exampleKey)) {
+                  seenExamples.add(exampleKey)
+                  allExamples.push(example)
+                }
+              })
+            }
+          })
+          
+          // 合并sources
+          const allSources = new Set()
+          group.items.forEach(item => {
+            if (item.sources && Array.isArray(item.sources)) {
+              item.sources.forEach(source => allSources.add(source))
+            }
+          })
+          
+          // 更新保留的记录
+          await db.collection('sentence_structures_integrated')
+            .doc(keepItem._id)
+            .update({
+              data: {
+                examples: allExamples,
+                sources: Array.from(allSources),
+                totalOccurrences: allExamples.length,
+                lastSeen: new Date()
+              }
+            })
+          
+          console.log(`✅ 更新保留记录: ${keepItem._id}, 合并后examples: ${allExamples.length}个`)
+          mergedCount++
+          
+          // 删除其他重复记录
+          for (const item of group.items) {
+            if (item._id !== keepItem._id) {
+              await db.collection('sentence_structures_integrated')
+                .doc(item._id)
+                .remove()
+              console.log(`🗑️ 删除重复记录: ${item._id}`)
+              deletedCount++
+            }
+          }
+          
+        } catch (error) {
+          console.error(`❌ 处理失败: ${group.structure}`, error)
+        }
+      }
+      
+      // 标记已清理
+      wx.setStorageSync('hasCleanedDuplicates', true)
+      wx.setStorageSync('lastCleanTime', Date.now())
+      
+      console.log(`🎉 前端清理完成! 合并了${mergedCount}个结构，删除了${deletedCount}条重复记录`)
+      
+      // 重新加载统计数据
+      setTimeout(() => {
+        this.loadStructureStats()
+      }, 1000)
+      
+      // 显示结果
+      if (deletedCount > 0) {
+        wx.showToast({
+          title: `已清理${deletedCount}条重复记录`,
+          icon: 'success',
+          duration: 2000
+        })
+      }
+      
+    } catch (error) {
+      console.error('❌ 前端清理失败:', error)
+    }
+  },
+
+  // 手动触发清理（开发调试用）
+  async manualCleanDuplicates() {
+    wx.showModal({
+      title: '清理重复数据',
+      content: '确定要手动清理重复的句子结构吗？这个操作会合并相同的结构并删除重复记录。',
+      success: async (res) => {
+        if (res.confirm) {
+          // 清除标志，允许重新清理
+          wx.removeStorageSync('hasCleanedDuplicates')
+          await this.cleanDuplicateStructures()
+        }
+      }
+    })
+  },
+
+  // 跳转到词汇列表
+  goToVocabularyList(e) {
+    const type = e.currentTarget.dataset.type;
+    const { totalWordsInLibrary, masteredWords, unmasteredWords } = this.data;
+    
+    // 检查是否有词汇可显示
+    let count = 0;
+    let title = '';
+    
+    switch(type) {
+      case 'all':
+        count = totalWordsInLibrary;
+        title = '全部词汇';
+        break;
+      case 'mastered':
+        count = masteredWords;
+        title = '已掌握词汇';
+        break;
+      case 'unmastered':
+        count = unmasteredWords;
+        title = '未掌握词汇';
+        break;
+    }
+    
+    if (count === 0) {
+      wx.showToast({
+        title: '暂无词汇数据',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 跳转到词汇列表页面，传递类型参数
+    wx.navigateTo({
+      url: `/packageB/pages/vocabulary-list/vocabulary-list?type=${type}&title=${title}&count=${count}`
+    });
+  },
+
+  // 跳转到句子结构列表
+  goToStructureList(e) {
+    const type = e.currentTarget.dataset.type;
+    const { totalStructures, masteredStructures, unmasteredStructures } = this.data;
+    
+    // 检查是否有结构可显示
+    let count = 0;
+    let title = '';
+    
+    switch(type) {
+      case 'all':
+        count = totalStructures;
+        title = '全部句子结构';
+        break;
+      case 'mastered':
+        count = masteredStructures;
+        title = '已掌握结构';
+        break;
+      case 'unmastered':
+        count = unmasteredStructures;
+        title = '未掌握结构';
+        break;
+    }
+    
+    if (count === 0) {
+      wx.showToast({
+        title: '暂无结构数据',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 跳转到句子结构列表页面，传递类型参数
+    wx.navigateTo({
+      url: `/packageB/pages/structure-list/structure-list?type=${type}&title=${title}&count=${count}`
+    });
+  },
+
+  // 批量重置掌握状态（首页快捷入口）
+  showMasteryResetOptions() {
+    const { masteredWords, masteredStructures } = this.data;
+    
+    if (masteredWords === 0 && masteredStructures === 0) {
+      wx.showToast({
+        title: '暂无已掌握的内容',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    const options = [];
+    if (masteredWords > 0) {
+      options.push(`重置已掌握词汇 (${masteredWords}个)`);
+    }
+    if (masteredStructures > 0) {
+      options.push(`重置已掌握句子结构 (${masteredStructures}个)`);
+    }
+    options.push('取消');
+    
+    wx.showActionSheet({
+      itemList: options,
+      success: (res) => {
+        if (res.tapIndex === options.length - 1) return; // 取消
+        
+        if (res.tapIndex === 0 && masteredWords > 0) {
+          // 重置词汇
+          this.showVocabularyResetConfirm();
+        } else if ((res.tapIndex === 1 && masteredWords > 0) || (res.tapIndex === 0 && masteredWords === 0)) {
+          // 重置句子结构
+          this.showStructureResetConfirm();
+        }
+      }
+    });
+  },
+
+  // 确认重置词汇掌握状态
+  showVocabularyResetConfirm() {
+    wx.showModal({
+      title: '重置词汇掌握状态',
+      content: `确定要将所有已掌握的词汇重新标记为未掌握吗？这将重置 ${this.data.masteredWords} 个词汇的学习进度。`,
+      success: (res) => {
+        if (res.confirm) {
+          this.resetAllVocabularyMastery();
+        }
+      }
+    });
+  },
+
+  // 确认重置句子结构掌握状态
+  showStructureResetConfirm() {
+    wx.showModal({
+      title: '重置句子结构掌握状态',
+      content: `确定要将所有已掌握的句子结构重新标记为未掌握吗？这将重置 ${this.data.masteredStructures} 个结构的学习进度。`,
+      success: (res) => {
+        if (res.confirm) {
+          this.resetAllStructureMastery();
+        }
+      }
+    });
+  },
+
+  // 重置所有词汇掌握状态
+  async resetAllVocabularyMastery() {
+    try {
+      wx.showLoading({ title: '重置词汇中...' });
+      
+      // 将所有已掌握词汇的出现次数重置为1
+      const _ = db.command;
+      const result = await db.collection('vocabulary_integrated')
+        .where({
+          totalOccurrences: _.gte(3)
+        })
+        .update({
+          data: {
+            totalOccurrences: 1,
+            masteryReset: true,
+            masteryResetTime: new Date()
+          }
+        });
+      
+      console.log(`✅ 重置词汇掌握状态完成: ${result.stats.updated}个词汇`);
+      
+      // 重新加载统计
+      await this.loadVocabularyStats();
+      
+      wx.showToast({
+        title: `已重置 ${result.stats.updated} 个词汇`,
+        icon: 'success'
+      });
+      
+    } catch (error) {
+      console.error('重置词汇掌握状态失败:', error);
+      wx.showToast({
+        title: '重置失败',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 重置所有句子结构掌握状态
+  async resetAllStructureMastery() {
+    try {
+      wx.showLoading({ title: '重置句子结构中...' });
+      
+      // 将所有已掌握句子结构的出现次数重置为1
+      const _ = db.command;
+      const result = await db.collection('sentence_structures_integrated')
+        .where({
+          totalOccurrences: _.gte(3)
+        })
+        .update({
+          data: {
+            totalOccurrences: 1,
+            masteryReset: true,
+            masteryResetTime: new Date()
+          }
+        });
+      
+      console.log(`✅ 重置句子结构掌握状态完成: ${result.stats.updated}个结构`);
+      
+      // 重新加载统计
+      await this.loadStructureStats();
+      
+      wx.showToast({
+        title: `已重置 ${result.stats.updated} 个结构`,
+        icon: 'success'
+      });
+      
+    } catch (error) {
+      console.error('重置句子结构掌握状态失败:', error);
+      wx.showToast({
+        title: '重置失败',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
 
   // 跳转到语音对话页面
   goToVoiceDialogue() {
     wx.navigateTo({
       url: '/packageA/pages/voice-dialogue/voice-dialogue'
+    })
+  },
+
+  // 跳转到学习计划页面
+  goToLearningPlan() {
+    wx.navigateTo({
+      url: '/packageB/pages/learning-plan/learning-plan'
+    })
+  },
+
+  // 显示学习统计
+  showLearningStats() {
+    wx.navigateTo({
+      url: '/pages/learning-progress/learning-progress?tab=1'
+    })
+  },
+
+  // 跳转到解析历史页面
+  goToParserHistory() {
+    wx.navigateTo({
+      url: '/pages/parser-history/parser-history'
     })
   },
 
@@ -744,5 +1672,123 @@ Page({
   onPullDownRefresh() {
     this.loadStudyData()
     wx.stopPullDownRefresh()
+  },
+
+  // 跳转到个人中心
+  goToProfile() {
+    wx.switchTab({
+      url: '/pages/profile/profile'
+    })
+  },
+
+  // 跳转到学习进度页面
+  goToLearningProgress() {
+    wx.navigateTo({
+      url: '/pages/learning-progress/learning-progress'
+    })
+  },
+
+  // 显示今日学习详情
+  async showTodayDetails() {
+    try {
+      wx.showLoading({ title: '加载今日数据...' })
+      
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+
+      // 获取今日解析记录
+      const todayParsed = await db.collection('japanese_parser_history')
+        .where({
+          createTime: db.command.gte(today).and(db.command.lt(tomorrow))
+        })
+        .orderBy('createTime', 'desc')
+        .get()
+
+      let content = '📊 今日学习详情\n\n'
+      
+      if (todayParsed.data.length === 0) {
+        content += '今天还没有学习记录\n\n'
+        content += '💡 建议:\n'
+        content += '• 去"句子解析"解析一些内容\n'
+        content += '• 或者复习已有的词汇'
+      } else {
+        let totalWords = 0
+        let totalStructures = 0
+        
+        content += `🎯 解析次数: ${todayParsed.data.length}次\n\n`
+        
+        content += '📝 解析记录:\n'
+        todayParsed.data.forEach((record, index) => {
+          const time = new Date(record.createTime)
+          const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`
+          
+          let wordCount = 0
+          let structureCount = 0
+          
+          if (record.sentences) {
+            record.sentences.forEach(sentence => {
+              if (sentence.vocabulary) {
+                wordCount += sentence.vocabulary.length
+              }
+              if (sentence.structure) {
+                structureCount++
+              }
+            })
+          }
+          
+          totalWords += wordCount
+          totalStructures += structureCount
+          
+          content += `${index + 1}. ${timeStr} - ${record.title || '解析内容'}\n`
+          content += `   📚 ${wordCount}个词汇 🧠 ${structureCount}个结构\n`
+        })
+        
+        content += `\n📊 今日总计:\n`
+        content += `• 新词汇: ${totalWords}个\n`
+        content += `• 句子结构: ${totalStructures}个\n`
+        content += `• 解析句子: ${todayParsed.data.reduce((sum, r) => sum + (r.sentences ? r.sentences.length : 0), 0)}个`
+      }
+
+      wx.showModal({
+        title: `今日学习 ${this.formatDate(new Date())}`,
+        content: content,
+        showCancel: false,
+        confirmText: '知道了'
+      })
+
+    } catch (error) {
+      console.error('获取今日详情失败:', error)
+      wx.showToast({
+        title: '获取数据失败',
+        icon: 'none'
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  // 格式化日期
+  formatDate(date) {
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    if (date.toDateString() === today.toDateString()) {
+      return '今天'
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return '昨天'
+    } else {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
+    }
+  },
+
+  // 跳转到注册页面
+  goToRegister() {
+    wx.switchTab({ url: '/pages/profile/profile' })
+    setTimeout(() => {
+      wx.navigateTo({ url: '/pages/register/register' })
+    }, 100)
   }
 })

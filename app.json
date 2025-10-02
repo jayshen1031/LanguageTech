@@ -4,10 +4,13 @@
     "pages/learn/learn",
     "pages/parser-history/parser-history",
     "pages/review/review",
-    "pages/wordbook/wordbook",
     "pages/profile/profile",
+    "pages/learning-progress/learning-progress",
     "pages/mastery-stats/mastery-stats",
-    "pages/register/register"
+    "pages/register/register",
+    "pages/approval-status/approval-status",
+    "pages/admin-debug/admin-debug",
+    "pages/user-management/user-management"
   ],
   "subPackages": [
     {
@@ -29,6 +32,8 @@
         "pages/parser-detail/parser-detail",
         "pages/history-vocabulary/history-vocabulary",
         "pages/vocabulary-search/vocabulary-search",
+        "pages/vocabulary-list/vocabulary-list",
+        "pages/structure-list/structure-list",
         "pages/learning-plan/learning-plan"
       ]
     },
@@ -46,34 +51,6 @@
     "navigationBarBackgroundColor": "#4A90E2",
     "navigationBarTitleText": "语伴君",
     "navigationBarTextStyle": "white"
-  },
-  "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#4A90E2",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/learn/learn",
-        "text": "学习"
-      },
-      {
-        "pagePath": "pages/parser-history/parser-history",
-        "text": "历史"
-      },
-      {
-        "pagePath": "pages/wordbook/wordbook",
-        "text": "生词本"
-      },
-      {
-        "pagePath": "pages/profile/profile",
-        "text": "我的"
-      }
-    ]
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

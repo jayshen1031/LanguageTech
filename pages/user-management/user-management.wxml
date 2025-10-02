@@ -1,0 +1,107 @@
+<!-- 用户管理页面 -->
+<view class="container">
+  <!-- 权限检查 -->
+  <view wx:if="{{!isAdmin}}" class="no-permission">
+    <text class="no-permission-text">正在检查管理员权限...</text>
+  </view>
+
+  <!-- 管理员界面 -->
+  <view wx:else class="admin-panel">
+    <!-- 页面标题 -->
+    <view class="page-header">
+      <text class="page-title">用户注册管理</text>
+      <text class="admin-info">管理员：{{currentUser.nickName}}</text>
+    </view>
+
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stat-card">
+        <text class="stat-number">{{totalCount}}</text>
+        <text class="stat-label">总申请</text>
+      </view>
+      <view class="stat-card pending">
+        <text class="stat-number">{{pendingCount}}</text>
+        <text class="stat-label">待审核</text>
+      </view>
+      <view class="stat-card approved">
+        <text class="stat-number">{{approvedCount}}</text>
+        <text class="stat-label">已通过</text>
+      </view>
+      <view class="stat-card rejected">
+        <text class="stat-number">{{rejectedCount}}</text>
+        <text class="stat-label">已拒绝</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮区 -->
+    <view class="actions-section">
+      <button class="action-btn primary" bindtap="batchApprove">批量通过</button>
+      <button class="action-btn secondary" bindtap="clearProcessed">清空已处理</button>
+      <button class="action-btn tertiary" bindtap="onRefresh">刷新</button>
+    </view>
+
+    <!-- 筛选器 -->
+    <view class="filter-section">
+      <text class="filter-label">筛选状态：</text>
+      <radio-group bindchange="onFilterChange" class="filter-group">
+        <label class="filter-item">
+          <radio value="all" checked="{{filterStatus === 'all'}}" color="#4A90E2" />
+          <text>全部</text>
+        </label>
+        <label class="filter-item">
+          <radio value="pending" checked="{{filterStatus === 'pending'}}" color="#ff9500" />
+          <text>待审核</text>
+        </label>
+        <label class="filter-item">
+          <radio value="approved" checked="{{filterStatus === 'approved'}}" color="#30d158" />
+          <text>已通过</text>
+        </label>
+        <label class="filter-item">
+          <radio value="rejected" checked="{{filterStatus === 'rejected'}}" color="#ff453a" />
+          <text>已拒绝</text>
+        </label>
+      </radio-group>
+    </view>
+
+    <!-- 申请列表 -->
+    <view class="list-section">
+      <view wx:if="{{filteredList.length === 0}}" class="empty-state">
+        <text class="empty-text">暂无{{filterStatus === 'all' ? '' : getStatusText(filterStatus)}}申请记录</text>
+      </view>
+      
+      <view wx:else class="registration-list">
+        <view wx:for="{{filteredList}}" wx:key="id" class="registration-item">
+          <view class="item-header">
+            <view class="user-info">
+              <image class="user-avatar" src="{{item.userInfo.avatarUrl}}" mode="aspectFill"></image>
+              <view class="user-details">
+                <text class="user-name">{{item.userInfo.nickName}}</text>
+                <text class="submit-time">{{item.submitTime}}</text>
+              </view>
+            </view>
+            <view class="status-badge {{getStatusClass(item.status)}}">
+              {{getStatusText(item.status)}}
+            </view>
+          </view>
+          
+          <view class="item-content">
+            <view class="profile-info">
+              <text class="info-item">学习目标：{{getLearningGoalText(item.profile.learningGoal)}}</text>
+              <text class="info-item">当前水平：{{getLevelText(item.profile.currentLevel)}}</text>
+              <text class="info-item">每日学习：{{item.profile.studyTimePerDay}}分钟</text>
+            </view>
+          </view>
+          
+          <view class="item-actions">
+            <button class="detail-btn" bindtap="viewDetail" data-index="{{index}}">详情</button>
+            <view wx:if="{{item.status === 'pending'}}" class="approval-actions">
+              <button class="approve-btn" bindtap="approveUser" data-index="{{index}}">通过</button>
+              <button class="reject-btn" bindtap="rejectUser" data-index="{{index}}">拒绝</button>
+            </view>
+            <button class="delete-btn" bindtap="deleteUser" data-index="{{index}}">删除</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,195 @@
+<view class="container">
+  <!-- 认证检查 -->
+  <view wx:if="{{!isAuthenticated}}" class="auth-required">
+    <view class="auth-icon">🔐</view>
+    <text class="auth-text">需要登录查看学习进度</text>
+  </view>
+
+  <!-- 主要内容 -->
+  <view wx:else>
+    <!-- 顶部总览 -->
+    <view class="header-overview">
+      <view class="overview-stats">
+        <view class="stat-item">
+          <text class="stat-number">{{totalStudyDays}}</text>
+          <text class="stat-label">学习天数</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item highlight">
+          <text class="stat-number">{{consecutiveDays}}</text>
+          <text class="stat-label">连续天数</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-number">{{todayProgress.parsed}}</text>
+          <text class="stat-label">今日解析</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 今日进度卡片 -->
+    <view class="today-progress">
+      <view class="card-header">
+        <text class="card-title">今日学习进度</text>
+        <text class="card-date">{{todayProgress.parsed > 0 ? '活跃中' : '待开始'}}</text>
+      </view>
+      <view class="progress-grid">
+        <view class="progress-item">
+          <text class="progress-icon">📝</text>
+          <view class="progress-content">
+            <text class="progress-number">{{todayProgress.parsed}}</text>
+            <text class="progress-label">内容解析</text>
+          </view>
+        </view>
+        <view class="progress-item">
+          <text class="progress-icon">📚</text>
+          <view class="progress-content">
+            <text class="progress-number">{{todayProgress.newWords}}</text>
+            <text class="progress-label">新增词汇</text>
+          </view>
+        </view>
+        <view class="progress-item">
+          <text class="progress-icon">🧠</text>
+          <view class="progress-content">
+            <text class="progress-number">{{todayProgress.structures}}</text>
+            <text class="progress-label">句子结构</text>
+          </view>
+        </view>
+        <view class="progress-item">
+          <text class="progress-icon">🔄</text>
+          <view class="progress-content">
+            <text class="progress-number">{{todayProgress.reviewed}}</text>
+            <text class="progress-label">复习次数</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 标签页切换 -->
+    <view class="tab-bar">
+      <view class="tab-item {{currentTab === 0 ? 'active' : ''}}" bindtap="switchTab" data-tab="0">
+        <text class="tab-text">学习轨迹</text>
+      </view>
+      <view class="tab-item {{currentTab === 1 ? 'active' : ''}}" bindtap="switchTab" data-tab="1">
+        <text class="tab-text">数据统计</text>
+      </view>
+      <view class="tab-item {{currentTab === 2 ? 'active' : ''}}" bindtap="switchTab" data-tab="2">
+        <text class="tab-text">成就徽章</text>
+      </view>
+    </view>
+
+    <!-- 学习轨迹 -->
+    <view wx:if="{{currentTab === 0}}" class="timeline-container">
+      <view wx:if="{{learningTimeline.length === 0}}" class="empty-state">
+        <text class="empty-icon">📝</text>
+        <text class="empty-text">还没有学习记录</text>
+        <text class="empty-desc">去解析一些内容开始你的学习之旅</text>
+      </view>
+      
+      <view wx:else class="timeline">
+        <view wx:for="{{learningTimeline}}" wx:key="date" class="timeline-day">
+          <view class="day-header" bindtap="toggleDetail" data-index="{{index}}">
+            <view class="day-info">
+              <text class="day-date">{{item.displayDate}}</text>
+              <text class="day-summary">{{item.parseCount}}次解析 · {{item.wordCount}}个词汇</text>
+            </view>
+            <text class="expand-icon">{{showDetail[index] ? '▼' : '▶'}}</text>
+          </view>
+          
+          <view wx:if="{{showDetail[index]}}" class="day-activities">
+            <view wx:for="{{item.activities}}" wx:for-item="activity" wx:key="time" class="activity-item">
+              <view class="activity-time">{{activity.time}}</view>
+              <view class="activity-content">
+                <view class="activity-header">
+                  <text class="activity-type-icon">
+                    {{activity.type === 'parse' ? '📝' : activity.type === 'learn' ? '📚' : '🔄'}}
+                  </text>
+                  <text class="activity-title">{{activity.title}}</text>
+                </view>
+                <text class="activity-desc">{{activity.content}}</text>
+                <text wx:if="{{activity.wordCount > 0}}" class="activity-words">+{{activity.wordCount}}个词汇</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据统计 -->
+    <view wx:if="{{currentTab === 1}}" class="stats-container">
+      <!-- 本周活跃度 -->
+      <view class="stats-card">
+        <text class="stats-title">本周学习活跃度</text>
+        <view class="week-chart">
+          <view wx:for="{{weeklyStats}}" wx:key="date" class="week-day">
+            <view class="day-bar">
+              <view class="bar {{item.active ? 'active' : ''}}" style="height: {{item.barHeight}}px"></view>
+            </view>
+            <text class="day-label">{{item.date}}</text>
+          </view>
+        </view>
+        <view class="week-summary">
+          <text class="summary-text">本周共学习 {{weekTotalCount}} 次</text>
+        </view>
+      </view>
+
+      <!-- 学习分布 -->
+      <view class="stats-card">
+        <text class="stats-title">学习内容分布</text>
+        <view class="distribution-stats">
+          <view class="dist-item">
+            <view class="dist-icon">📝</view>
+            <view class="dist-info">
+              <text class="dist-label">内容解析</text>
+              <text class="dist-value">{{totalParseCount}}次</text>
+            </view>
+          </view>
+          <view class="dist-item">
+            <view class="dist-icon">📚</view>
+            <view class="dist-info">
+              <text class="dist-label">词汇收集</text>
+              <text class="dist-value">{{totalWordCount}}个</text>
+            </view>
+          </view>
+          <view class="dist-item">
+            <view class="dist-icon">🧠</view>
+            <view class="dist-info">
+              <text class="dist-label">句子结构</text>
+              <text class="dist-value">{{totalStructureCount}}个</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 成就徽章 -->
+    <view wx:if="{{currentTab === 2}}" class="achievements-container">
+      <view wx:if="{{achievements.length === 0}}" class="empty-state">
+        <text class="empty-icon">🏆</text>
+        <text class="empty-text">暂无成就</text>
+        <text class="empty-desc">继续学习解锁更多成就</text>
+      </view>
+      
+      <view wx:else class="achievements-grid">
+        <view wx:for="{{achievements}}" wx:key="id" class="achievement-card {{item.unlocked ? 'unlocked' : 'locked'}}">
+          <view class="achievement-icon">{{item.icon}}</view>
+          <text class="achievement-title">{{item.title}}</text>
+          <text class="achievement-desc">{{item.description}}</text>
+          <view class="achievement-progress">
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{item.progress}}%"></view>
+            </view>
+            <text class="progress-text">{{item.progressText}}%</text>
+          </view>
+          <view wx:if="{{item.unlocked}}" class="unlocked-badge">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-overlay">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载学习数据中...</text>
+    </view>
+  </view>
+</view>

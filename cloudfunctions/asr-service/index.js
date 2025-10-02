@@ -112,10 +112,10 @@ async function recognizeSpeech(audioData, format, lang) {
     }
     
     // console.log('调用腾讯云ASR:', {
-      EngineModelType: engineModelType,
-      EngSerViceType: engineModelType,
-      DataLen: params.DataLen
-    })
+    //   EngineModelType: engineModelType,
+    //   EngSerViceType: engineModelType,
+    //   DataLen: params.DataLen
+    // })
     
     // 调用一句话识别接口
     const response = await client.SentenceRecognition(params)

@@ -1,135 +1,139 @@
 <view class="container">
-  <!-- 顶部背景 -->
-  <view class="header-bg">
-    <view class="bg-circle circle-1"></view>
-    <view class="bg-circle circle-2"></view>
-  </view>
-  
-  <!-- 用户信息区 -->
-  <view class="user-section">
-    <view class="user-avatar">
-      <image wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-      <text wx:else class="avatar-icon">👤</text>
+  <!-- 登录提示界面 -->
+  <view wx:if="{{showLoginPrompt}}" class="login-prompt-overlay">
+    <view class="login-prompt-card">
+      <view class="prompt-icon">🔐</view>
+      <text class="prompt-title">欢迎使用语伴君</text>
+      <text class="prompt-subtitle">微信登录后即可开始学习</text>
+      <view class="prompt-benefits">
+        <text class="benefit-item">• 学习进度云端同步</text>
+        <text class="benefit-item">• 个性化学习计划</text>
+        <text class="benefit-item">• 海量学习内容</text>
+        <text class="benefit-item">• 句子解析功能需审核通过</text>
+      </view>
+      <button class="login-btn" bindtap="goToRegister">微信快速登录</button>
     </view>
-    <view class="user-info">
-      <text class="user-name">{{userInfo.nickName || '语伴君用户'}}</text>
-      <view class="user-badges">
-        <view class="badge">
-          <text class="badge-icon">🔥</text>
-          <text class="badge-text">连续{{studyDays}}天</text>
+  </view>
+
+  <!-- 主要内容（需要认证） -->
+  <view wx:else>
+    <!-- 顶部背景 -->
+    <view class="header-bg">
+      <view class="bg-circle circle-1"></view>
+      <view class="bg-circle circle-2"></view>
+    </view>
+    
+    <!-- 用户信息区 -->
+    <view class="user-section clickable-section" bindtap="goToProfile">
+      <view class="user-avatar">
+        <image wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <text wx:else class="avatar-icon">👤</text>
+      </view>
+      <view class="user-info">
+        <text class="user-name">{{userInfo.nickName || '语伴君用户'}}</text>
+        <view class="user-subtitle">
+          <text class="quick-stats">连续{{studyDays}}天 · {{todayCompleted ? '今日已完成' : '今日待学习'}}</text>
+          <text class="goto-arrow">＞</text>
         </view>
-        <view class="badge {{todayCompleted ? 'completed' : ''}}">
-          <text class="badge-icon">{{todayCompleted ? '✅' : '⏰'}}</text>
-          <text class="badge-text">今日{{todayCompleted ? '已完成' : '待学习'}}</text>
-        </view>
+      </view>
+    </view>
+
+  <!-- 学习仪表板 -->
+  <view class="dashboard">
+    <view class="dashboard-header">
+      <text class="dashboard-title">学习仪表板</text>
+      <text class="dashboard-subtitle">今日学习进度和数据概览</text>
+    </view>
+    
+    <!-- 数据概览 -->
+    <view class="data-overview">
+      <view class="overview-item" bindtap="goToVocabularyList" data-type="all">
+        <text class="overview-number">{{totalWordsInLibrary}}</text>
+        <text class="overview-label">词汇</text>
+        <text class="overview-detail">已掌握{{masteredWords}}</text>
+      </view>
+      <view class="overview-divider"></view>
+      <view class="overview-item" bindtap="goToStructureList" data-type="all">
+        <text class="overview-number">{{totalStructures}}</text>
+        <text class="overview-label">句型</text>
+        <text class="overview-detail">已掌握{{masteredStructures}}</text>
+      </view>
+      <view class="overview-divider"></view>
+      <view class="overview-item" bindtap="goToLearningProgress">
+        <text class="overview-number">{{studyDays}}</text>
+        <text class="overview-label">学习天数</text>
+        <text class="overview-detail">{{todayCompleted ? '今日已完成' : '今日待学习'}}</text>
       </view>
     </view>
   </view>
 
-  <!-- 词汇库统计卡片 -->
-  <view class="stats-card">
-    <view class="stats-item">
-      <text class="stats-value">{{totalWordsInLibrary}}</text>
-      <text class="stats-label">总词汇量</text>
+  <!-- 今日学习 -->
+  <view class="today-learning">
+    <view class="learning-header">
+      <text class="learning-title">今日学习</text>
+      <view class="learning-config" bindtap="showStudyAmountSelection">
+        <text class="config-text">{{selectedTotal}}个词汇</text>
+        <text class="config-icon">⚙️</text>
+      </view>
     </view>
-    <view class="stats-divider"></view>
-    <view class="stats-item primary">
-      <text class="stats-value">{{newWordsAvailable}}</text>
-      <text class="stats-label">新词汇</text>
-    </view>
-    <view class="stats-divider"></view>
-    <view class="stats-item">
-      <text class="stats-value">{{reviewWordsAvailable}}</text>
-      <text class="stats-label">复习词汇</text>
+    
+    <!-- 一键开始学习 -->
+    <view class="start-learning-btn" bindtap="goToSmartPlan">
+      <view class="start-content">
+        <view class="start-icon">🎯</view>
+        <view class="start-text">
+          <text class="start-title">开始学习</text>
+          <text class="start-desc">新学{{newWordsCount}}个 + 复习{{reviewWordsCount}}个</text>
+        </view>
+      </view>
+      <text class="start-arrow">▶</text>
     </view>
   </view>
 
-  <!-- 今日学习计划 -->
-  <view class="learning-plan">
-    <view class="plan-header">
-      <text class="plan-title">学习计划设置</text>
-      <view class="plan-settings" bindtap="showStudyAmountSelection">
-        <text class="settings-text">{{selectedTotal}}个</text>
-        <text class="settings-icon">⚙️</text>
-      </view>
+  <!-- 快捷功能 -->
+  <view class="quick-functions">
+    <view class="section-header">
+      <text class="section-title">快捷功能</text>
     </view>
-    
-    <!-- 学习量说明 -->
-    <view class="plan-summary">
-      <text class="summary-text">当前计划：{{selectedTotal}}个词汇 (新学{{newWordsCount}} + 复习{{reviewWordsCount}})</text>
-      <text class="summary-ratio">复习75% + 新学25%</text>
-    </view>
-    
-    <!-- 学习计划卡片 -->
-    <view class="plan-cards">
-      <view class="plan-card new-words" bindtap="goToNewWords">
-        <view class="card-header">
-          <text class="card-title">新学词汇</text>
-          <view class="card-icon">📘</view>
-        </view>
-        <view class="card-count">{{newWordsCount}}</view>
-        <view class="card-desc">25% · 掌握新词</view>
+    <view class="quick-grid">
+      <view class="quick-card primary" bindtap="goToParser">
+        <view class="quick-icon">🔍</view>
+        <text class="quick-title">句子解析</text>
+        <text class="quick-desc">AI智能分析</text>
       </view>
       
-      <view class="plan-card review-words" bindtap="goToReviewWords">
-        <view class="card-header">
-          <text class="card-title">复习巩固</text>
-          <view class="card-icon">🔄</view>
-        </view>
-        <view class="card-count">{{reviewWordsCount}}</view>
-        <view class="card-desc">75% · 强化记忆</view>
+      <view class="quick-card" bindtap="goToParserHistory">
+        <view class="quick-icon">📚</view>
+        <text class="quick-title">学习历史</text>
+        <text class="quick-desc">解析记录</text>
       </view>
-    </view>
-    
-    <!-- 智能学习按钮 -->
-    <view class="smart-plan-btn" bindtap="goToSmartPlan">
-      <view class="btn-content">
-        <text class="btn-icon">🧠</text>
-        <view class="btn-text">
-          <text class="btn-title">开始学习</text>
-          <text class="btn-desc">智能混合计划 · 共{{selectedTotal}}个词汇</text>
-        </view>
+      
+      <view class="quick-card" bindtap="goToKanaMerged">
+        <view class="quick-icon">あア</view>
+        <text class="quick-title">假名对照</text>
+        <text class="quick-desc">基础工具</text>
       </view>
-      <text class="btn-arrow">▶</text>
+      
+      <view class="quick-card" bindtap="goToGrammarLibrary">
+        <view class="quick-icon">📖</view>
+        <text class="quick-title">语法库</text>
+        <text class="quick-desc">语法参考</text>
+      </view>
+      
+      <view class="quick-card" bindtap="goToVoiceDialogue">
+        <view class="quick-icon">🎤</view>
+        <text class="quick-title">语音对话</text>
+        <text class="quick-desc">口语练习</text>
+      </view>
+      
+      <view class="quick-card" bindtap="goToProfile">
+        <view class="quick-icon">👤</view>
+        <text class="quick-title">个人中心</text>
+        <text class="quick-desc">设置管理</text>
+      </view>
     </view>
   </view>
-
-  <!-- 功能模块网格 -->
-  <view class="features-section">
-    <view class="features-header">
-      <text class="section-title">特色功能</text>
-    </view>
-    <view class="features-grid grid-cols-3">
-      <view class="feature-card" bindtap="goToKanaMerged">
-        <view class="feature-icon kana-merged">あア</view>
-        <text class="feature-name">假名对照</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToGrammarStudy">
-        <view class="feature-icon grammar">📖</view>
-        <text class="feature-name">语法学习</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToGrammarLibrary">
-        <view class="feature-icon grammar-lib">📚</view>
-        <text class="feature-name">语法库</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToVoiceDialogue">
-        <view class="feature-icon voice">🎤</view>
-        <text class="feature-name">语音对话</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToParser">
-        <view class="feature-icon parser">🔍</view>
-        <text class="feature-name">句子解析</text>
-      </view>
-      
-      <view class="feature-card" bindtap="goToParserReview">
-        <view class="feature-icon parser-review">📝</view>
-        <text class="feature-name">解析复习</text>
-      </view>
-    </view>
+  <!-- 主要内容区域结束 -->
   </view>
 
 </view>

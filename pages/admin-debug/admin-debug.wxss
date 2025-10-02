@@ -1,0 +1,174 @@
+/* 管理员调试页面样式 */
+.container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding: 20rpx;
+}
+
+.debug-header {
+  text-align: center;
+  margin-bottom: 40rpx;
+  padding: 40rpx 20rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx;
+  color: white;
+}
+
+.debug-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+}
+
+.debug-subtitle {
+  display: block;
+  font-size: 28rpx;
+  opacity: 0.9;
+}
+
+/* 信息卡片 */
+.info-card,
+.status-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+/* OpenID 显示 */
+.openid-display {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.openid-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: #666;
+  word-break: break-all;
+  margin-right: 20rpx;
+}
+
+.copy-btn {
+  background: #4A90E2 !important;
+  color: white !important;
+  border-radius: 20rpx !important;
+}
+
+.info-tips {
+  display: flex;
+  flex-direction: column;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+
+/* 状态行 */
+.status-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.status-label {
+  font-size: 28rpx;
+  color: #666;
+  width: 160rpx;
+}
+
+.status-value {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.status-value.admin {
+  color: #10b981;
+}
+
+.status-value.normal {
+  color: #f59e0b;
+}
+
+/* 操作按钮 */
+.action-section {
+  margin: 40rpx 0;
+}
+
+.action-btn {
+  width: 100%;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.action-btn.secondary {
+  background: white;
+  color: #666;
+  border: 2rpx solid #e5e7eb;
+}
+
+/* 帮助部分 */
+.help-section {
+  background: #fff3cd;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  border-left: 8rpx solid #ffc107;
+}
+
+.help-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #856404;
+  margin-bottom: 20rpx;
+}
+
+.help-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-text {
+  font-size: 26rpx;
+  color: #856404;
+  margin-bottom: 12rpx;
+  line-height: 1.5;
+}
+
+/* 技术信息 */
+.tech-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  background: rgba(255,255,255,0.5);
+  border-radius: 12rpx;
+}
+
+.tech-text {
+  font-size: 22rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}

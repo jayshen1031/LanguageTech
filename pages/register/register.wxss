@@ -207,6 +207,34 @@
   color: #666;
 }
 
+/* 服务条款确认 */
+.terms-section {
+  margin: 30rpx 0;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  line-height: 1.6;
+}
+
+.checkbox-text {
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 8rpx;
+}
+
+.link-text {
+  font-size: 26rpx;
+  color: #4A90E2;
+  text-decoration: underline;
+  margin-right: 8rpx;
+}
+
 .complete-btn {
   background: linear-gradient(135deg, #4A90E2, #667eea);
   color: white;
@@ -215,6 +243,33 @@
   font-size: 32rpx;
   margin-top: 30rpx;
   box-shadow: 0 8rpx 20rpx rgba(74,144,226,0.3);
+}
+
+.complete-btn[disabled] {
+  background: #ccc !important;
+  box-shadow: none !important;
+  color: #999 !important;
+}
+
+/* 注册提示 */
+.register-tips {
+  margin-top: 30rpx;
+  padding: 20rpx;
+  background: #fff3cd;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #ffc107;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #856404;
+  display: block;
+  margin-bottom: 8rpx;
+  line-height: 1.5;
+}
+
+.tip-text:last-child {
+  margin-bottom: 0;
 }
 
 /* 资料管理部分 */
