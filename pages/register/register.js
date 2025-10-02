@@ -167,18 +167,20 @@ Page({
     try {
       wx.showLoading({ title: '提交申请中...' })
 
+      const userInfo = wx.getStorageSync('userInfo')
       const profileData = {
         nickname: this.data.nickname.trim(),
         learningGoal: this.data.learningGoal,
         studyTimePerDay: this.data.studyTimePerDay,
         currentLevel: this.data.currentLevel,
+        // 添加用户头像信息
+        avatarUrl: userInfo ? userInfo.avatarUrl : '',
         // 添加更多注册信息
         deviceInfo: this.getDeviceInfo(),
         appVersion: this.getAppVersion()
       }
 
       // 管理员审核系统：检查是否为管理员
-      const userInfo = wx.getStorageSync('userInfo')
       const isAdmin = this.checkIfAdmin(userInfo)
       
       const userStatus = isAdmin ? 'approved' : 'pending'

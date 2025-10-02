@@ -96,7 +96,7 @@ Page({
   getUserInfo() {
     try {
       // 优先从本地存储获取用户资料
-      const userProfile = wx.getStorageSync('userProfile') || app.globalData.userProfile
+      let userProfile = wx.getStorageSync('userProfile') || app.globalData.userProfile
       const userInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo
       
       console.log('🔍 获取用户信息:', { 
@@ -108,11 +108,23 @@ Page({
         finalInfo: userInfo
       })
       
+      // 头像信息同步：如果userProfile中没有头像但userInfo中有，则同步过去
+      if (userProfile && userInfo && userInfo.avatarUrl && !userProfile.avatarUrl) {
+        console.log('🔄 同步头像信息到用户资料')
+        const updatedProfile = {
+          ...userProfile,
+          avatarUrl: userInfo.avatarUrl
+        }
+        wx.setStorageSync('userProfile', updatedProfile)
+        app.globalData.userProfile = updatedProfile
+        userProfile = updatedProfile // 更新本地变量
+      }
+      
       if (userProfile && userProfile.nickname) {
-        // 如果有用户资料，优先使用资料中的昵称
+        // 如果有用户资料，优先使用资料中的信息
         const finalUserInfo = {
           nickName: userProfile.nickname,
-          avatarUrl: userInfo ? userInfo.avatarUrl : ''
+          avatarUrl: userProfile.avatarUrl || (userInfo ? userInfo.avatarUrl : '')
         }
         console.log('✅ 使用用户资料昵称:', finalUserInfo)
         this.setData({ userInfo: finalUserInfo })
