@@ -142,6 +142,37 @@
         </view>
       </view>
       
+      <!-- 解析历史标签筛选 -->
+      <view class="config-item">
+        <text class="config-label">解析历史标签筛选</text>
+        <view class="tag-filter-section">
+          <view class="filter-tabs">
+            <view class="filter-tab {{contentSource === 'vocabulary' ? 'active' : ''}}"
+                  bindtap="onContentSourceChange" data-source="vocabulary">
+              JLPT词汇
+            </view>
+            <view class="filter-tab {{contentSource === 'history' ? 'active' : ''}}"
+                  bindtap="onContentSourceChange" data-source="history">
+              解析历史
+            </view>
+          </view>
+          
+          <view wx:if="{{contentSource === 'history'}}" class="history-tags">
+            <view wx:if="{{historyTags.length === 0}}" class="no-tags">
+              <text class="no-tags-text">暂无解析历史标签</text>
+              <text class="no-tags-hint">去解析页面为记录添加标签</text>
+            </view>
+            <view wx:else class="tag-list">
+              <view wx:for="{{historyTags}}" wx:key="tag"
+                    class="history-tag {{item.selected ? 'selected' : ''}}"
+                    bindtap="onHistoryTagSelect" data-tag="{{item.tag}}">
+                {{item.tag}} ({{item.count}})
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
       <!-- 学习提醒 -->
       <view class="config-item">
         <text class="config-label">学习提醒</text>

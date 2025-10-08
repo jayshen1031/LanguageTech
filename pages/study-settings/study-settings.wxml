@@ -15,16 +15,37 @@
       </view>
     </view>
 
+    <!-- 来源标签筛选 -->
+    <view class="setting-item" wx:if="{{availableTags.length > 0}}">
+      <view class="setting-label">
+        <text class="label-text">学习来源筛选</text>
+        <text class="label-hint">选择特定来源的词汇学习</text>
+      </view>
+      <scroll-view scroll-x="true" class="tags-scroll">
+        <view class="tags-container">
+          <view class="tag-chip {{selectedTag === '' ? 'active' : ''}}"
+                bindtap="onSelectTag" data-tag="">
+            全部来源
+          </view>
+          <view wx:for="{{availableTags}}" wx:key="index"
+                class="tag-chip {{selectedTag === item ? 'active' : ''}}"
+                bindtap="onSelectTag" data-tag="{{item}}">
+            {{item}}
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 词汇数量设置 -->
     <view class="setting-item">
       <view class="setting-label">
         <text class="label-text">每日词汇数量</text>
         <text class="label-value">{{vocabularySettings.totalCount}}个</text>
       </view>
-      <slider 
+      <slider
         class="setting-slider"
-        min="5" 
-        max="50" 
+        min="5"
+        max="50"
         step="5"
         value="{{vocabularySettings.totalCount}}"
         block-color="#667eea"

@@ -47,6 +47,371 @@
   color: #999;
 }
 
+/* 模式切换 */
+.mode-switch {
+  display: flex;
+  background-color: #fff;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.switch-item {
+  flex: 1;
+  padding: 20rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.switch-item.active {
+  background-color: #4a90e2;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 学习行为统计样式 */
+.behavior-stats-content {
+  padding: 0 20rpx;
+}
+
+/* 行为概览卡片 */
+.behavior-overview-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.behavior-overview-card .overview-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.behavior-overview-card .overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30rpx;
+}
+
+.behavior-overview-card .overview-item {
+  text-align: center;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.behavior-overview-card .overview-number {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #4a90e2;
+  margin-bottom: 8rpx;
+}
+
+.behavior-overview-card .overview-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 学习习惯卡片 */
+.study-habits-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.habits-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20rpx;
+}
+
+.habit-item {
+  text-align: center;
+  padding: 20rpx;
+  background-color: #f0f7ff;
+  border-radius: 12rpx;
+  min-width: 200rpx;
+}
+
+.habit-label {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.habit-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #4a90e2;
+}
+
+/* 内容分解卡片 */
+.content-breakdown-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.breakdown-item {
+  margin-bottom: 25rpx;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.breakdown-item:last-child {
+  margin-bottom: 0;
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.breakdown-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.breakdown-total {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.breakdown-details {
+  display: flex;
+  justify-content: space-around;
+}
+
+.detail-item {
+  font-size: 24rpx;
+  color: #4a90e2;
+  padding: 8rpx 16rpx;
+  background-color: #e7f3ff;
+  border-radius: 8rpx;
+}
+
+/* 每日活动图表 */
+.daily-activity-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.activity-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 200rpx;
+  margin-top: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+
+.activity-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin: 0 2rpx;
+}
+
+.activity-bar {
+  width: 20rpx;
+  min-height: 8rpx;
+  background-color: #4a90e2;
+  border-radius: 4rpx 4rpx 0 0;
+  margin-bottom: 10rpx;
+}
+
+.activity-date {
+  font-size: 20rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.activity-count {
+  font-size: 20rpx;
+  color: #666;
+}
+
+/* 复习统计卡片 */
+.review-stats-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.review-overview {
+  display: flex;
+  justify-content: space-around;
+  margin: 20rpx 0;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.review-item {
+  text-align: center;
+}
+
+.review-label {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.review-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff6b35;
+}
+
+.review-patterns {
+  margin-top: 25rpx;
+  padding: 20rpx;
+  background-color: #f0f7ff;
+  border-radius: 12rpx;
+}
+
+.pattern-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.time-patterns {
+  display: flex;
+  justify-content: space-around;
+}
+
+.time-item {
+  text-align: center;
+  padding: 15rpx;
+  background-color: #fff;
+  border-radius: 8rpx;
+  min-width: 120rpx;
+}
+
+.time-label {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.time-count {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #4a90e2;
+}
+
+.content-patterns {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background-color: #fff5f5;
+  border-radius: 12rpx;
+}
+
+.content-types {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 15rpx;
+}
+
+.content-type-item {
+  text-align: center;
+  padding: 15rpx;
+  background-color: #fff;
+  border-radius: 8rpx;
+  min-width: 120rpx;
+}
+
+.content-type-label {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.content-type-count {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #e91e63;
+}
+
+/* 行为建议卡片 */
+.behavior-suggestion-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.behavior-suggestion-card .suggestion-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.behavior-suggestion-card .suggestion-content {
+  padding: 0;
+}
+
+.behavior-suggestion-card .suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  margin-bottom: 15rpx;
+  background-color: #fff7e6;
+  border-radius: 12rpx;
+  border-left: 6rpx solid #ffa726;
+}
+
+.behavior-suggestion-card .suggestion-item.success {
+  background-color: #e8f5e8;
+  border-left-color: #4caf50;
+}
+
+.behavior-suggestion-card .suggestion-icon {
+  font-size: 32rpx;
+  margin-right: 15rpx;
+}
+
+.behavior-suggestion-card .suggestion-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
 /* 统计内容 */
 .stats-content {
   padding: 20rpx;

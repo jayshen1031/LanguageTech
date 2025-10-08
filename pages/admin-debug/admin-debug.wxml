@@ -1,20 +1,15 @@
 <!-- 管理员调试页面 -->
 <view class="container">
   <view class="debug-header">
-    <text class="debug-title">🛠️ 管理员调试工具</text>
-    <text class="debug-subtitle">用于设置管理员权限和调试登录问题</text>
+    <text class="debug-title">🛠️ 开发者权限设置</text>
+    <text class="debug-subtitle">获取您的OpenID并配置管理员权限</text>
   </view>
 
-  <!-- OpenID 信息 -->
+  <!-- 调试信息 -->
   <view class="info-card">
-    <view class="card-title">🔑 您的 OpenID</view>
-    <view class="openid-display">
-      <text class="openid-text">{{openid || '获取中...'}}</text>
-      <button wx:if="{{openid}}" class="copy-btn" size="mini" bindtap="copyOpenid">复制</button>
-    </view>
-    <view class="info-tips">
-      <text class="tip-text">• 这是您微信的唯一标识</text>
-      <text class="tip-text">• 需要添加到云函数管理员白名单中</text>
+    <view class="card-title">📋 用户信息</view>
+    <view class="debug-info">
+      <text class="debug-text">{{debugInfo || '加载中...'}}</text>
     </view>
   </view>
 
@@ -36,31 +31,44 @@
 
   <!-- 操作按钮 -->
   <view class="action-section">
-    <button wx:if="{{!isAdmin}}" class="action-btn primary" bindtap="setAdminPermission">
-      设置管理员权限
+    <button wx:if="{{userInfo && userInfo.openid}}" class="action-btn primary" bindtap="copyCodeSnippet">
+      📋 复制管理员代码片段
     </button>
     
-    <button class="action-btn secondary" bindtap="testUserRegister">
-      测试用户注册
-    </button>
-    
-    <button class="action-btn secondary" bindtap="showDetails">
-      查看详细信息
+    <button class="action-btn secondary" bindtap="copyOpenid">
+      📎 仅复制OpenID
     </button>
     
     <button class="action-btn secondary" bindtap="refresh">
-      刷新状态
+      🔄 刷新信息
     </button>
+  </view>
+
+  <!-- 数据修复工具 -->
+  <view class="repair-section">
+    <view class="repair-title">🔧 数据修复工具</view>
+    <view class="repair-buttons">
+      <button class="repair-btn fix" bindtap="fixExampleRomaji">
+        🎌 修复例句罗马音
+      </button>
+      
+      <button class="repair-btn verify" bindtap="verifyRomajiFix">
+        🔍 验证罗马音完整率
+      </button>
+    </view>
+    <view class="repair-tip">
+      <text>💡 如果学习界面的例句缺少罗马音注解，可使用此工具修复</text>
+    </view>
   </view>
 
   <!-- 说明信息 -->
   <view class="help-section">
-    <view class="help-title">📖 使用说明</view>
+    <view class="help-title">📖 操作步骤</view>
     <view class="help-content">
-      <text class="help-text">1. 首次使用请先"设置管理员权限"</text>
-      <text class="help-text">2. 管理员账户登录后自动审核通过</text>
-      <text class="help-text">3. 可以使用所有功能包括句子解析</text>
-      <text class="help-text">4. 如果登录失败，请检查云函数是否部署</text>
+      <text class="help-text">1. 确保您已在个人中心完成微信授权登录</text>
+      <text class="help-text">2. 点击"复制管理员代码片段"获取您的OpenID</text>
+      <text class="help-text">3. 将代码片段添加到指定的两个文件中</text>
+      <text class="help-text">4. 重新编译小程序后即可获得管理员权限</text>
     </view>
   </view>
 

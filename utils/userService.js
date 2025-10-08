@@ -160,6 +160,18 @@ class UserService {
 
   // 同步学习数据到云端
   async syncLearningDataToCloud() {
+    // 检查是否启用云端同步
+    const enableCloudSync = true // 启用云端同步
+    
+    if (!enableCloudSync) {
+      console.log('🔕 云端同步已禁用，数据仅保存在本地')
+      return {
+        success: true,
+        message: '本地数据已保存',
+        localOnly: true
+      }
+    }
+    
     if (!this.isLoggedIn) {
       return {
         success: false,
@@ -201,6 +213,18 @@ class UserService {
 
   // 从云端同步学习数据
   async syncFromCloud() {
+    // 检查是否启用云端同步
+    const enableCloudSync = true // 启用云端同步
+    
+    if (!enableCloudSync) {
+      console.log('🔕 云端同步已禁用，仅使用本地数据')
+      return {
+        success: true,
+        message: '使用本地数据',
+        localOnly: true
+      }
+    }
+    
     if (!this.isLoggedIn) {
       return {
         success: false,

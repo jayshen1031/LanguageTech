@@ -1,10 +1,12 @@
 // pages/mastery-stats/mastery-stats.js
 const app = getApp()
+const { getLearningStats, getReviewStats } = require('../../utils/userBehavior')
 
 
 Page({
   data: {
     loading: true,
+    // 原有的解析统计数据
     totalStats: {
       sentence: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 },
       word: { total: 0, unseen: 0, unfamiliar: 0, partial: 0, mastered: 0 },
@@ -12,16 +14,49 @@ Page({
     },
     historyList: [],
     filterType: 'all', // all, favorite, recent
-    chartData: null
+    chartData: null,
+    // 新增：真实学习行为统计
+    learningBehaviorStats: {
+      totalViewed: 0,
+      totalStudied: 0,
+      totalReviewed: 0,
+      uniqueContentCount: 0,
+      studyDays: 0,
+      avgDailyActions: 0,
+      contentBreakdown: {
+        sentence: { viewed: 0, studied: 0, reviewed: 0 },
+        word: { viewed: 0, studied: 0, reviewed: 0 },
+        grammar: { viewed: 0, studied: 0, reviewed: 0 },
+        structure: { viewed: 0, studied: 0, reviewed: 0 }
+      },
+      dailyActivity: []
+    },
+    // 新增：复习统计数据
+    reviewStats: {
+      totalReviews: 0,
+      reviewedContentCount: 0,
+      consistentDays: 0,
+      bestReviewDay: null,
+      reviewPatterns: {
+        byContentType: {},
+        byTimeOfDay: {},
+        byDayOfWeek: {}
+      }
+    },
+    statsMode: 'behavior' // behavior: 真实行为统计, mastery: 掌握度统计
   },
 
   onLoad() {
     this.loadHistoryData()
+    this.loadLearningBehaviorStats()
+    this.loadReviewStats()
   },
 
   onShow() {
     // 每次显示页面时重新加载，确保数据最新
     this.loadHistoryData()
+    this.loadLearningBehaviorStats()
+    this.loadReviewStats()
   },
 
   // 加载所有历史数据
@@ -305,6 +340,42 @@ Page({
     this.setData({ 
       totalStats: stats,
       chartData: this.generateChartData(stats)
+    })
+  },
+
+  // 加载真实学习行为统计
+  loadLearningBehaviorStats() {
+    try {
+      const stats = getLearningStats(7) // 获取最近7天的统计
+      if (stats) {
+        this.setData({
+          learningBehaviorStats: stats
+        })
+      }
+    } catch (error) {
+      console.error('加载学习行为统计失败:', error)
+    }
+  },
+
+  // 加载复习统计
+  loadReviewStats() {
+    try {
+      const stats = getReviewStats(7) // 获取最近7天的复习统计
+      if (stats) {
+        this.setData({
+          reviewStats: stats
+        })
+      }
+    } catch (error) {
+      console.error('加载复习统计失败:', error)
+    }
+  },
+
+  // 切换统计模式
+  switchStatsMode(e) {
+    const mode = e.currentTarget.dataset.mode
+    this.setData({
+      statsMode: mode
     })
   },
 

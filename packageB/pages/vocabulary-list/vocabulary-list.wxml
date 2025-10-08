@@ -87,17 +87,25 @@
         <text class="word-meaning">{{selectedWord.meaning}}</text>
       </view>
 
-      <!-- 学习统计 -->
+      <!-- 学习进度管理 -->
+      <view class="learning-section">
+        <text class="section-title">学习进度</text>
+        <learning-progress 
+          content="{{selectedWord.word}}"
+          type="word"
+          metadata="{{selectedWord}}"
+          size="large"
+          show-details="{{true}}"
+          bind:learn="onWordLearned"
+          bind:statuschange="onWordStatusChanged"
+        />
+      </view>
+
+      <!-- 出现统计 -->
       <view class="word-stats">
         <view class="stat-row">
-          <text class="stat-label">出现次数：</text>
+          <text class="stat-label">解析出现：</text>
           <text class="stat-value">{{selectedWord.totalOccurrences}} 次</text>
-        </view>
-        <view class="stat-row">
-          <text class="stat-label">学习状态：</text>
-          <text class="stat-value {{selectedWord.totalOccurrences >= 3 ? 'mastered' : 'learning'}}">
-            {{selectedWord.totalOccurrences >= 3 ? '已掌握' : '学习中'}}
-          </text>
         </view>
         <view class="stat-row">
           <text class="stat-label">词汇级别：</text>
@@ -110,6 +118,7 @@
         <text class="section-title">例句</text>
         <view wx:for="{{selectedWord.examples}}" wx:key="*this" class="example-item">
           <text class="example-jp">{{item.jp}}</text>
+          <text class="example-romaji" wx:if="{{item.romaji}}">{{item.romaji}}</text>
           <text class="example-cn">{{item.cn}}</text>
           <button class="play-example" bindtap="playAudio" data-text="{{item.jp}}">🔊</button>
         </view>

@@ -2,5 +2,7 @@
   "navigationBarTitleText": "词汇列表",
   "enablePullDownRefresh": true,
   "backgroundColor": "#f8f9fa",
-  "usingComponents": {}
+  "usingComponents": {
+    "learning-progress": "/components/learning-progress/learning-progress"
+  }
 }

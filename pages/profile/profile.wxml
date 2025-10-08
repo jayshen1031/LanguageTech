@@ -3,7 +3,7 @@
   <!-- 用户信息区域 -->
   <view class="user-section">
     <view wx:if="{{isLoggedIn}}" class="user-info">
-      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <image class="avatar" src="{{userProfile.avatarUrl || userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       <view class="user-details">
         <text class="nickname">{{userProfile.nickname || '语伴君用户'}}</text>
         <text class="level">{{userProfile.currentLevel === 'beginner' ? '初学者' : userProfile.currentLevel === 'intermediate' ? '中级' : '高级'}}</text>
@@ -81,7 +81,7 @@
       <view class="menu-icon">☁️</view>
       <view class="menu-content">
         <text class="menu-title">同步学习数据</text>
-        <text class="menu-desc">将学习记录同步到云端</text>
+        <text class="menu-desc">{{lastSyncTime ? '上次同步: ' + lastSyncTime : '将学习记录同步到云端'}}</text>
       </view>
       <view class="menu-arrow">›</view>
     </view>
@@ -102,6 +102,16 @@
       <view class="menu-content">
         <text class="menu-title">清理音频缓存</text>
         <text class="menu-desc">{{cacheStats.fileCount}}个文件，{{cacheStats.totalSizeMB}}MB</text>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    
+    <!-- 账号管理 -->
+    <view wx:if="{{isLoggedIn}}" class="menu-item" bindtap="showAccountManagement">
+      <view class="menu-icon">👤</view>
+      <view class="menu-content">
+        <text class="menu-title">账号管理</text>
+        <text class="menu-desc">切换账号、退出登录</text>
       </view>
       <view class="menu-arrow">›</view>
     </view>
@@ -142,6 +152,18 @@
         <view class="function-arrow">></view>
       </view>
     </view>
+  </view>
+
+  <!-- 账号操作区 -->
+  <view wx:if="{{isLoggedIn}}" class="account-actions">
+    <button class="switch-account-btn" bindtap="switchAccount">
+      <text class="btn-icon">🔄</text>
+      <text class="btn-text">切换账号</text>
+    </button>
+    <button class="logout-btn" bindtap="logout">
+      <text class="btn-icon">🚪</text>
+      <text class="btn-text">退出登录</text>
+    </button>
   </view>
 
   <!-- 隐藏的管理员调试入口（长按版本号触发） -->

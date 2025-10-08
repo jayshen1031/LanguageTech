@@ -9,7 +9,8 @@ Page({
     page: 0,
     pageSize: 20,
     filterType: 'all', // all, favorite, recent
-    storageInfo: null // 存储信息
+    storageInfo: null, // 存储信息
+    availableCategories: [] // 可用的分类标签列表
   },
 
   onLoad() {
@@ -175,6 +176,9 @@ Page({
           page: this.data.page + 1,
           loading: false
         })
+
+        // 更新可用分类列表
+        this.updateAvailableCategories()
       })
       .catch(err => {
         console.error('加载历史记录失败:', err)
@@ -831,6 +835,154 @@ Page({
             break
         }
       }
+    })
+  },
+
+  // 编辑分类标签
+  onEditCategory(e) {
+    const index = e.currentTarget.dataset.index
+    const item = this.data.historyList[index]
+
+    wx.showActionSheet({
+      itemList: ['修改标签', '删除标签'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 修改标签
+          this.showCategoryInput(index, item.categoryTag)
+        } else if (res.tapIndex === 1) {
+          // 删除标签
+          wx.showModal({
+            title: '确认删除',
+            content: '确定要删除这个标签吗？',
+            success: (confirmRes) => {
+              if (confirmRes.confirm) {
+                this.updateCategory(item, index, '')
+              }
+            }
+          })
+        }
+      }
+    })
+  },
+
+  // 添加分类标签
+  onAddCategory(e) {
+    const index = e.currentTarget.dataset.index
+    this.showCategoryInput(index, '')
+  },
+
+  // 显示标签输入框
+  showCategoryInput(index, currentCategory) {
+    const availableCategories = this.data.availableCategories || []
+    const item = this.data.historyList[index]
+
+    // 如果有现有分类，显示选择或自定义输入
+    if (availableCategories.length > 0) {
+      const itemList = [...availableCategories, '+ 自定义新标签']
+      wx.showActionSheet({
+        itemList: itemList,
+        success: (res) => {
+          if (res.tapIndex === itemList.length - 1) {
+            // 选择了自定义新标签
+            this.showCustomCategoryInput(index, currentCategory)
+          } else {
+            // 选择了现有标签
+            const selectedCategory = availableCategories[res.tapIndex]
+            if (selectedCategory !== currentCategory) {
+              this.updateCategory(item, index, selectedCategory)
+            }
+          }
+        }
+      })
+    } else {
+      // 没有现有分类，直接输入
+      this.showCustomCategoryInput(index, currentCategory)
+    }
+  },
+
+  // 显示自定义标签输入
+  showCustomCategoryInput(index, currentCategory) {
+    const item = this.data.historyList[index]
+    wx.showModal({
+      title: '编辑分类标签',
+      editable: true,
+      placeholderText: '请输入分类标签（如：NHK、动漫、新闻）',
+      content: currentCategory || '',
+      success: (res) => {
+        if (res.confirm) {
+          const newCategory = res.content.trim()
+          if (newCategory && newCategory !== currentCategory) {
+            this.updateCategory(item, index, newCategory)
+          } else if (!newCategory && currentCategory) {
+            // 输入为空且原来有标签，询问是否删除
+            wx.showModal({
+              title: '确认删除',
+              content: '标签内容为空，是否删除原有标签？',
+              success: (deleteRes) => {
+                if (deleteRes.confirm) {
+                  this.updateCategory(item, index, '')
+                }
+              }
+            })
+          }
+        }
+      }
+    })
+  },
+
+  // 更新分类标签
+  async updateCategory(item, index, newCategory) {
+    try {
+      // 1. 更新云数据库
+      const db = wx.cloud.database()
+      await db.collection('japanese_parser_history')
+        .doc(item._id)
+        .update({
+          data: {
+            categoryTag: newCategory,
+            updateTime: new Date()
+          }
+        })
+
+      // 2. 更新本地显示
+      const historyList = [...this.data.historyList]
+      historyList[index].categoryTag = newCategory
+      this.setData({ historyList })
+
+      // 3. 更新本地存储
+      const localHistory = wx.getStorageSync('parser_history') || []
+      const localIndex = localHistory.findIndex(h => h._id === item._id || h.timestamp === item.timestamp)
+      if (localIndex !== -1) {
+        localHistory[localIndex].categoryTag = newCategory
+        wx.setStorageSync('parser_history', localHistory)
+      }
+
+      // 4. 更新可用分类列表
+      this.updateAvailableCategories()
+
+      wx.showToast({
+        title: newCategory ? '标签已更新' : '标签已删除',
+        icon: 'success'
+      })
+    } catch (error) {
+      console.error('更新标签失败:', error)
+      wx.showToast({
+        title: '更新失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 更新可用分类列表
+  updateAvailableCategories() {
+    const categories = new Set()
+    this.data.historyList.forEach(item => {
+      if (item.categoryTag && item.categoryTag.trim()) {
+        categories.add(item.categoryTag.trim())
+      }
+    })
+    this.setData({
+      availableCategories: Array.from(categories).sort()
     })
   },
 

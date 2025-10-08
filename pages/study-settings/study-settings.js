@@ -7,14 +7,14 @@ Page({
       newWordPercent: 70,
       reviewPercent: 30
     },
-    
+
     // 语法结构设置
     structureSettings: {
       totalCount: 5,
       newStructurePercent: 60,
       reviewPercent: 40
     },
-    
+
     // 学习目标设置
     studyGoals: {
       dailyVocabulary: 10,
@@ -22,7 +22,7 @@ Page({
       studyTime: 30, // 分钟
       weeklyGoal: 70 // 词汇数
     },
-    
+
     // 复习间隔设置
     reviewSettings: {
       firstReview: 1,  // 1天后
@@ -30,19 +30,24 @@ Page({
       thirdReview: 7,  // 7天后
       finalReview: 15  // 15天后
     },
-    
+
     // 统计数据
     stats: {
       totalVocabulary: 0,
       masteredVocabulary: 0,
       totalStructures: 0,
       masteredStructures: 0
-    }
+    },
+
+    // 来源标签相关
+    availableTags: [],
+    selectedTag: ''
   },
 
   onLoad() {
     this.loadSettings()
     this.loadStats()
+    this.loadAvailableTags()
   },
 
   // 加载设置
@@ -50,7 +55,7 @@ Page({
     try {
       const studyPlanConfig = wx.getStorageSync('studyPlanConfig') || {}
       const userPreferences = wx.getStorageSync('userPreferences') || {}
-      
+
       // 合并设置
       this.setData({
         vocabularySettings: {
@@ -60,11 +65,54 @@ Page({
         },
         structureSettings: userPreferences.structureSettings || this.data.structureSettings,
         studyGoals: userPreferences.studyGoals || this.data.studyGoals,
-        reviewSettings: userPreferences.reviewSettings || this.data.reviewSettings
+        reviewSettings: userPreferences.reviewSettings || this.data.reviewSettings,
+        selectedTag: studyPlanConfig.selectedTag || ''
       })
     } catch (error) {
       console.error('加载设置失败:', error)
     }
+  },
+
+  // 加载可用的来源标签
+  async loadAvailableTags() {
+    try {
+      const tags = new Set()
+
+      // 优先从云数据库获取
+      const userInfo = wx.getStorageSync('userInfo')
+      if (userInfo) {
+        const db = wx.cloud.database()
+        const res = await db.collection('japanese_parser_history')
+          .field({ categoryTag: true })
+          .get()
+
+        res.data.forEach(record => {
+          if (record.categoryTag && record.categoryTag.trim()) {
+            tags.add(record.categoryTag.trim())
+          }
+        })
+      }
+
+      // 从本地存储获取
+      const localHistory = wx.getStorageSync('parser_history') || []
+      localHistory.forEach(item => {
+        if (item.categoryTag && item.categoryTag.trim()) {
+          tags.add(item.categoryTag.trim())
+        }
+      })
+
+      this.setData({
+        availableTags: Array.from(tags).sort()
+      })
+    } catch (error) {
+      console.error('加载可用标签失败:', error)
+    }
+  },
+
+  // 选择来源标签
+  onSelectTag(e) {
+    const tag = e.currentTarget.dataset.tag
+    this.setData({ selectedTag: tag })
   },
 
   // 加载统计数据
@@ -150,30 +198,31 @@ Page({
         selectedTotal: this.data.vocabularySettings.totalCount,
         newWordPercent: this.data.vocabularySettings.newWordPercent,
         reviewPercent: this.data.vocabularySettings.reviewPercent,
+        selectedTag: this.data.selectedTag,
         availableTotals: [5, 10, 15, 20, 30],
         lastUpdated: new Date()
       }
-      
+
       const userPreferences = {
         structureSettings: this.data.structureSettings,
         studyGoals: this.data.studyGoals,
         reviewSettings: this.data.reviewSettings,
         lastUpdated: new Date()
       }
-      
+
       wx.setStorageSync('studyPlanConfig', studyPlanConfig)
       wx.setStorageSync('userPreferences', userPreferences)
-      
+
       wx.showToast({
         title: '设置已保存',
         icon: 'success'
       })
-      
+
       // 延迟返回，让用户看到保存成功的提示
       setTimeout(() => {
         wx.navigateBack()
       }, 1000)
-      
+
     } catch (error) {
       console.error('保存设置失败:', error)
       wx.showToast({

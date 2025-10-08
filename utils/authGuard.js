@@ -16,7 +16,12 @@ const authGuard = {
         return { isValid: false, redirectTo: '/pages/register/register', reason: '未完善资料' }
       }
       
-      // 2. 检查审核状态
+      // 2. 检查是否为管理员（管理员自动通过审核）
+      if (this.isAdmin(userInfo)) {
+        return { isValid: true, userInfo, userProfile, userStatus: 'approved' }
+      }
+      
+      // 3. 检查审核状态
       if (!userStatus || userStatus === 'pending') {
         return { 
           isValid: false, 
@@ -158,6 +163,57 @@ const authGuard = {
     }
     
     return true
+  },
+  
+  // 检查是否为管理员
+  isAdmin(userInfo) {
+    if (!userInfo) {
+      return false
+    }
+    
+    // 1. 优先检查手机号（更稳定的管理员验证方式）
+    if (userInfo.phone) {
+      const adminPhones = [
+        '13818425406', // 您的手机号
+        '18888888888', // 测试手机号
+        // 可以添加更多管理员手机号
+      ]
+      
+      if (adminPhones.includes(userInfo.phone)) {
+        console.log('✅ 手机号管理员验证通过:', userInfo.phone)
+        return true
+      }
+    }
+    
+    // 2. 检查userInfo中的isAdmin标志
+    if (userInfo.isAdmin === true) {
+      console.log('✅ 用户标志管理员验证通过')
+      return true
+    }
+    
+    // 3. 兼容原有的openid验证
+    if (userInfo.openid) {
+      const adminOpenIds = [
+        'oyehIvjzBJ8kK-KbqRBCa4anbc7Y', // 原管理员openid
+      ]
+      
+      // 精确匹配
+      if (adminOpenIds.includes(userInfo.openid)) {
+        console.log('✅ OpenID管理员验证通过')
+        return true
+      }
+      
+      // 开发调试模式
+      const debugPrefixes = ['temp_', 'guest_', 'phone_13818425406']
+      for (let prefix of debugPrefixes) {
+        if (userInfo.openid.startsWith(prefix)) {
+          console.log('🔧 开发调试模式：临时授予管理员权限')
+          return true
+        }
+      }
+    }
+    
+    return false
   },
   
   // 可选认证检查（用于某些功能）

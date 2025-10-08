@@ -1,0 +1,62 @@
+<!-- 存储调试页面 -->
+<view class="container">
+  <view class="debug-header">
+    <text class="debug-title">🔍 存储数据调试</text>
+    <text class="debug-subtitle">查看本地存储的注册申请记录</text>
+  </view>
+
+  <!-- 存储信息 -->
+  <view class="info-card">
+    <view class="card-title">📋 存储数据详情</view>
+    <view class="storage-info">
+      <text class="storage-text">{{storageInfo || '加载中...'}}</text>
+    </view>
+  </view>
+
+  <!-- 注册列表快览 -->
+  <view wx:if="{{registrationList.length > 0}}" class="list-card">
+    <view class="card-title">📝 注册申请列表 ({{registrationList.length}}条)</view>
+    <view class="registration-list">
+      <view wx:for="{{registrationList}}" wx:key="id" class="registration-item">
+        <view class="item-header">
+          <text class="item-nickname">{{item.userInfo.nickName || '未知昵称'}}</text>
+          <text class="item-status status-{{item.status}}">{{item.status}}</text>
+        </view>
+        <view class="item-details">
+          <text class="item-time">提交时间: {{item.submitTime}}</text>
+          <text class="item-openid">OpenID: {{item.userInfo.openid}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-section">
+    <button class="action-btn primary" bindtap="refreshData">
+      🔄 刷新数据
+    </button>
+    
+    <button class="action-btn secondary" bindtap="addTestData">
+      🧪 添加测试数据
+    </button>
+    
+    <button class="action-btn secondary" bindtap="exportData">
+      📤 导出数据
+    </button>
+    
+    <button class="action-btn danger" bindtap="clearRegistrationList">
+      🗑️ 清空注册列表
+    </button>
+  </view>
+
+  <!-- 说明信息 -->
+  <view class="help-section">
+    <view class="help-title">📖 调试说明</view>
+    <view class="help-content">
+      <text class="help-text">• 此页面用于调试用户注册数据存储问题</text>
+      <text class="help-text">• 如果注册列表为空，可能是所有用户都被自动认定为管理员</text>
+      <text class="help-text">• 管理员用户不会出现在待审核列表中</text>
+      <text class="help-text">• 数据存储在本地，卸载应用会丢失</text>
+    </view>
+  </view>
+</view>

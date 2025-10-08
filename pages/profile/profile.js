@@ -11,6 +11,7 @@ Page({
     userProfile: null,
     isLoggedIn: false,
     isAdmin: false,
+    lastSyncTime: '', // 最后同步时间
     learningStats: {
       studyDays: 0,
       totalWords: 0,
@@ -180,17 +181,52 @@ Page({
   // 加载用户信息
   loadUserInfo() {
     try {
-      const userInfo = wx.getStorageSync('userInfo')
-      const userProfile = wx.getStorageSync('userProfile')
+      let userInfo = wx.getStorageSync('userInfo')
+      let userProfile = wx.getStorageSync('userProfile')
+      
+      // 头像信息同步：确保头像数据一致性
+      if (userInfo && userProfile) {
+        // 如果userProfile中没有头像但userInfo中有，则同步过去
+        if (userInfo.avatarUrl && !userProfile.avatarUrl) {
+          console.log('🔄 同步头像信息到用户资料')
+          userProfile = {
+            ...userProfile,
+            avatarUrl: userInfo.avatarUrl
+          }
+          wx.setStorageSync('userProfile', userProfile)
+        }
+        // 如果userProfile中有头像但userInfo中没有，则反向同步
+        else if (userProfile.avatarUrl && !userInfo.avatarUrl) {
+          console.log('🔄 同步头像信息到用户信息')
+          userInfo = {
+            ...userInfo,
+            avatarUrl: userProfile.avatarUrl
+          }
+          wx.setStorageSync('userInfo', userInfo)
+        }
+      }
+      
+      // 更新全局用户信息
+      const app = getApp()
+      if (app.globalData && userInfo) {
+        app.globalData.userInfo = userInfo
+      }
+      if (app.globalData && userProfile) {
+        app.globalData.userProfile = userProfile
+      }
       
       // 检查是否为管理员
       const isAdmin = this.checkIfAdmin(userInfo)
+      
+      // 获取最后同步时间
+      const lastSyncTime = this.getLastSyncTimeString()
       
       this.setData({
         userInfo: userInfo,
         userProfile: userProfile,
         isLoggedIn: !!userInfo,
-        isAdmin: isAdmin
+        isAdmin: isAdmin,
+        lastSyncTime: lastSyncTime
       })
     } catch (error) {
       console.error('加载用户信息失败:', error)
@@ -269,8 +305,12 @@ Page({
       
       if (result.success) {
         wx.showToast({
-          title: '同步成功',
+          title: result.localOnly ? '本地数据已保存' : '同步成功',
           icon: 'success'
+        })
+        // 更新最后同步时间显示
+        this.setData({
+          lastSyncTime: this.getLastSyncTimeString()
         })
       } else {
         wx.showToast({
@@ -336,10 +376,44 @@ Page({
       '项目负责人', 
       '管理员',
       'Jay',
-      'Admin'
+      'Admin',
+      '测试用户',
+      'TestUser',
+      '13818425406' // 您的微信号
     ]
     
-    if (adminNicknames.includes(userInfo.nickName)) {
+    // 管理员微信号列表
+    const adminWeChatNumbers = [
+      '13818425406' // 您的微信号
+    ]
+    
+    // 检查微信昵称
+    if (userInfo.nickName && adminNicknames.includes(userInfo.nickName)) {
+      return true
+    }
+    
+    // 检查微信号（如果昵称就是微信号）
+    if (userInfo.nickName && adminWeChatNumbers.includes(userInfo.nickName)) {
+      return true
+    }
+    
+    // 检查是否包含管理员微信号
+    if (userInfo.nickName) {
+      for (let wechatNumber of adminWeChatNumbers) {
+        if (userInfo.nickName.includes(wechatNumber)) {
+          return true
+        }
+      }
+    }
+    
+    // 通过openid判断管理员
+    const adminOpenIds = [
+      'oyehIvjzBJ8kK-KbqRBCa4anbc7Y', // 你的真实openid
+      'admin', // 测试环境
+      '13818425406' // 备用标识
+    ]
+    
+    if (userInfo.openid && adminOpenIds.includes(userInfo.openid)) {
       return true
     }
     
@@ -354,6 +428,151 @@ Page({
   goToUserManagement() {
     wx.navigateTo({
       url: '/pages/user-management/user-management'
+    })
+  },
+
+  // 获取最后同步时间的显示字符串
+  getLastSyncTimeString() {
+    try {
+      const lastSyncTime = wx.getStorageSync('lastSyncTime') || wx.getStorageSync('lastAutoSyncTime')
+      if (lastSyncTime) {
+        const syncDate = new Date(lastSyncTime)
+        const now = new Date()
+        const diffInMinutes = Math.floor((now - syncDate) / 1000 / 60)
+        
+        if (diffInMinutes < 1) {
+          return '刚刚'
+        } else if (diffInMinutes < 60) {
+          return `${diffInMinutes}分钟前`
+        } else if (diffInMinutes < 24 * 60) {
+          const hours = Math.floor(diffInMinutes / 60)
+          return `${hours}小时前`
+        } else {
+          const days = Math.floor(diffInMinutes / 60 / 24)
+          return `${days}天前`
+        }
+      }
+      return ''
+    } catch (error) {
+      console.error('获取同步时间失败:', error)
+      return ''
+    }
+  },
+
+  // 显示账号管理选项
+  showAccountManagement() {
+    wx.showActionSheet({
+      itemList: [
+        '修改个人资料',
+        '切换微信账号',
+        '退出当前登录'
+      ],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.goToRegister()
+            break
+          case 1:
+            this.switchAccount()
+            break
+          case 2:
+            this.logout()
+            break
+        }
+      }
+    })
+  },
+
+  // 切换微信账号
+  switchAccount() {
+    wx.showModal({
+      title: '切换账号',
+      content: '确定要切换微信账号吗？当前学习数据已云端同步，下次使用相同微信账号登录时可以恢复。',
+      confirmText: '确定切换',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除当前登录状态但保留学习数据
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('userProfile')
+          wx.removeStorageSync('openid')
+          
+          // 更新页面状态
+          this.setData({
+            userInfo: null,
+            userProfile: null,
+            isLoggedIn: false,
+            isAdmin: false
+          })
+          
+          // 清除全局状态
+          const app = getApp()
+          if (app.globalData) {
+            app.globalData.userInfo = null
+            app.globalData.userProfile = null
+            app.globalData.isLoggedIn = false
+          }
+          
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          })
+          
+          // 跳转到注册页面重新登录
+          setTimeout(() => {
+            wx.navigateTo({
+              url: '/pages/register/register'
+            })
+          }, 1500)
+        }
+      }
+    })
+  },
+
+  // 退出登录
+  logout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？学习记录已云端同步，下次登录相同账号可恢复数据。',
+      confirmText: '确定退出',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除所有用户数据
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('userProfile')
+          wx.removeStorageSync('openid')
+          wx.removeStorageSync('userStatus')
+          
+          // 更新页面状态
+          this.setData({
+            userInfo: null,
+            userProfile: null,
+            isLoggedIn: false,
+            isAdmin: false
+          })
+          
+          // 清除全局状态
+          const app = getApp()
+          if (app.globalData) {
+            app.globalData.userInfo = null
+            app.globalData.userProfile = null
+            app.globalData.isLoggedIn = false
+          }
+          
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          })
+        }
+      }
+    })
+  },
+
+  // 跳转到注册页面
+  goToRegister() {
+    wx.navigateTo({
+      url: '/pages/register/register'
     })
   },
 

@@ -55,6 +55,15 @@
         <view class="item-info">
           <text class="info-tag">{{item.inputMethod === 'image' ? '图片' : '文本'}}</text>
           <text class="info-count" wx:if="{{item.sentences}}">{{item.sentences.length}}个句子</text>
+
+          <!-- 分类标签区域 -->
+          <view class="category-section">
+            <view wx:if="{{item.categoryTag}}" class="category-badge-container">
+              <text class="category-badge">{{item.categoryTag}}</text>
+              <text class="edit-category-btn" catchtap="onEditCategory" data-index="{{index}}">✏️</text>
+            </view>
+            <text wx:else class="add-category-btn" catchtap="onAddCategory" data-index="{{index}}">+ 添加标签</text>
+          </view>
         </view>
       </view>
     </view>

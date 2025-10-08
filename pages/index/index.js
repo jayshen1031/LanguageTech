@@ -1,5 +1,6 @@
 const app = getApp()
 const authGuard = require('../../utils/authGuard')
+const { trackView, CONTENT_TYPES } = require('../../utils/userBehavior')
 
 // 初始化云开发
 if (!wx.cloud) {
@@ -91,6 +92,40 @@ Page({
     // 页面显示时刷新数据（包括句子结构统计和用户信息）
     this.getUserInfo()
     this.loadStudyData()
+    
+    // 检查是否需要刷新统计数据
+    this.checkAndRefreshStats()
+  },
+
+  // 检查并刷新统计数据
+  checkAndRefreshStats() {
+    try {
+      // 检查全局刷新标志
+      const app = getApp()
+      if (app.globalData && app.globalData.needRefreshHomeStats) {
+        console.log('🔄 检测到全局刷新标志，重新加载统计数据')
+        this.loadVocabularyStats()
+        this.loadStructureStats()
+        app.globalData.needRefreshHomeStats = false
+        return
+      }
+      
+      // 检查本地存储刷新标志
+      const refreshFlag = wx.getStorageSync('homeStatsNeedRefresh')
+      if (refreshFlag && refreshFlag.timestamp) {
+        const timeDiff = Date.now() - refreshFlag.timestamp
+        // 如果是5分钟内的刷新请求，执行刷新
+        if (timeDiff < 5 * 60 * 1000) {
+          console.log(`🔄 检测到${Math.floor(timeDiff/1000)}秒前的刷新请求，重新加载统计数据`)
+          this.loadVocabularyStats()
+          this.loadStructureStats()
+          // 清除刷新标志
+          wx.removeStorageSync('homeStatsNeedRefresh')
+        }
+      }
+    } catch (error) {
+      console.error('检查刷新统计失败:', error)
+    }
   },
 
   getUserInfo() {
@@ -161,7 +196,8 @@ Page({
         this.loadVocabularyStats(),
         this.loadStructureStats(),
         this.loadTodayPlan(),
-        this.loadStudyDays()
+        this.loadStudyDays(),
+        this.loadNewLearningStats() // 新的学习进度统计
       ])
       
     } catch (error) {
@@ -853,7 +889,7 @@ Page({
   // 智能学习计划 - 混合新学和复习
   goToSmartPlan() {
     const { selectedTotal, totalWordsInLibrary } = this.data
-    
+
     if (totalWordsInLibrary === 0) {
       wx.showModal({
         title: '词汇库为空',
@@ -870,10 +906,18 @@ Page({
       })
       return
     }
-    
-    wx.navigateTo({
-      url: `/pages/learn/learn?count=${selectedTotal}&type=mixed`
-    })
+
+    // 读取学习设置中保存的标签
+    const studyPlanConfig = wx.getStorageSync('studyPlanConfig') || {}
+    const selectedTag = studyPlanConfig.selectedTag || ''
+
+    // 跳转到智能学习页面，传递标签参数
+    let url = `/pages/learn/learn?count=${selectedTotal}&type=mixed`
+    if (selectedTag) {
+      url += `&tag=${encodeURIComponent(selectedTag)}`
+    }
+
+    wx.navigateTo({ url })
   },
 
   // 跳转到学习设置页面
@@ -1122,29 +1166,14 @@ Page({
     });
   },
 
-  // 跳转到日语解析工具（需要高级认证）
+  // 跳转到日语解析工具（基础登录即可）
   async goToParser() {
-    // 检查高级功能权限
-    const hasAdvancedAuth = await authGuard.requireAdvancedAuth(this, {
-      showToast: false
+    // 检查基础登录权限
+    const isAuthenticated = await authGuard.requireBasicAuth(this, {
+      showToast: true
     })
     
-    if (!hasAdvancedAuth) {
-      // 显示特殊提示
-      wx.showModal({
-        title: '功能提示',
-        content: '句子解析功能需要完成用户认证，是否前往完善资料？',
-        confirmText: '去认证',
-        cancelText: '稍后',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateTo({ url: '/pages/profile/profile' })
-            setTimeout(() => {
-              wx.navigateTo({ url: '/pages/register/register' })
-            }, 100)
-          }
-        }
-      })
+    if (!isAuthenticated) {
       return
     }
     
@@ -1501,6 +1530,13 @@ Page({
       return;
     }
     
+    // 记录查看行为
+    trackView(CONTENT_TYPES.VOCABULARY_LIST, type, {
+      title: title,
+      count: count,
+      vocabularyType: type
+    });
+    
     // 跳转到词汇列表页面，传递类型参数
     wx.navigateTo({
       url: `/packageB/pages/vocabulary-list/vocabulary-list?type=${type}&title=${title}&count=${count}`
@@ -1606,6 +1642,114 @@ Page({
         }
       }
     });
+  },
+
+  // 词汇管理菜单
+  onVocabManage() {
+    wx.showActionSheet({
+      itemList: ['修复例句罗马音', '重置词汇掌握状态', '重建词汇库'],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.fixVocabularyRomaji()
+            break
+          case 1:
+            this.resetAllVocabularyMastery()
+            break
+          case 2:
+            this.rebuildVocabularyLibrary()
+            break
+        }
+      }
+    })
+  },
+
+  // 修复词汇库中例句的罗马音
+  async fixVocabularyRomaji() {
+    wx.showModal({
+      title: '修复例句罗马音',
+      content: '将为现有词汇的例句补充罗马音数据，这可能需要几分钟时间。',
+      confirmText: '开始修复',
+      cancelText: '取消',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({ title: '正在修复...' })
+            
+            const result = await wx.cloud.callFunction({
+              name: 'vocabulary-integration',
+              data: { action: 'fix_romaji' }
+            })
+            
+            if (result.result.success) {
+              wx.showModal({
+                title: '修复完成',
+                content: `处理了${result.result.processedCount}个词汇，修复了${result.result.fixedCount}个词汇的例句罗马音数据。\n\n修复率：${result.result.fixRate}`,
+                showCancel: false
+              })
+            } else {
+              wx.showToast({
+                title: '修复失败：' + result.result.error,
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (error) {
+            console.error('修复例句罗马音失败:', error)
+            wx.showToast({
+              title: '修复失败',
+              icon: 'none'
+            })
+          } finally {
+            wx.hideLoading()
+          }
+        }
+      }
+    })
+  },
+
+  // 重建词汇库
+  async rebuildVocabularyLibrary() {
+    wx.showModal({
+      title: '重建词汇库',
+      content: '将重新从解析历史中提取所有词汇，这会覆盖现有数据。确定继续吗？',
+      confirmText: '确定重建',
+      cancelText: '取消',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            wx.showLoading({ title: '重建中...' })
+            
+            const result = await wx.cloud.callFunction({
+              name: 'vocabulary-integration',
+              data: { action: 'rebuild_all' }
+            })
+            
+            if (result.result.success) {
+              await this.loadVocabularyStats()
+              wx.showToast({
+                title: `重建完成，共${result.result.wordCount}个词汇`,
+                icon: 'success',
+                duration: 2000
+              })
+            } else {
+              wx.showToast({
+                title: '重建失败',
+                icon: 'none'
+              })
+            }
+          } catch (error) {
+            console.error('重建词汇库失败:', error)
+            wx.showToast({
+              title: '重建失败',
+              icon: 'none'
+            })
+          } finally {
+            wx.hideLoading()
+          }
+        }
+      }
+    })
   },
 
   // 重置所有词汇掌握状态
@@ -1789,6 +1933,108 @@ Page({
     })
   },
 
+  // 显示快速账号菜单（长按头像触发）
+  showQuickAccountMenu() {
+    wx.showActionSheet({
+      itemList: [
+        '个人中心',
+        '切换账号',
+        '退出登录'
+      ],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            wx.navigateTo({
+              url: '/pages/profile/profile'
+            })
+            break
+          case 1:
+            this.switchAccount()
+            break
+          case 2:
+            this.quickLogout()
+            break
+        }
+      }
+    })
+  },
+
+  // 快速切换账号
+  switchAccount() {
+    wx.showModal({
+      title: '切换账号',
+      content: '确定要切换微信账号吗？当前学习数据已云端同步。',
+      confirmText: '确定切换',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除登录信息
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('userProfile')
+          wx.removeStorageSync('openid')
+          
+          // 清除全局状态
+          const app = getApp()
+          if (app.globalData) {
+            app.globalData.userInfo = null
+            app.globalData.userProfile = null
+            app.globalData.isLoggedIn = false
+          }
+          
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          })
+          
+          // 跳转到注册页面
+          setTimeout(() => {
+            wx.reLaunch({
+              url: '/pages/register/register'
+            })
+          }, 1500)
+        }
+      }
+    })
+  },
+
+  // 快速退出登录
+  quickLogout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？学习记录已云端同步，下次登录相同账号可恢复数据。',
+      confirmText: '确定退出',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除所有用户数据
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('userProfile')
+          wx.removeStorageSync('openid')
+          wx.removeStorageSync('userStatus')
+          
+          // 清除全局状态
+          const app = getApp()
+          if (app.globalData) {
+            app.globalData.userInfo = null
+            app.globalData.userProfile = null
+            app.globalData.isLoggedIn = false
+          }
+          
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          })
+          
+          // 重置到登录状态
+          this.setData({
+            showLoginPrompt: true,
+            userInfo: null
+          })
+        }
+      }
+    })
+  },
+
   // 跳转到学习进度页面
   goToLearningProgress() {
     wx.navigateTo({
@@ -1895,5 +2141,60 @@ Page({
   // 跳转到注册页面
   goToRegister() {
     wx.navigateTo({ url: '/pages/register/register' })
+  },
+
+  // 加载新的学习进度统计
+  loadNewLearningStats() {
+    try {
+      const { learningProgress } = require('../../utils/learningProgress.js')
+      const stats = learningProgress.getLearningStats()
+      const todayTarget = learningProgress.getTodayTarget()
+
+      console.log('📊 新学习进度统计:', stats)
+      console.log('🎯 今日学习目标:', todayTarget)
+
+      // 更新页面数据
+      this.setData({
+        // 新学习统计
+        newLearningStats: {
+          total: stats.total,
+          learning: stats.learning,
+          familiar: stats.familiar,
+          mastered: stats.mastered,
+          byType: stats.byType
+        },
+        
+        // 今日目标
+        todayLearningTarget: {
+          target: todayTarget.target,
+          completed: todayTarget.completed,
+          remaining: todayTarget.remaining,
+          message: todayTarget.message,
+          progress: todayTarget.target > 0 ? Math.round((todayTarget.completed / todayTarget.target) * 100) : 0
+        }
+      })
+
+      console.log('✅ 新学习进度统计加载完成')
+
+    } catch (error) {
+      console.error('加载新学习进度统计失败:', error)
+      // 设置默认值
+      this.setData({
+        newLearningStats: {
+          total: 0,
+          learning: 0, 
+          familiar: 0,
+          mastered: 0,
+          byType: {}
+        },
+        todayLearningTarget: {
+          target: 0,
+          completed: 0,
+          remaining: 0,
+          message: '还没有学习项目',
+          progress: 0
+        }
+      })
+    }
   }
 })

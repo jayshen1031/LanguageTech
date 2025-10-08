@@ -1,0 +1,115 @@
+<!-- 手机号验证码登录页面 -->
+<view class="login-container">
+  <!-- 已登录状态 -->
+  <view wx:if="{{isLoggedIn}}" class="logged-in-section">
+    <view class="login-header">
+      <text class="welcome-text">欢迎回来</text>
+      <text class="phone-text">{{phone}}</text>
+    </view>
+    
+    <view class="login-actions">
+      <button class="primary-btn" bindtap="continueApp">继续使用应用</button>
+      <button class="secondary-btn" bindtap="switchAccount">切换账号</button>
+    </view>
+  </view>
+
+  <!-- 登录流程 -->
+  <view wx:else class="login-process">
+    <!-- 标题区域 -->
+    <view class="login-header">
+      <text class="app-title">语伴君</text>
+      <text class="login-subtitle">手机号快速登录</text>
+    </view>
+
+    <!-- 步骤1: 输入手机号 -->
+    <view wx:if="{{step === 1}}" class="step-section">
+      <view class="input-section">
+        <view class="input-group">
+          <text class="input-label">手机号</text>
+          <input 
+            class="phone-input"
+            type="number"
+            placeholder="请输入手机号"
+            value="{{phone}}"
+            bindinput="onPhoneInput"
+            maxlength="11"
+          />
+        </view>
+      </view>
+
+      <view class="action-section">
+        <button 
+          class="primary-btn {{!phone || phone.length !== 11 ? 'disabled' : ''}}"
+          bindtap="sendCode"
+          disabled="{{!phone || phone.length !== 11}}"
+        >
+          获取验证码
+        </button>
+      </view>
+    </view>
+
+    <!-- 步骤2: 输入验证码 -->
+    <view wx:if="{{step === 2}}" class="step-section">
+      <view class="phone-info">
+        <text class="phone-display">{{phone}}</text>
+        <button class="change-phone-btn" bindtap="resetPhone">更换</button>
+      </view>
+
+      <view class="input-section">
+        <view class="input-group">
+          <text class="input-label">验证码</text>
+          <input 
+            class="code-input"
+            type="number"
+            placeholder="请输入6位验证码"
+            value="{{code}}"
+            bindinput="onCodeInput"
+            maxlength="6"
+          />
+        </view>
+        
+        <view class="code-tips">
+          <text class="tip-text">验证码已发送至您的手机</text>
+          <button 
+            class="resend-btn {{!canSendCode ? 'disabled' : ''}}"
+            bindtap="resendCode"
+            disabled="{{!canSendCode}}"
+          >
+            {{canSendCode ? '重新发送' : countdown + 's后重发'}}
+          </button>
+        </view>
+      </view>
+
+      <view class="action-section">
+        <button 
+          class="primary-btn {{!code || code.length !== 6 ? 'disabled' : ''}}"
+          bindtap="verifyAndLogin"
+          disabled="{{!code || code.length !== 6}}"
+        >
+          验证并登录
+        </button>
+      </view>
+    </view>
+
+    <!-- 其他登录方式 -->
+    <view class="alternative-login">
+      <view class="divider">
+        <text class="divider-text">其他方式</text>
+      </view>
+      
+      <view class="alt-buttons">
+        <button class="alt-btn" bindtap="wechatLogin">
+          <text class="alt-btn-text">微信登录</text>
+        </button>
+        <button class="alt-btn" bindtap="skipLogin">
+          <text class="alt-btn-text">访客模式</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 开发提示 -->
+  <view class="dev-tips">
+    <text class="dev-text">开发环境可使用验证码: 123456</text>
+  </view>
+</view>

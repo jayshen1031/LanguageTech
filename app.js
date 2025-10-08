@@ -8,10 +8,8 @@ App({
     logs.unshift(Date.now())
     wx.setStorageSync('logs', logs)
 
-    // 延迟初始化云开发环境，等待登录状态稳定
-    setTimeout(() => {
-      this.initCloudDev()
-    }, 1000)
+    // 立即初始化云开发环境，不延迟
+    this.initCloudDev()
 
     // 初始化用户服务
     this.initUserService()
@@ -23,86 +21,114 @@ App({
       await userService.init()
       this.globalData.userService = userService
       this.globalData.isLoggedIn = userService.checkLoginStatus()
-      this.globalData.userInfo = userService.getUserInfo()
-      this.globalData.userProfile = userService.getProfile()
       
-      // 如果用户已登录，启动自动同步
+      // 确保头像数据同步
+      const userInfo = userService.getUserInfo()
+      const userProfile = userService.getProfile()
+      
+      // 头像信息同步
+      if (userInfo && userProfile) {
+        if (userInfo.avatarUrl && !userProfile.avatarUrl) {
+          userProfile.avatarUrl = userInfo.avatarUrl
+          wx.setStorageSync('userProfile', userProfile)
+        } else if (userProfile.avatarUrl && !userInfo.avatarUrl) {
+          userInfo.avatarUrl = userProfile.avatarUrl
+          wx.setStorageSync('userInfo', userInfo)
+        }
+      }
+      
+      this.globalData.userInfo = userInfo
+      this.globalData.userProfile = userProfile
+      
+      // 如果用户已登录，启动时从云端同步一次数据
       if (this.globalData.isLoggedIn) {
-        this.startAutoSync()
+        this.syncDataFromCloud()
       }
     } catch (error) {
       console.error('初始化用户服务失败:', error)
     }
   },
 
-  // 启动自动同步
-  startAutoSync() {
-    // 每30分钟自动同步一次学习数据
-    setInterval(async () => {
-      try {
-        await this.globalData.userService.autoSync()
-      } catch (error) {
-        console.error('自动同步失败:', error)
+
+  // 从云端同步数据
+  async syncDataFromCloud() {
+    try {
+      console.log('📥 启动时从云端同步学习数据...')
+      const result = await this.globalData.userService.syncFromCloud()
+      if (result.success && !result.localOnly) {
+        console.log('✅ 云端数据同步成功')
+      } else if (result.localOnly) {
+        console.log('📱 使用本地数据')
+      } else {
+        console.log('❌ 云端数据同步失败:', result.error)
       }
-    }, 1800000) // 30分钟
+    } catch (error) {
+      console.error('从云端同步数据失败:', error)
+    }
   },
 
   // 云开发初始化方法
   initCloudDev() {
     if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
+      console.error('❌ 请使用 2.2.3 或以上的基础库以使用云能力')
+      this.globalData.cloudReady = false
       return
     }
 
-    // 先检查登录状态
-    wx.checkSession({
-      success: () => {
-        // 会话未过期，可以初始化云开发
-        this.doCloudInit()
-      },
-      fail: () => {
-        // 会话过期，先登录再初始化云开发
-        wx.login({
-          success: () => {
-            this.doCloudInit()
-          },
-          fail: (error) => {
-            console.error('微信登录失败:', error)
-            // 即使登录失败，也尝试初始化云开发（不追踪用户）
-            this.doCloudInit(false)
-          }
-        })
-      }
-    })
+    console.log('🔄 开始初始化云开发...')
+    this.doCloudInit()
   },
 
   // 执行云开发初始化
-  doCloudInit(traceUser = true) {
+  doCloudInit() {
     try {
       wx.cloud.init({
         env: 'cloud1-2g49srond2b01891',
-        traceUser: traceUser,
+        traceUser: true
       })
-      // 云开发环境初始化成功
+      
       this.globalData.cloudReady = true
-      console.log('云开发初始化成功')
+      console.log('✅ 云开发初始化成功')
+      
+      // 验证云开发是否正常工作
+      this.verifyCloudFunction()
     } catch (error) {
-      console.error('云开发初始化失败:', error)
+      console.error('❌ 云开发初始化失败:', error)
+      
       // 重试初始化（不追踪用户）
+      console.log('🔄 尝试重试初始化...')
       setTimeout(() => {
         try {
           wx.cloud.init({
             env: 'cloud1-2g49srond2b01891',
-            traceUser: false,
+            traceUser: false
           })
-          // 云开发环境重试初始化成功
+          
           this.globalData.cloudReady = true
-          console.log('云开发重试初始化成功')
+          console.log('✅ 云开发重试初始化成功')
+          this.verifyCloudFunction()
         } catch (retryError) {
-          console.error('云开发重试初始化失败:', retryError)
+          console.error('❌ 云开发重试初始化失败:', retryError)
           this.globalData.cloudReady = false
         }
-      }, 3000)
+      }, 2000)
+    }
+  },
+
+  // 验证云函数是否可用
+  async verifyCloudFunction() {
+    try {
+      console.log('🔍 验证云函数连接...')
+      const result = await wx.cloud.callFunction({
+        name: 'user-auth',
+        data: {
+          action: 'ping'
+        }
+      })
+      console.log('✅ 云函数连接正常')
+    } catch (error) {
+      console.warn('⚠️ 云函数连接测试失败:', error.message)
+      // 不影响应用启动，只是记录警告
     }
   },
 

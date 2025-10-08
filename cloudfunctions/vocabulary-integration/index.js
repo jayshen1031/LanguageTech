@@ -69,6 +69,7 @@ async function integrateNewRecord(recordId) {
               meaning: vocab.chinese,
               sourceRecordId: recordId,
               sourceSentence: sentence.originalText,
+              sourceRomaji: sentence.romaji,  // 📝 添加句子罗马音
               sourceTranslation: sentence.translation,
               sourceStructure: sentence.structure,
               sourceAnalysis: sentence.analysis,
@@ -104,6 +105,7 @@ async function integrateNewRecord(recordId) {
           ...newWord,
           examples: [{
             jp: newWord.sourceSentence,
+            romaji: newWord.sourceRomaji,  // 📝 添加例句罗马音
             cn: newWord.sourceTranslation,
             source: newWord.articleTitle,
             recordId: newWord.sourceRecordId,
@@ -135,6 +137,7 @@ async function integrateNewRecord(recordId) {
         // 添加新例句
         const newExample = {
           jp: newWord.sourceSentence,
+          romaji: newWord.sourceRomaji,  // 📝 添加例句罗马音
           cn: newWord.sourceTranslation,
           source: newWord.articleTitle,
           recordId: newWord.sourceRecordId,
@@ -255,6 +258,7 @@ async function rebuildVocabularyTable() {
               if (!hasThisSource) {
                 wordData.examples.push({
                   jp: sentence.originalText,
+                  romaji: sentence.romaji,  // 📝 添加例句罗马音
                   cn: sentence.translation,
                   source: record.articleTitle || record.title || '解析记录',
                   recordId: record._id,
@@ -350,19 +354,56 @@ async function getLearningWords(count) {
 
 // 智能学习计划 - 根据3:1比例分配新学和复习
 async function getSmartLearningPlan(options) {
-  const { 
-    totalCount = 12, 
-    newRatio = 1, 
+  const {
+    totalCount = 12,
+    newRatio = 1,
     reviewRatio = 3,
-    type = 'mixed' // 'new', 'review', 'mixed'
+    type = 'mixed', // 'new', 'review', 'mixed'
+    sourceTag = '' // 来源标签筛选
   } = options
-  
-  console.log(`🧠 生成智能学习计划: ${totalCount}个词汇, ${newRatio}:${reviewRatio}比例, 类型:${type}`)
-  
+
+  console.log(`🧠 生成智能学习计划: ${totalCount}个词汇, ${newRatio}:${reviewRatio}比例, 类型:${type}, 来源:${sourceTag || '全部'}`)
+
   try {
+    // 🔍 如果指定了来源标签，需要先从解析历史中获取相关记录ID
+    let sourceRecordIds = []
+    if (sourceTag && sourceTag.trim()) {
+      const historyRes = await db.collection('japanese_parser_history')
+        .where({
+          categoryTag: sourceTag.trim()
+        })
+        .field({ _id: true })
+        .get()
+
+      sourceRecordIds = historyRes.data.map(record => record._id)
+      console.log(`📚 找到${sourceRecordIds.length}个标签为"${sourceTag}"的解析记录`)
+
+      if (sourceRecordIds.length === 0) {
+        return {
+          success: false,
+          error: `没有找到标签为"${sourceTag}"的解析内容`,
+          words: [],
+          plan: null
+        }
+      }
+    }
+
     // 获取所有整合词汇，按学习情况分类
-    const allWords = await db.collection('vocabulary_integrated')
-      .get()
+    let allWords
+    if (sourceRecordIds.length > 0) {
+      // 筛选指定来源的词汇
+      const _ = db.command
+      allWords = await db.collection('vocabulary_integrated')
+        .where({
+          sources: _.elemMatch(_.in(sourceRecordIds))
+        })
+        .get()
+      console.log(`📖 从指定来源筛选出${allWords.data.length}个词汇`)
+    } else {
+      // 获取全部词汇
+      allWords = await db.collection('vocabulary_integrated')
+        .get()
+    }
     
     if (allWords.data.length === 0) {
       return {

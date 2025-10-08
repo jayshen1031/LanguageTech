@@ -20,7 +20,9 @@ Page({
     mcpAvailable: false, // MCP服务是否可用
     isPlaying: false, // 是否正在播放音频
     learningPlan: null, // 学习计划信息
-    learningStats: null // 学习统计
+    learningStats: null, // 学习统计
+    availableTags: [], // 可用的来源标签
+    selectedTag: '' // 选中的来源标签
   },
   
   // 页面实例属性
@@ -33,39 +35,49 @@ Page({
     if (!isAuthenticated) {
       return
     }
-    
+
     // 检查MCP服务（可选）
     // this.checkMCPService()
-    
+
     // 临时跳过MCP，直接使用云函数或读音显示
     this.setData({ mcpAvailable: false })
     console.log('⚠️ 跳过MCP服务，使用备用方案')
-    
+
     // 初始化音频上下文
     this.initAudioContext()
-    
+
+    // 加载可用的来源标签
+    await this.loadAvailableTags()
+
     // 检查自动开始学习设置
     const autoStart = wx.getStorageSync('autoStartLearning') || false
     this.setData({
       autoStartLearning: autoStart
     })
-    
+
     // 清理过期的音频缓存
     this.cleanExpiredAudioCache()
-    
+
+    // 从URL参数读取标签
+    if (options && options.tag) {
+      const tag = decodeURIComponent(options.tag)
+      this.setData({ selectedTag: tag })
+      console.log(`📚 从URL读取标签: ${tag}`)
+    }
+
     // 检查是否有传入的学习数量，如果有则自动开始
     if (options && options.count) {
       const count = parseInt(options.count)
       if (count > 0) {
-        this.setData({ 
+        this.setData({
           selectedCount: count,
-          showSetup: false 
+          showSetup: false
         })
         this.loadTodayWords(count)
         return
       }
     }
-    
+
     // 检查是否要自动开始（使用默认数量）
     if (autoStart) {
       const defaultCount = wx.getStorageSync('defaultLearningCount') || 10
@@ -75,6 +87,61 @@ Page({
       })
       this.loadTodayWords(defaultCount)
     }
+  },
+
+  // 加载可用的来源标签
+  async loadAvailableTags() {
+    try {
+      const tags = new Set()
+
+      // 优先从云数据库获取
+      const userInfo = wx.getStorageSync('userInfo')
+      if (userInfo) {
+        try {
+          const res = await wx.cloud.database()
+            .collection('japanese_parser_history')
+            .field({ categoryTag: true })
+            .get()
+
+          res.data.forEach(record => {
+            if (record.categoryTag && record.categoryTag.trim()) {
+              tags.add(record.categoryTag.trim())
+            }
+          })
+
+          console.log(`📚 从云数据库加载了${tags.size}个来源标签`)
+        } catch (cloudError) {
+          console.log('⚠️ 云数据库获取失败，尝试本地存储')
+        }
+      }
+
+      // 备选方案：从本地存储获取
+      if (tags.size === 0) {
+        const localHistory = wx.getStorageSync('parser_history') || []
+        localHistory.forEach(record => {
+          if (record.categoryTag && record.categoryTag.trim()) {
+            tags.add(record.categoryTag.trim())
+          }
+        })
+        console.log(`📚 从本地存储加载了${tags.size}个来源标签`)
+      }
+
+      this.setData({
+        availableTags: Array.from(tags).sort()
+      })
+
+    } catch (error) {
+      console.error('❌ 加载来源标签失败:', error)
+    }
+  },
+
+  // 选择来源标签
+  selectSourceTag(e) {
+    const tag = e.currentTarget.dataset.tag
+    this.setData({
+      selectedTag: tag
+    })
+    console.log(`📚 选择来源标签: ${tag || '全部来源'}`)
   },
 
   // 选择学习数量
@@ -198,18 +265,19 @@ Page({
     wx.showLoading({
       title: '生成学习计划...'
     })
-    
+
     try {
       // 从页面参数获取学习类型和配置
       const pages = getCurrentPages()
       const currentPage = pages[pages.length - 1]
       const options = currentPage.options || {}
-      
+
       const learningType = options.type || 'mixed'  // new, review, mixed
       const learningCount = parseInt(options.count) || count
-      
-      console.log(`🎯 生成${learningType}学习计划，数量：${learningCount}`)
-      
+      const { selectedTag } = this.data
+
+      console.log(`🎯 生成${learningType}学习计划，数量：${learningCount}，来源标签：${selectedTag || '全部'}`)
+
       // 调用智能学习计划云函数
       const result = await wx.cloud.callFunction({
         name: 'vocabulary-integration',
@@ -218,7 +286,8 @@ Page({
           totalCount: learningCount,
           newRatio: 1,
           reviewRatio: 3,
-          type: learningType
+          type: learningType,
+          sourceTag: selectedTag || '' // 传递来源标签
         }
       })
       

@@ -1,6 +1,7 @@
 // pages/parser-detail/parser-detail.js
 
 const app = getApp()
+const { trackView, trackStudy, trackReview, trackFavorite, trackAudio, CONTENT_TYPES } = require('../../../utils/userBehavior')
 
 Page({
   data: {
@@ -28,6 +29,12 @@ Page({
         loading: false
       })
       this.loadMasteryLevels(historyItem._id)
+      
+      // 记录查看行为
+      trackView(CONTENT_TYPES.PARSER_RECORD, historyItem._id, {
+        title: historyItem.title,
+        sentenceCount: processedSentences.length
+      })
     } else if (id) {
       // 如果没有全局数据，从数据库查询
       this.loadHistoryDetail(id)
@@ -58,6 +65,12 @@ Page({
           loading: false
         })
         this.loadMasteryLevels(id)
+        
+        // 记录查看行为
+        trackView(CONTENT_TYPES.PARSER_RECORD, id, {
+          title: historyItem.title,
+          sentenceCount: processedSentences.length
+        })
       })
       .catch(err => {
         console.error('加载详情失败:', err)
@@ -170,6 +183,18 @@ Page({
     }, () => {
       this.saveMasteryLevels()
       this.calculateMasteryStats()
+      
+      // 记录学习行为
+      const contentType = type === 'sentence' ? CONTENT_TYPES.SENTENCE : 
+                         type.startsWith('word') ? CONTENT_TYPES.WORD : CONTENT_TYPES.GRAMMAR
+      const contentId = `${this.data.historyItem._id}_${key}`
+      
+      trackStudy(contentType, contentId, {
+        masteryLevel: newLevel,
+        previousLevel: currentLevel,
+        recordId: this.data.historyItem._id,
+        itemKey: key
+      })
     })
   },
 
@@ -177,12 +202,26 @@ Page({
   quickSetMastery(e) {
     const { type, id, level } = e.currentTarget.dataset
     const key = `${id}_${type}`
+    const currentLevel = this.data.masteryLevels[key] || 0
+    const newLevel = parseInt(level)
     
     this.setData({
-      [`masteryLevels.${key}`]: parseInt(level)
+      [`masteryLevels.${key}`]: newLevel
     }, () => {
       this.saveMasteryLevels()
       this.calculateMasteryStats()
+      
+      // 记录学习行为
+      const contentType = type === 'sentence' ? CONTENT_TYPES.SENTENCE : 
+                         type.startsWith('word') ? CONTENT_TYPES.WORD : CONTENT_TYPES.GRAMMAR
+      const contentId = `${this.data.historyItem._id}_${key}`
+      
+      trackStudy(contentType, contentId, {
+        masteryLevel: newLevel,
+        previousLevel: currentLevel,
+        recordId: this.data.historyItem._id,
+        itemKey: key
+      })
     })
   },
 

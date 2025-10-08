@@ -16,6 +16,8 @@ Page({
     inputMethod: 'text', // 输入方式：text或image
     extractedImageText: '', // 从图片中提取的文本
     articleTitle: '', // AI生成的文章标题
+    categoryTag: '', // 分类标签
+    commonCategories: ['NHK', '抖音图片', '小说', '漫画', '新闻', '教材', '对话', '歌词'], // 常用分类
     // 历史记录相关功能已移至独立页面
   },
 
@@ -82,10 +84,32 @@ Page({
     })
   },
 
-  // 标题输入变化
+  // 标题输入变化（文本模式）
   onTitleInput(e) {
     this.setData({
       articleTitle: e.detail.value
+    })
+  },
+
+  // 图片标题输入变化
+  onImageTitleInput(e) {
+    this.setData({
+      userInputTitle: e.detail.value
+    })
+  },
+
+  // 分类标签输入变化
+  onCategoryInput(e) {
+    this.setData({
+      categoryTag: e.detail.value
+    })
+  },
+
+  // 选择预设分类
+  selectCategory(e) {
+    const category = e.currentTarget.dataset.category
+    this.setData({
+      categoryTag: category
     })
   },
 
@@ -98,48 +122,16 @@ Page({
       success: (res) => {
         const tempFilePath = res.tempFilePaths[0]
         
-        // 要求用户输入标题
-        wx.showModal({
-          title: '请输入文章标题',
-          editable: true,
-          placeholderText: '请输入标题（必填，10字以内）',
-          success: (modalRes) => {
-            if (modalRes.confirm) {
-              const userTitle = modalRes.content?.trim() || ''
-              if (!userTitle) {
-                wx.showToast({
-                  title: '标题不能为空',
-                  icon: 'none'
-                })
-                return
-              }
-              if (userTitle.length > 10) {
-                wx.showToast({
-                  title: '标题不能超过10字',
-                  icon: 'none'
-                })
-                return
-              }
-              
-              this.setData({
-                imageUrl: tempFilePath,
-                inputText: '', // 清空文本
-                userInputTitle: userTitle // 保存用户输入的标题
-              })
-              
-              wx.showToast({
-                title: '图片已选择',
-                icon: 'success',
-                duration: 1500
-              })
-            } else {
-              // 用户取消，清除选择的图片
-              wx.showToast({
-                title: '已取消',
-                icon: 'none'
-              })
-            }
-          }
+        // 直接设置图片，使用页面上方的标题输入框
+        this.setData({
+          imageUrl: tempFilePath,
+          inputText: '' // 清空文本
+        })
+        
+        wx.showToast({
+          title: '图片已选择',
+          icon: 'success',
+          duration: 1500
         })
       }
     })
@@ -590,15 +582,18 @@ Page({
   // 将文本分割成段落，按句子数量分段
   splitTextIntoSegments(text, maxLinesPerSegment = 4) {
     const segments = []
-    const lines = text.split('\n').filter(line => line.trim())
+    // 保留原始格式，不过滤空行
+    const lines = text.split('\n')
     
-    console.log(`原文共${lines.length}行，按每段最多${maxLinesPerSegment}行分段`)
+    // 计算非空行数用于日志显示
+    const nonEmptyLines = lines.filter(line => line.trim())
+    console.log(`原文共${lines.length}行（${nonEmptyLines.length}行非空），按每段最多${maxLinesPerSegment}行分段`)
     
-    // 按固定行数分段 - 就是简单的数学除法
+    // 按固定行数分段，保持原始格式
     for (let i = 0; i < lines.length; i += maxLinesPerSegment) {
       const segmentLines = lines.slice(i, i + maxLinesPerSegment)
       const segment = segmentLines.join('\n')
-      segments.push(segment.trim())
+      segments.push(segment) // 不再trim，保持原始格式
       console.log(`第${segments.length}段：${segmentLines.length}行 (第${i+1}-${Math.min(i+maxLinesPerSegment, lines.length)}行)`)
     }
     
@@ -1178,6 +1173,8 @@ Page({
           structure: this.extractContent(limitedSection, '【精简结构】', '\n') || this.extractContent(limitedSection, '精简结构', '\n') || this.extractContent(limitedSection, '【句子结构】', '\n'),
           analysis: this.extractContent(limitedSection, '【句子结构分析】', '【词汇明细表】') || this.extractContent(limitedSection, '句子结构分析', '【词汇明细表】') || this.extractContent(limitedSection, '【分析】', '【词汇明细表】'),
           grammar: this.extractContent(limitedSection, '【语法点说明】', '【词汇明细表】') || this.extractContent(limitedSection, '语法点说明', '【词汇明细表】') || this.extractContent(limitedSection, '【语法】', '【词汇明细表】'),
+          // 新增：词形变化详解字段提取
+          inflection: this.extractContent(limitedSection, '【词形变化详解】', '【词汇明细表】') || this.extractContent(limitedSection, '词形变化详解', '【词汇明细表】') || this.extractContent(limitedSection, '【词形变化】', '【词汇明细表】') || this.extractContent(limitedSection, '词形变化', '【词汇明细表】'),
           vocabulary: this.extractVocabulary(limitedSection)
         }
         
@@ -1216,6 +1213,8 @@ Page({
           structure: '',
           analysis: section, // 将整个section作为分析内容
           grammar: '',
+          // 新增：词形变化详解字段提取
+          inflection: this.extractContent(section, '【词形变化详解】', '【词汇明细表】') || this.extractContent(section, '词形变化详解', '【词汇明细表】') || '',
           vocabulary: this.extractVocabulary(section)
         }
         
@@ -2011,11 +2010,22 @@ Page({
         }
       }
       
+      // 获取当前用户信息
+      const userInfo = wx.getStorageSync('userInfo')
+      const userProfile = wx.getStorageSync('userProfile')
+      
       const saveData = {
         ...data,
         title, // 添加标题字段
+        categoryTag: this.data.categoryTag || '', // 添加分类标签
         createTime: new Date(),
         favorite: false, // 默认不收藏
+        // 用户信息字段
+        userOpenId: userInfo?.openid || '', // 显式记录用户openid
+        userName: userProfile?.name || userInfo?.nickName || '匿名用户',
+        userAvatar: userProfile?.avatar || userInfo?.avatarUrl || '',
+        isAdmin: authGuard.isAdmin(userInfo), // 标记是否为管理员
+        isPublic: false, // 默认为私人内容，管理员可以后续设置为公开
         sentences: data.analysisResult.map(item => ({
           originalText: item.originalText,
           romaji: item.romaji,
@@ -2048,14 +2058,12 @@ Page({
         data: saveData
       })
       
-      // console.log('云数据库保存成功:', res)
-      // console.log('保存的记录ID:', res._id)
-      // console.log('保存的数据摘要:', {
-      //   inputMethod: saveData.inputMethod,
-      //   hasImageUrl: !!saveData.imageUrl,
-      //   title: saveData.title,
-      //   sentencesCount: saveData.sentences?.length
-      // })
+      console.log('云数据库保存成功:', res)
+      console.log('保存的记录ID:', res._id)
+      
+      // 将记录ID添加到保存数据中，用于后续整合
+      saveData._id = res._id
+      saveData.recordId = res._id
       
       wx.showToast({
         title: '已保存到历史',
@@ -2063,12 +2071,28 @@ Page({
         duration: 1500
       })
       
-      // 保存成功后，延迟刷新历史页面（如果存在）
+      // 保存成功后自动触发整合
+      Promise.all([
+        this.integrateVocabularyToLearning(saveData),
+        this.integrateStructuresToLearning(saveData)
+      ]).then(() => {
+        // 整合完成后再刷新首页统计
+        setTimeout(() => {
+          this.refreshHomePageStats()
+        }, 1000)
+      }).catch(error => {
+        console.error('整合过程出错:', error)
+        // 即使整合失败，也尝试刷新统计
+        setTimeout(() => {
+          this.refreshHomePageStats()
+        }, 1000)
+      })
+      
+      // 立即刷新历史页面
       setTimeout(() => {
         const pages = getCurrentPages()
         const historyPage = pages.find(page => page.route === 'pages/parser-history/parser-history')
         if (historyPage) {
-          // console.log('刷新历史页面')
           historyPage.loadHistory()
         }
       }, 500)
@@ -2546,10 +2570,11 @@ Page({
     // 先保存原始文本
     this.setData({ originalInputText: text })
     
-    const lines = text.split('\n').filter(line => line.trim())
+    const lines = text.split('\n')
+    const nonEmptyLines = lines.filter(line => line.trim())
     const BATCH_SIZE = 4 // 每批处理4行
     
-    console.log(`歌词分批处理：共${lines.length}行，每批${BATCH_SIZE}行`)
+    console.log(`歌词分批处理：共${lines.length}行（${nonEmptyLines.length}行非空），每批${BATCH_SIZE}行`)
     
     // 使用统一的分段函数
     const batches = this.splitTextIntoSegments(text, BATCH_SIZE)
@@ -2716,6 +2741,7 @@ Page({
           inputText: text,
           inputMethod: 'text',
           sentences: parsedSentences,
+          categoryTag: this.data.categoryTag || '', // 添加分类标签
           favorite: false,
           createTime: new Date(),
           updateTime: new Date()
@@ -2807,6 +2833,7 @@ Page({
           inputText: inputText,
           inputMethod: analysisResult.inputMethod,
           sentences: analysisResult.sentences,
+          categoryTag: this.data.categoryTag || '', // 添加分类标签
           favorite: false,
           createTime: new Date(),
           updateTime: new Date()
@@ -3062,6 +3089,55 @@ Page({
     })
     
     return points
+  },
+
+  // 刷新首页统计数据
+  refreshHomePageStats() {
+    try {
+      // 方法1：尝试获取首页实例并刷新
+      const pages = getCurrentPages()
+      const homePage = pages.find(page => page.route === 'pages/index/index')
+      if (homePage) {
+        console.log('🔄 刷新首页统计数据...')
+        homePage.loadVocabularyStats()
+        homePage.loadStructureStats()
+        return
+      }
+      
+      // 方法2：如果首页不在页面栈中，通过全局事件刷新
+      const app = getApp()
+      if (app.globalData) {
+        app.globalData.needRefreshHomeStats = true
+        console.log('🔄 设置首页统计刷新标志')
+      }
+      
+      // 方法3：通过事件总线通知首页刷新（如果有的话）
+      wx.setStorageSync('homeStatsNeedRefresh', {
+        timestamp: Date.now(),
+        source: 'parser'
+      })
+      
+      console.log('✅ 首页统计刷新请求已发送')
+      
+      // 方法4：强制刷新 - 通过小程序页面路由
+      setTimeout(() => {
+        try {
+          // 如果用户回到首页，强制重新加载数据
+          const currentPages = getCurrentPages()
+          const currentPage = currentPages[currentPages.length - 1]
+          if (currentPage && currentPage.route === 'pages/index/index') {
+            console.log('🔄 用户在首页，立即强制刷新统计')
+            currentPage.loadVocabularyStats()
+            currentPage.loadStructureStats()
+          }
+        } catch (err) {
+          console.error('强制刷新失败:', err)
+        }
+      }, 2000)
+      
+    } catch (error) {
+      console.error('❌ 刷新首页统计失败:', error)
+    }
   },
 
   // 分享

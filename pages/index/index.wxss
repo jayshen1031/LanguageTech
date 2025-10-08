@@ -243,6 +243,28 @@
   text-align: center;
   padding: 15rpx 5rpx;
   transition: all 0.3s ease;
+  position: relative;
+}
+
+.vocab-manage-btn {
+  position: absolute;
+  top: 5rpx;
+  right: 5rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  background: rgba(74, 144, 226, 0.1);
+  color: #4a90e2;
+  font-size: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.vocab-manage-btn:active {
+  background: rgba(74, 144, 226, 0.2);
+  transform: scale(0.9);
 }
 
 .overview-item:active {

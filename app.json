@@ -8,10 +8,12 @@
     "pages/learning-progress/learning-progress",
     "pages/mastery-stats/mastery-stats",
     "pages/register/register",
+    "pages/phone-login/phone-login",
     "pages/approval-status/approval-status",
     "pages/admin-debug/admin-debug",
     "pages/user-management/user-management",
-    "pages/study-settings/study-settings"
+    "pages/study-settings/study-settings",
+    "pages/debug-storage/debug-storage"
   ],
   "subPackages": [
     {

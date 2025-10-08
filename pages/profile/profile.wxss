@@ -417,6 +417,57 @@
   font-weight: bold;
 }
 
+/* 账号操作区 */
+.account-actions {
+  display: flex;
+  gap: 20rpx;
+  margin: 40rpx 20rpx;
+  padding-bottom: 80rpx; /* 给底部留出空间 */
+}
+
+.switch-account-btn, .logout-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx 20rpx;
+  border-radius: 20rpx;
+  border: none;
+  font-size: 28rpx;
+  transition: all 0.3s ease;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.1);
+}
+
+.switch-account-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.switch-account-btn:active {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: scale(0.98);
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  color: white;
+}
+
+.logout-btn:active {
+  background: linear-gradient(135deg, #ff5252 0%, #ff4444 100%);
+  transform: scale(0.98);
+}
+
+.btn-icon {
+  font-size: 36rpx;
+  margin-bottom: 8rpx;
+}
+
+.btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
 /* 版本信息（管理员调试入口） */
 .version-info {
   position: fixed;

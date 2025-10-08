@@ -1,0 +1,283 @@
+/* 学习进度确认组件样式 */
+
+.learning-progress-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 尺寸变体 */
+.learning-progress-container.small {
+  padding: 8rpx;
+}
+
+.learning-progress-container.normal {
+  padding: 12rpx;
+}
+
+.learning-progress-container.large {
+  padding: 16rpx;
+}
+
+/* 简化版本 (small) */
+.simple-version {
+  display: flex;
+  justify-content: center;
+}
+
+.learn-btn.simple {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  min-height: 60rpx;
+}
+
+.learn-btn.simple::after {
+  border: none;
+}
+
+.learn-btn.simple .btn-icon {
+  font-size: 20rpx;
+}
+
+.learn-btn.simple .btn-text {
+  font-weight: 500;
+}
+
+.learn-btn.simple .learn-count {
+  font-size: 20rpx;
+  opacity: 0.8;
+}
+
+/* 完整版本 */
+.full-version {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  border: 1rpx solid #e9ecef;
+}
+
+/* 状态显示区域 */
+.status-display {
+  margin-bottom: 12rpx;
+  padding: 12rpx;
+  background: white;
+  border-radius: 8rpx;
+  cursor: pointer;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.content-type {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.learn-count {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.status-badge {
+  padding: 4rpx 8rpx;
+  border-radius: 10rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+.status-badge.learning {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.familiar {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.mastered {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+/* 进度条 */
+.progress-bar {
+  position: relative;
+  height: 20rpx;
+  background: #e9ecef;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+  border-radius: 10rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18rpx;
+  color: #333;
+  font-weight: 500;
+  z-index: 1;
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+/* 主要学习按钮 */
+.learn-btn.primary {
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.learn-btn.primary::after {
+  border: none;
+}
+
+.learn-btn.primary:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.3);
+}
+
+.learn-btn.primary .btn-icon {
+  font-size: 32rpx;
+}
+
+/* 状态标记按钮 */
+.status-buttons {
+  display: flex;
+  gap: 12rpx;
+}
+
+.status-btn {
+  flex: 1;
+  height: 64rpx;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.status-btn::after {
+  border: none;
+}
+
+.status-btn.familiar {
+  background: linear-gradient(135deg, #FF9800 0%, #FF6F00 100%);
+  color: white;
+  box-shadow: 0 2rpx 8rpx rgba(255, 152, 0, 0.3);
+}
+
+.status-btn.mastered {
+  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+  color: white;
+  box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.3);
+}
+
+.status-btn .btn-icon {
+  font-size: 24rpx;
+}
+
+/* 详细信息 (large版本) */
+.detailed-info {
+  margin-top: 16rpx;
+  padding: 12rpx;
+  background: white;
+  border-radius: 8rpx;
+  border: 1rpx solid #e9ecef;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+  border-bottom: 1rpx solid #f1f3f4;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.info-value {
+  font-size: 24rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 加载状态 */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20rpx;
+  height: 20rpx;
+  margin: -10rpx 0 0 -10rpx;
+  border: 2rpx solid rgba(255,255,255,0.3);
+  border-top: 2rpx solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 占位符 */
+.placeholder {
+  padding: 24rpx;
+  text-align: center;
+}
+
+.placeholder-text {
+  font-size: 24rpx;
+  color: #999;
+}

@@ -1,0 +1,101 @@
+<!-- 学习进度确认组件 -->
+<view class="learning-progress-container {{size}}" wx:if="{{learningItem && displayInfo}}">
+  
+  <!-- 简化版本 (small) -->
+  <view wx:if="{{size === 'small'}}" class="simple-version">
+    <button 
+      class="learn-btn simple {{isLoading ? 'loading' : ''}}"
+      bindtap="onConfirmLearning"
+      disabled="{{isLoading}}"
+    >
+      <text class="btn-icon">{{displayInfo.icon}}</text>
+      <text class="btn-text">+1</text>
+      <text class="learn-count">({{displayInfo.learnCount}})</text>
+    </button>
+  </view>
+
+  <!-- 完整版本 (normal/large) -->
+  <view wx:else class="full-version">
+    
+    <!-- 学习状态显示 -->
+    <view class="status-display" bindtap="showLearningDetails">
+      <view class="status-info">
+        <text class="content-type">{{displayInfo.icon}} {{displayInfo.typeName}}</text>
+        <text class="learn-count">已学{{displayInfo.learnCount}}次</text>
+        <text class="status-badge {{learningItem.status}}">{{displayInfo.status}}</text>
+      </view>
+      
+      <!-- 进度条 -->
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{displayInfo.progressPercent}}%"></view>
+        <text class="progress-text">{{displayInfo.nextTarget}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮区域 -->
+    <view class="action-buttons">
+      
+      <!-- 主要学习按钮 -->
+      <button 
+        class="learn-btn primary {{isLoading ? 'loading' : ''}}"
+        bindtap="onConfirmLearning"
+        disabled="{{isLoading}}"
+      >
+        <text class="btn-icon">📖</text>
+        <text class="btn-text">学了一次</text>
+      </button>
+
+      <!-- 状态标记按钮 -->
+      <view class="status-buttons" wx:if="{{showDetails}}">
+        
+        <!-- 略懂按钮 -->
+        <button 
+          wx:if="{{displayInfo.canMarkFamiliar}}"
+          class="status-btn familiar {{isLoading ? 'loading' : ''}}"
+          bindtap="onMarkFamiliar"
+          disabled="{{isLoading}}"
+        >
+          <text class="btn-icon">🤔</text>
+          <text class="btn-text">略懂了</text>
+        </button>
+
+        <!-- 掌握按钮 -->
+        <button 
+          wx:if="{{displayInfo.canMarkMastered}}"
+          class="status-btn mastered {{isLoading ? 'loading' : ''}}"
+          bindtap="onMarkMastered"
+          disabled="{{isLoading}}"
+        >
+          <text class="btn-icon">✅</text>
+          <text class="btn-text">掌握了</text>
+        </button>
+        
+      </view>
+    </view>
+
+    <!-- 详细信息展示 (large版本) -->
+    <view wx:if="{{size === 'large' && showDetails}}" class="detailed-info">
+      <view class="info-item">
+        <text class="info-label">学习进度</text>
+        <text class="info-value">{{displayInfo.progressPercent}}%</text>
+      </view>
+      
+      <view class="info-item">
+        <text class="info-label">下一目标</text>
+        <text class="info-value">{{displayInfo.nextTarget}}</text>
+      </view>
+      
+      <view class="info-item" wx:if="{{learningItem.userNotes}}">
+        <text class="info-label">学习笔记</text>
+        <text class="info-value">{{learningItem.userNotes}}</text>
+      </view>
+    </view>
+
+  </view>
+
+</view>
+
+<!-- 未初始化状态 -->
+<view wx:else class="placeholder">
+  <text class="placeholder-text">正在加载学习进度...</text>
+</view>

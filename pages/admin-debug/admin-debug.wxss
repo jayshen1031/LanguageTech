@@ -157,6 +157,94 @@
   line-height: 1.5;
 }
 
+/* 调试信息显示 */
+.debug-info {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  border-left: 4rpx solid #4A90E2;
+}
+
+.debug-text {
+  font-size: 24rpx;
+  color: #333;
+  line-height: 1.6;
+  font-family: Monaco, Consolas, monospace;
+  white-space: pre-line;
+  word-break: break-all;
+}
+
+/* 数据修复工具 */
+.repair-section {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  border: 1rpx solid #e6e6e6;
+}
+
+.repair-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.repair-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.repair-btn {
+  padding: 20rpx 30rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  border: none;
+  color: white;
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repair-btn.fix {
+  background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.3);
+}
+
+.repair-btn.fix:active {
+  background: linear-gradient(135deg, #FF5555, #FF7777);
+  transform: translateY(2rpx);
+}
+
+.repair-btn.verify {
+  background: linear-gradient(135deg, #4ECDC4, #44A08D);
+  box-shadow: 0 4rpx 12rpx rgba(78, 205, 196, 0.3);
+}
+
+.repair-btn.verify:active {
+  background: linear-gradient(135deg, #3DBDB6, #3A9F7A);
+  transform: translateY(2rpx);
+}
+
+.repair-tip {
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  padding: 15rpx;
+  text-align: center;
+}
+
+.repair-tip text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
 /* 技术信息 */
 .tech-info {
   display: flex;

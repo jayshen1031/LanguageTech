@@ -41,6 +41,25 @@
           />
         </view>
         
+        <!-- 分类标签输入 -->
+        <view class="category-input-section">
+          <input 
+            class="category-input"
+            placeholder="添加分类标签（如：NHK、抖音图片、小说等）"
+            placeholder-class="placeholder"
+            value="{{categoryTag}}"
+            bindinput="onCategoryInput"
+            maxlength="20"
+          />
+          <view class="category-suggestions">
+            <view wx:for="{{commonCategories}}" wx:key="*this" 
+                  class="category-chip {{categoryTag === item ? 'selected' : ''}}"
+                  bindtap="selectCategory" data-category="{{item}}">
+              {{item}}
+            </view>
+          </view>
+        </view>
+        
         <textarea 
           class="text-input"
           placeholder="请输入日语文本（如：私は学生です）"
@@ -62,6 +81,37 @@
 
       <!-- 图片输入 -->
       <view wx:else class="image-mode">
+        <!-- 标题输入（图片模式） -->
+        <view class="title-input-section">
+          <input 
+            class="title-input"
+            placeholder="为这张图片添加标题（可选）"
+            placeholder-class="placeholder"
+            value="{{userInputTitle}}"
+            bindinput="onImageTitleInput"
+            maxlength="50"
+          />
+        </view>
+        
+        <!-- 分类标签输入（图片模式） -->
+        <view class="category-input-section">
+          <input 
+            class="category-input"
+            placeholder="添加分类标签（如：NHK、抖音图片、小说等）"
+            placeholder-class="placeholder"
+            value="{{categoryTag}}"
+            bindinput="onCategoryInput"
+            maxlength="20"
+          />
+          <view class="category-suggestions">
+            <view wx:for="{{commonCategories}}" wx:key="*this" 
+                  class="category-chip {{categoryTag === item ? 'selected' : ''}}"
+                  bindtap="selectCategory" data-category="{{item}}">
+              {{item}}
+            </view>
+          </view>
+        </view>
+        
         <view wx:if="{{!imageUrl}}" class="upload-box" bindtap="chooseImage">
           <view class="upload-icon">+</view>
           <text class="upload-text">上传图片</text>
@@ -123,7 +173,7 @@
         <text class="original-content-title">📄 原始内容</text>
         <text class="original-content-info">（共{{originalInputText.split('\n').length}}行，{{originalInputText.length}}字符）</text>
       </view>
-      <view class="original-content-text">{{originalInputText}}</view>
+      <text class="original-content-text" decode="{{true}}" space="nbsp">{{originalInputText}}</text>
     </view>
 
     <!-- 平铺展示解析结果 -->
@@ -256,6 +306,12 @@
         <view class="result-row align-top">
           <text class="row-label">【语法点说明】</text>
           <text class="row-value grammar">{{item.grammar}}</text>
+        </view>
+        
+        <!-- 词形变化详解 -->
+        <view wx:if="{{item.inflection || item.wordInflection || item.morphology}}" class="result-row align-top">
+          <text class="row-label">【词形变化详解】</text>
+          <text class="row-value inflection">{{item.inflection || item.wordInflection || item.morphology}}</text>
         </view>
         
         <!-- 词汇明细表 -->

@@ -69,8 +69,9 @@
   color: #333;
 }
 
-.wechat-login-btn {
-  background: #07c160;
+/* 主要登录按钮 */
+.phone-login-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-radius: 50rpx;
   height: 100rpx;
@@ -78,20 +79,55 @@
   align-items: center;
   justify-content: center;
   font-size: 32rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 8rpx 20rpx rgba(7,193,96,0.3);
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.3);
+  font-weight: 500;
 }
 
-.wechat-icon {
+.phone-login-btn::after {
+  border: none;
+}
+
+.phone-icon {
   margin-right: 16rpx;
   font-size: 36rpx;
 }
 
+/* 其他登录方式 */
+.other-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.wechat-login-btn {
+  flex: 1;
+  background: transparent;
+  color: #666;
+  border: 2rpx solid #e1e5e9;
+  border-radius: 40rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+}
+
+.wechat-login-btn::after {
+  border: none;
+}
+
+.wechat-icon {
+  margin-right: 12rpx;
+  font-size: 30rpx;
+}
+
 .skip-text {
-  text-align: center;
   color: #999;
   font-size: 24rpx;
   text-decoration: underline;
+  white-space: nowrap;
 }
 
 /* 资料完善部分 */
@@ -108,12 +144,41 @@
   margin-bottom: 50rpx;
 }
 
+/* 头像选择按钮 */
+.avatar-button {
+  position: relative;
+  background: transparent;
+  padding: 0;
+  border: none;
+  margin-bottom: 20rpx;
+}
+
+.avatar-button::after {
+  border: none;
+}
+
+/* 头像显示容器 */
+.avatar-display {
+  position: relative;
+  margin-bottom: 20rpx;
+}
+
 .user-avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 60rpx;
-  margin-bottom: 30rpx;
   border: 6rpx solid rgba(255,255,255,0.3);
+  display: block;
+}
+
+.avatar-tip {
+  position: absolute;
+  bottom: -30rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20rpx;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
 }
 
 .profile-title {

@@ -1,5 +1,7 @@
 // 日语解析复习页面
 
+const { trackView, trackReview, CONTENT_TYPES } = require('../../../utils/userBehavior')
+
 Page({
   data: {
     reviewList: [], // 复习列表
@@ -111,6 +113,16 @@ Page({
     this.setData({
       showAnswer: true
     })
+    
+    // 记录复习行为
+    const currentSentence = this.data.currentSentence
+    if (currentSentence) {
+      trackReview(CONTENT_TYPES.SENTENCE, currentSentence.id || `review_${this.data.currentIndex}`, {
+        action: 'view_answer',
+        reviewIndex: this.data.currentIndex,
+        sentenceText: currentSentence.originalText
+      })
+    }
   },
 
   // 隐藏答案
@@ -151,6 +163,14 @@ Page({
         showAnswer: false,
         'reviewProgress.current': nextIndex,
         'reviewProgress.completed': completed
+      })
+      
+      // 记录复习进度行为
+      trackReview(CONTENT_TYPES.SENTENCE, `review_progress_${nextIndex}`, {
+        action: 'next_question',
+        currentIndex: nextIndex,
+        totalCount: reviewList.length,
+        completedCount: completed.length
       })
     } else {
       // 复习完成

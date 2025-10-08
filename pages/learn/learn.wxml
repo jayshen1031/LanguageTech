@@ -10,7 +10,25 @@
         <button class="count-option" bindtap="selectWordCount" data-count="20">20个</button>
       </view>
       <text class="setup-tip">建议每天学习10-15个新词</text>
-      
+
+      <!-- 来源标签筛选 -->
+      <view class="source-filter" wx:if="{{availableTags.length > 0}}">
+        <text class="filter-label">📚 学习来源：</text>
+        <scroll-view scroll-x="true" class="tag-scroll">
+          <view class="tag-options">
+            <view class="tag-option {{selectedTag === '' ? 'active' : ''}}"
+                  bindtap="selectSourceTag" data-tag="">
+              全部来源
+            </view>
+            <view wx:for="{{availableTags}}" wx:key="index"
+                  class="tag-option {{selectedTag === item ? 'active' : ''}}"
+                  bindtap="selectSourceTag" data-tag="{{item}}">
+              {{item}}
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
       <!-- 自动开始选项 -->
       <view class="auto-start-option">
         <switch bindchange="toggleAutoStart" />
@@ -19,12 +37,29 @@
     </view>
   </view>
 
+  <!-- 来源标签筛选（主界面） -->
+  <view class="main-source-filter" wx:if="{{!showSetup && availableTags.length > 0}}">
+    <scroll-view scroll-x="true" class="tag-scroll-main">
+      <view class="tag-options-main">
+        <view class="tag-option-main {{selectedTag === '' ? 'active' : ''}}"
+              bindtap="selectSourceTag" data-tag="">
+          全部来源
+        </view>
+        <view wx:for="{{availableTags}}" wx:key="index"
+              class="tag-option-main {{selectedTag === item ? 'active' : ''}}"
+              bindtap="selectSourceTag" data-tag="{{item}}">
+          {{item}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 学习进度 -->
   <view class="progress-header" wx:if="{{!showSetup}}">
     <text class="progress-text">{{currentIndex + 1}} / {{wordList.length}}</text>
     <view class="progress-dots">
-      <view 
-        wx:for="{{wordList}}" 
+      <view
+        wx:for="{{wordList}}"
         wx:key="id"
         class="dot {{index <= currentIndex ? 'active' : ''}}"
       ></view>

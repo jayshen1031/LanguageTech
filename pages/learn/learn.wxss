@@ -480,6 +480,56 @@
   font-style: italic;
 }
 
+/* 来源标签筛选 */
+.source-filter {
+  margin-top: 30rpx;
+  padding: 20rpx 0;
+}
+
+.filter-label {
+  display: block;
+  color: #666;
+  font-size: 28rpx;
+  margin-bottom: 16rpx;
+  padding-left: 10rpx;
+  font-weight: 500;
+}
+
+.tag-scroll {
+  white-space: nowrap;
+  width: 100%;
+}
+
+.tag-options {
+  display: inline-flex;
+  gap: 12rpx;
+  padding: 0 10rpx;
+}
+
+.tag-option {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2rpx solid rgba(102, 126, 234, 0.3);
+  border-radius: 30rpx;
+  color: #667eea;
+  font-size: 26rpx;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.tag-option.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+  transform: scale(1.05);
+}
+
+.tag-option:active {
+  transform: scale(0.95);
+}
+
 /* 自动开始选项 */
 .auto-start-option {
   display: flex;

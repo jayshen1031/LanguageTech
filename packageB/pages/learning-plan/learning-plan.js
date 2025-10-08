@@ -48,6 +48,11 @@ Page({
     categories: [],
     selectedCategories: [],
     
+    // 解析历史标签相关
+    contentSource: 'vocabulary', // vocabulary 或 history
+    historyTags: [], // 解析历史中的标签
+    selectedHistoryTags: [], // 选中的历史标签
+    
     // UI状态
     showConfig: false,
     loading: false,
@@ -66,6 +71,7 @@ Page({
     this.loadUserConfig();
     this.loadProgress();
     this.loadCategories();
+    this.loadHistoryTags();
     this.generateTodayTasks();
     
     // 如果从词汇搜索页面带参数过来
@@ -590,6 +596,91 @@ Page({
       'idiom': '惯用语'
     };
     return labels[category] || category;
+  },
+
+  // 加载解析历史标签
+  async loadHistoryTags() {
+    try {
+      const db = wx.cloud.database();
+      const userInfo = wx.getStorageSync('userInfo');
+      
+      if (!userInfo) {
+        // 未登录，尝试从本地存储加载
+        const localHistory = wx.getStorageSync('parser_history') || [];
+        const tags = new Map();
+        
+        localHistory.forEach(item => {
+          if (item.categoryTag && item.categoryTag.trim()) {
+            const tag = item.categoryTag.trim();
+            tags.set(tag, (tags.get(tag) || 0) + 1);
+          }
+        });
+        
+        const historyTags = Array.from(tags.entries()).map(([tag, count]) => ({
+          tag,
+          count,
+          selected: this.data.selectedHistoryTags.includes(tag)
+        }));
+        
+        this.setData({ historyTags });
+        return;
+      }
+      
+      // 从云数据库加载
+      const res = await db.collection('japanese_parser_history')
+        .field({ categoryTag: true })
+        .get();
+      
+      const tags = new Map();
+      res.data.forEach(item => {
+        if (item.categoryTag && item.categoryTag.trim()) {
+          const tag = item.categoryTag.trim();
+          tags.set(tag, (tags.get(tag) || 0) + 1);
+        }
+      });
+      
+      const historyTags = Array.from(tags.entries()).map(([tag, count]) => ({
+        tag,
+        count,
+        selected: this.data.selectedHistoryTags.includes(tag)
+      }));
+      
+      this.setData({ historyTags });
+    } catch (error) {
+      console.error('加载解析历史标签失败:', error);
+    }
+  },
+
+  // 切换内容源
+  onContentSourceChange(e) {
+    const source = e.currentTarget.dataset.source;
+    this.setData({
+      contentSource: source
+    });
+  },
+
+  // 选择历史标签
+  onHistoryTagSelect(e) {
+    const tag = e.currentTarget.dataset.tag;
+    const selectedTags = this.data.selectedHistoryTags;
+    
+    const index = selectedTags.indexOf(tag);
+    if (index > -1) {
+      selectedTags.splice(index, 1);
+    } else {
+      selectedTags.push(tag);
+    }
+    
+    // 更新标签选中状态
+    const historyTags = this.data.historyTags.map(item => ({
+      ...item,
+      selected: selectedTags.includes(item.tag)
+    }));
+    
+    this.setData({
+      selectedHistoryTags: selectedTags,
+      historyTags: historyTags
+    });
   },
 
   // 分享

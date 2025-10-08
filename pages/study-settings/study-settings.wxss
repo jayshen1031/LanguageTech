@@ -82,10 +82,53 @@
   font-weight: 500;
 }
 
+.label-hint {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 8rpx;
+  display: block;
+}
+
 .label-value {
   font-size: 26rpx;
   color: #667eea;
   font-weight: bold;
+}
+
+/* 标签滚动区域 */
+.tags-scroll {
+  width: 100%;
+  margin-top: 10rpx;
+}
+
+.tags-container {
+  display: flex;
+  gap: 12rpx;
+  white-space: nowrap;
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  background: #f8f9fa;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #666;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.tag-chip.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+  transform: scale(1.05);
+}
+
+.tag-chip:active {
+  transform: scale(0.95);
 }
 
 .setting-slider {

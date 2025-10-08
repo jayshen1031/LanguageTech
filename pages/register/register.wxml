@@ -28,19 +28,36 @@
         </view>
       </view>
       
-      <button class="wechat-login-btn" open-type="getUserInfo" bindgetuserinfo="onWechatLogin">
-        <text class="wechat-icon">👤</text>
-        微信快速登录
+      <!-- 主要登录方式 -->
+      <button class="phone-login-btn" bindtap="goToPhoneLogin">
+        <text class="phone-icon">📱</text>
+        手机号登录
       </button>
       
-      <text class="skip-text" bindtap="onSkipRegister">暂时跳过，稍后登录</text>
+      <!-- 其他登录方式 -->
+      <view class="other-login">
+        <button class="wechat-login-btn" bindtap="onWechatLogin">
+          <text class="wechat-icon">👤</text>
+          微信登录
+        </button>
+        
+        <text class="skip-text" bindtap="onSkipRegister">暂时跳过</text>
+      </view>
     </view>
   </view>
 
   <!-- 已登录但未完善资料 -->
   <view wx:elif="{{isLoggedIn && !hasUserProfile}}" class="profile-section">
     <view class="profile-header">
-      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <!-- 如果已有微信头像，直接显示；否则显示选择按钮 -->
+      <view wx:if="{{userInfo.avatarUrl}}" class="avatar-display">
+        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <view class="avatar-tip">微信头像</view>
+      </view>
+      <button wx:else class="avatar-button" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image class="user-avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+        <view class="avatar-tip">点击选择头像</view>
+      </button>
       <text class="profile-title">完善个人资料</text>
       <text class="profile-subtitle">让学习更加个性化</text>
     </view>
@@ -48,7 +65,7 @@
     <view class="form-card">
       <view class="form-group">
         <text class="label">昵称</text>
-        <input class="input" placeholder="请输入您的昵称" value="{{nickname}}" bindinput="onNicknameInput" maxlength="20" />
+        <input class="input" type="nickname" placeholder="请输入您的昵称" value="{{nickname}}" bindinput="onNicknameInput" maxlength="20" />
       </view>
       
       <view class="form-group">

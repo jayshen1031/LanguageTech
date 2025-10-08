@@ -56,26 +56,19 @@ Page({
     })
   },
 
-  // 检查是否为管理员（与register.js中的逻辑保持一致）
+  // 检查是否为管理员（仅基于openid验证）
   checkIfAdmin(userInfo) {
-    if (!userInfo) return false
+    if (!userInfo || !userInfo.openid) {
+      return false
+    }
     
-    const adminNicknames = [
-      '项目负责人', 
-      '管理员',
-      'Jay',
-      'Admin'
+    // 管理员的openid（仅限开发者账户）
+    const adminOpenIds = [
+      'oyehIvjzBJ8kK-KbqRBCa4anbc7Y' // 原管理员openid
+      // TODO: 添加开发者微信号13818425406对应的openid
     ]
     
-    if (adminNicknames.includes(userInfo.nickName)) {
-      return true
-    }
-    
-    if (userInfo.openid && userInfo.openid.includes('temp_')) {
-      return true
-    }
-    
-    return false
+    return adminOpenIds.includes(userInfo.openid)
   },
 
   // 加载注册申请列表

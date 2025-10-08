@@ -5,8 +5,18 @@
     <view class="header-left" bindtap="onBack">
       <text class="back-btn">←</text>
     </view>
-    <view class="header-title">学习统计</view>
+    <view class="header-title">学习进度</view>
     <view class="header-right"></view>
+  </view>
+
+  <!-- 统计模式切换 -->
+  <view class="mode-switch">
+    <view class="switch-item {{statsMode === 'behavior' ? 'active' : ''}}" bindtap="switchStatsMode" data-mode="behavior">
+      📊 学习行为
+    </view>
+    <view class="switch-item {{statsMode === 'mastery' ? 'active' : ''}}" bindtap="switchStatsMode" data-mode="mastery">
+      📝 掌握程度
+    </view>
   </view>
 
   <!-- 加载中 -->
@@ -16,6 +26,204 @@
 
   <!-- 统计内容 -->
   <view wx:else class="stats-content">
+    
+    <!-- 学习行为统计 -->
+    <view wx:if="{{statsMode === 'behavior'}}" class="behavior-stats-content">
+      <!-- 总体数据概览 -->
+      <view class="behavior-overview-card">
+        <view class="overview-title">📈 最近7天学习数据</view>
+        <view class="overview-grid">
+          <view class="overview-item">
+            <text class="overview-number">{{learningBehaviorStats.totalViewed}}</text>
+            <text class="overview-label">查看次数</text>
+          </view>
+          <view class="overview-item">
+            <text class="overview-number">{{learningBehaviorStats.totalStudied}}</text>
+            <text class="overview-label">学习次数</text>
+          </view>
+          <view class="overview-item">
+            <text class="overview-number">{{learningBehaviorStats.totalReviewed}}</text>
+            <text class="overview-label">复习次数</text>
+          </view>
+          <view class="overview-item">
+            <text class="overview-number">{{learningBehaviorStats.uniqueContentCount}}</text>
+            <text class="overview-label">涉及内容</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 学习习惯统计 -->
+      <view class="study-habits-card">
+        <view class="stat-header">
+          <text class="stat-title">📅 学习习惯</text>
+        </view>
+        <view class="habits-grid">
+          <view class="habit-item">
+            <text class="habit-label">学习天数</text>
+            <text class="habit-value">{{learningBehaviorStats.studyDays}} 天</text>
+          </view>
+          <view class="habit-item">
+            <text class="habit-label">日均学习</text>
+            <text class="habit-value">{{learningBehaviorStats.avgDailyActions}} 次</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 内容类型分解 -->
+      <view class="content-breakdown-card">
+        <view class="stat-header">
+          <text class="stat-title">📚 内容学习分解</text>
+        </view>
+        
+        <!-- 句子学习 -->
+        <view class="breakdown-item">
+          <view class="breakdown-header">
+            <text class="breakdown-title">📝 句子</text>
+            <text class="breakdown-total">总计：{{learningBehaviorStats.contentBreakdown.sentence.viewed + learningBehaviorStats.contentBreakdown.sentence.studied + learningBehaviorStats.contentBreakdown.sentence.reviewed}}</text>
+          </view>
+          <view class="breakdown-details">
+            <text class="detail-item">查看 {{learningBehaviorStats.contentBreakdown.sentence.viewed}}</text>
+            <text class="detail-item">学习 {{learningBehaviorStats.contentBreakdown.sentence.studied}}</text>
+            <text class="detail-item">复习 {{learningBehaviorStats.contentBreakdown.sentence.reviewed}}</text>
+          </view>
+        </view>
+
+        <!-- 词汇学习 -->
+        <view class="breakdown-item">
+          <view class="breakdown-header">
+            <text class="breakdown-title">📚 词汇</text>
+            <text class="breakdown-total">总计：{{learningBehaviorStats.contentBreakdown.word.viewed + learningBehaviorStats.contentBreakdown.word.studied + learningBehaviorStats.contentBreakdown.word.reviewed}}</text>
+          </view>
+          <view class="breakdown-details">
+            <text class="detail-item">查看 {{learningBehaviorStats.contentBreakdown.word.viewed}}</text>
+            <text class="detail-item">学习 {{learningBehaviorStats.contentBreakdown.word.studied}}</text>
+            <text class="detail-item">复习 {{learningBehaviorStats.contentBreakdown.word.reviewed}}</text>
+          </view>
+        </view>
+
+        <!-- 语法学习 -->
+        <view class="breakdown-item">
+          <view class="breakdown-header">
+            <text class="breakdown-title">🔍 语法</text>
+            <text class="breakdown-total">总计：{{learningBehaviorStats.contentBreakdown.grammar.viewed + learningBehaviorStats.contentBreakdown.grammar.studied + learningBehaviorStats.contentBreakdown.grammar.reviewed}}</text>
+          </view>
+          <view class="breakdown-details">
+            <text class="detail-item">查看 {{learningBehaviorStats.contentBreakdown.grammar.viewed}}</text>
+            <text class="detail-item">学习 {{learningBehaviorStats.contentBreakdown.grammar.studied}}</text>
+            <text class="detail-item">复习 {{learningBehaviorStats.contentBreakdown.grammar.reviewed}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 每日活动趋势 -->
+      <view wx:if="{{learningBehaviorStats.dailyActivity.length > 0}}" class="daily-activity-card">
+        <view class="stat-header">
+          <text class="stat-title">📊 每日学习趋势</text>
+        </view>
+        <view class="activity-chart">
+          <view wx:for="{{learningBehaviorStats.dailyActivity}}" wx:key="date" class="activity-day">
+            <view class="activity-bar" style="height: {{item.actions * 2}}px; max-height: 100px;"></view>
+            <text class="activity-date">{{item.date.split('-')[2]}}</text>
+            <text class="activity-count">{{item.actions}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 复习专项统计 -->
+      <view class="review-stats-card">
+        <view class="stat-header">
+          <text class="stat-title">🔄 复习专项分析</text>
+        </view>
+        
+        <!-- 复习概览 -->
+        <view class="review-overview">
+          <view class="review-item">
+            <text class="review-label">复习总次数</text>
+            <text class="review-value">{{reviewStats.totalReviews}}</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">复习内容数</text>
+            <text class="review-value">{{reviewStats.reviewedContentCount}}</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">复习天数</text>
+            <text class="review-value">{{reviewStats.consistentDays}}</text>
+          </view>
+        </view>
+
+        <!-- 复习时间偏好 -->
+        <view wx:if="{{reviewStats.reviewPatterns.byTimeOfDay}}" class="review-patterns">
+          <text class="pattern-title">⏰ 复习时间偏好</text>
+          <view class="time-patterns">
+            <view wx:if="{{reviewStats.reviewPatterns.byTimeOfDay.morning}}" class="time-item">
+              <text class="time-label">🌅 上午</text>
+              <text class="time-count">{{reviewStats.reviewPatterns.byTimeOfDay.morning}}次</text>
+            </view>
+            <view wx:if="{{reviewStats.reviewPatterns.byTimeOfDay.afternoon}}" class="time-item">
+              <text class="time-label">☀️ 下午</text>
+              <text class="time-count">{{reviewStats.reviewPatterns.byTimeOfDay.afternoon}}次</text>
+            </view>
+            <view wx:if="{{reviewStats.reviewPatterns.byTimeOfDay.evening}}" class="time-item">
+              <text class="time-label">🌙 晚上</text>
+              <text class="time-count">{{reviewStats.reviewPatterns.byTimeOfDay.evening}}次</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 复习内容偏好 -->
+        <view wx:if="{{reviewStats.reviewPatterns.byContentType}}" class="content-patterns">
+          <text class="pattern-title">📚 复习内容偏好</text>
+          <view class="content-types">
+            <view wx:if="{{reviewStats.reviewPatterns.byContentType.sentence}}" class="content-type-item">
+              <text class="content-type-label">📝 句子</text>
+              <text class="content-type-count">{{reviewStats.reviewPatterns.byContentType.sentence}}次</text>
+            </view>
+            <view wx:if="{{reviewStats.reviewPatterns.byContentType.word}}" class="content-type-item">
+              <text class="content-type-label">📚 词汇</text>
+              <text class="content-type-count">{{reviewStats.reviewPatterns.byContentType.word}}次</text>
+            </view>
+            <view wx:if="{{reviewStats.reviewPatterns.byContentType.grammar}}" class="content-type-item">
+              <text class="content-type-label">🔍 语法</text>
+              <text class="content-type-count">{{reviewStats.reviewPatterns.byContentType.grammar}}次</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 学习建议 -->
+      <view class="behavior-suggestion-card">
+        <view class="suggestion-title">💡 学习建议</view>
+        <view class="suggestion-content">
+          <view wx:if="{{learningBehaviorStats.studyDays < 3}}" class="suggestion-item">
+            <text class="suggestion-icon">📅</text>
+            <text class="suggestion-text">建议每天坚持学习，培养学习习惯</text>
+          </view>
+          <view wx:if="{{learningBehaviorStats.totalReviewed < learningBehaviorStats.totalStudied / 3}}" class="suggestion-item">
+            <text class="suggestion-icon">🔄</text>
+            <text class="suggestion-text">可以增加复习频率，巩固学习效果</text>
+          </view>
+          <view wx:if="{{reviewStats.totalReviews === 0}}" class="suggestion-item">
+            <text class="suggestion-icon">📖</text>
+            <text class="suggestion-text">尝试使用复习功能，巩固已学内容</text>
+          </view>
+          <view wx:if="{{reviewStats.consistentDays >= 5}}" class="suggestion-item success">
+            <text class="suggestion-icon">🏆</text>
+            <text class="suggestion-text">复习习惯很棒！持续复习效果更佳</text>
+          </view>
+          <view wx:if="{{learningBehaviorStats.avgDailyActions < 10}}" class="suggestion-item">
+            <text class="suggestion-icon">📈</text>
+            <text class="suggestion-text">建议适当增加每日学习量</text>
+          </view>
+          <view wx:if="{{learningBehaviorStats.studyDays >= 7 && learningBehaviorStats.avgDailyActions >= 20}}" class="suggestion-item success">
+            <text class="suggestion-icon">🎉</text>
+            <text class="suggestion-text">学习习惯非常好！继续保持</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 掌握程度统计（原有内容） -->
+    <view wx:else class="mastery-stats-content">
     <!-- 筛选栏 -->
     <view class="filter-bar">
       <view class="filter-item {{filterType === 'all' ? 'active' : ''}}" bindtap="onFilterChange" data-type="all">
@@ -189,6 +397,7 @@
           <text class="progress-label">已掌握</text>
         </view>
       </view>
+    </view>
     </view>
   </view>
 </view>
