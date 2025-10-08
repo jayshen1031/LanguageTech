@@ -388,4 +388,67 @@ LanguageTech/
   **修复文件**:
   - ✅ `packageB/pages/japanese-parser/japanese-parser.js` - 添加自动整合和刷新逻辑
 
-[后续内容保持不变...]
+## 学习设置页面标签筛选功能完善 (2025-10-08)
+ ⏺ ✅ 学习设置页面标签筛选功能完成！
+
+  **核心问题解决**:
+  - 用户反馈：点击"今日学习计划"右边的设置按钮，没有看到标签选择功能
+  - 原因：标签筛选只在学习页面的初始设置弹窗中，用户开启"自动学习"后就看不到了
+  - 解决：在学习设置页面 (`pages/study-settings/study-settings`) 添加标签筛选功能
+
+  **实现功能**:
+  1. **学习设置页面UI** - 在词汇学习设置区域添加"学习来源筛选"
+  2. **横向滚动标签** - 显示"全部来源" + 所有可用标签
+  3. **标签数据加载** - 从云数据库和本地存储加载解析历史标签
+  4. **标签选择交互** - 点击标签切换选中状态，支持取消选择
+  5. **配置持久化** - 保存选中标签到 `studyPlanConfig.selectedTag`
+  6. **智能学习集成** - 首页智能学习按钮自动读取标签并传递
+
+  **用户体验特性**:
+  - 📚 **统一入口** - 首页删除独立的词汇学习和语法结构学习，统一为智能学习
+  - ⚙️ **便捷设置** - 点击"设置"按钮即可进入标签筛选页面
+  - 🏷️ **智能标签** - 自动识别解析历史中的所有分类标签
+  - 🎨 **美观交互** - 选中标签渐变背景+阴影效果
+  - 💾 **自动应用** - 保存后下次智能学习自动使用选中标签
+
+  **技术实现**:
+  1. **study-settings 页面改造**:
+     - 添加 `availableTags` 和 `selectedTag` 数据字段
+     - `loadAvailableTags()` - 加载所有可用标签
+     - `onSelectTag()` - 处理标签选择
+     - `saveSettings()` - 保存标签到配置
+
+  2. **首页智能学习跳转**:
+     - `goToSmartPlan()` - 读取 `studyPlanConfig.selectedTag`
+     - URL参数传递：`/pages/learn/learn?count=10&type=mixed&tag=NHK`
+
+  3. **学习页面接收**:
+     - `onLoad()` - 从URL参数 `options.tag` 读取标签
+     - `loadTodayWords()` - 将标签传递给云函数筛选
+
+  **数据流程**:
+  ```
+  解析历史添加标签 → study-settings加载标签列表 →
+  用户选择标签并保存 → studyPlanConfig.selectedTag →
+  首页智能学习读取标签 → URL参数传递 →
+  学习页面接收标签 → 云函数按标签筛选词汇
+  ```
+
+  **文件更新**:
+  - ✅ `pages/study-settings/study-settings.wxml` - 添加标签筛选UI
+  - ✅ `pages/study-settings/study-settings.wxss` - 添加标签芯片样式
+  - ✅ `pages/study-settings/study-settings.js` - 实现标签加载和保存逻辑
+  - ✅ `pages/index/index.wxml` - 删除独立学习入口，保留智能学习
+  - ✅ `pages/index/index.js` - 智能学习跳转时传递标签参数
+  - ✅ `pages/learn/learn.js` - 从URL读取标签参数
+
+  **Git提交**:
+  - Commit: `4f8283b`
+  - 标题: ✨ 完善学习设置页面标签筛选功能
+  - 75个文件修改，9094行新增
+
+  **核心价值**:
+  - 🎯 **用户友好** - 设置入口清晰，操作简单直观
+  - 🔄 **统一体验** - 从设置到学习的完整闭环
+  - 📊 **个性化学习** - 支持按来源标签定制学习内容
+  - 💪 **技术完善** - 数据流转清晰，配置持久化可靠
