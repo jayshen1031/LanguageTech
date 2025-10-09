@@ -14,15 +14,16 @@ Page({
     showSetup: true, // 显示设置界面
     selectedCount: 10, // 默认学习数量
     masteredCount: 0,
-    fuzzyCount: 0,
-    forgotCount: 0,
-    learningRecord: {}, // 记录每个单词的学习状态
+    totalLearningCount: 0, // 本轮总学习次数
+    learningRecord: {}, // 记录每个单词的学习状态（包含sessionCount）
     mcpAvailable: false, // MCP服务是否可用
     isPlaying: false, // 是否正在播放音频
     learningPlan: null, // 学习计划信息
     learningStats: null, // 学习统计
     availableTags: [], // 可用的来源标签
-    selectedTag: '' // 选中的来源标签
+    selectedTag: '', // 选中的来源标签
+    requiredLearningCount: 5, // 要求的学习次数，默认5次
+    canConfirmMastery: false // 当前单词是否可以确认掌握
   },
   
   // 页面实例属性
@@ -51,8 +52,13 @@ Page({
 
     // 检查自动开始学习设置
     const autoStart = wx.getStorageSync('autoStartLearning') || false
+
+    // 加载用户配置的学习次数要求
+    const requiredCount = wx.getStorageSync('requiredLearningCount') || 5
+
     this.setData({
-      autoStartLearning: autoStart
+      autoStartLearning: autoStart,
+      requiredLearningCount: requiredCount
     })
 
     // 清理过期的音频缓存
@@ -315,6 +321,13 @@ Page({
           duration: 2000
         })
         
+        // 为每个单词初始化本次学习的sessionCount
+        wordList.forEach(word => {
+          word.sessionCount = 0 // 本轮学习次数
+          word.learningCount = word.learningCount || 0 // 累计学习次数（从数据库读取）
+          word.masteryConfirmed = word.masteryConfirmed || false // 是否已确认掌握
+        })
+
         this.setData({
           wordList,
           currentWord: wordList[0] || {},
@@ -323,10 +336,13 @@ Page({
           learningStats: stats
         })
 
+        // 检查当前单词是否可以确认掌握
+        this.checkCanConfirmMastery()
+
         // 存储到全局数据
         app.globalData.todayWords = wordList
         app.globalData.learningPlan = plan
-        
+
         // 预加载音频
         this.preloadAudio()
         
@@ -465,6 +481,7 @@ Page({
         isPlaying: false
       })
       this.innerAudioContext.stop()
+      this.checkCanConfirmMastery()
     }
   },
 
@@ -479,6 +496,10 @@ Page({
         isPlaying: false
       })
       this.innerAudioContext.stop()
+      this.checkCanConfirmMastery()
+    } else {
+      // 完成所有单词学习
+      this.showLearningComplete()
     }
   },
 
@@ -490,43 +511,197 @@ Page({
   },
 
 
-  // 标记掌握状态
-  markStatus(e) {
-    const status = e.currentTarget.dataset.status
-    const { currentWord, currentIndex, learningRecord } = this.data
-    
-    // 记录学习状态
-    learningRecord[currentWord.id] = status
-    this.setData({ learningRecord })
-    
-    // 更新统计
-    this.updateLearningStats(status)
-    
+  // 检查当前单词是否可以确认掌握
+  checkCanConfirmMastery() {
+    const { currentWord, requiredLearningCount } = this.data
+    if (!currentWord || !currentWord.id) {
+      this.setData({ canConfirmMastery: false })
+      return
+    }
+
+    // 本轮学习次数 + 累计学习次数 >= 要求次数，且未确认掌握
+    const totalCount = (currentWord.sessionCount || 0) + (currentWord.learningCount || 0)
+    const canConfirm = totalCount >= requiredLearningCount && !currentWord.masteryConfirmed
+
+    this.setData({ canConfirmMastery: canConfirm })
+  },
+
+  // +1学习（学习次数+1）
+  async continueLearning() {
+    const { currentWord, currentIndex, wordList, totalLearningCount } = this.data
+
+    if (!currentWord || !currentWord.id) return
+
+    // 创建新对象，避免小程序数据绑定问题
+    const updatedWord = {
+      ...currentWord,
+      sessionCount: (currentWord.sessionCount || 0) + 1,
+      learningCount: (currentWord.learningCount || 0) + 1
+    }
+
+    // 更新wordList中的数据
+    wordList[currentIndex] = updatedWord
+
+    // 更新本轮总学习次数
+    const newTotalCount = totalLearningCount + 1
+
+    this.setData({
+      currentWord: updatedWord,
+      wordList,
+      totalLearningCount: newTotalCount
+    })
+
+    console.log(`✅ +1学习: 本轮${updatedWord.sessionCount}次, 累计${updatedWord.learningCount}次`)
+
+    // 检查是否可以确认掌握
+    this.checkCanConfirmMastery()
+
+    // 调用云函数更新学习次数到数据库
+    this.updateLearningCountToDatabase(updatedWord)
+
     // 自动切换到下一个单词
-    if (currentIndex < this.data.wordList.length - 1) {
-      setTimeout(() => {
-        this.nextWord()
-      }, 500)
-    } else {
-      // 完成所有单词学习
-      this.showLearningComplete()
+    setTimeout(() => {
+      this.nextWord()
+    }, 300)
+  },
+
+  // 确认已掌握
+  async confirmMastery() {
+    const { currentWord, currentIndex, wordList, masteredCount, canConfirmMastery } = this.data
+
+    if (!canConfirmMastery) {
+      wx.showToast({
+        title: `需要学习${this.data.requiredLearningCount}次后才能确认掌握`,
+        icon: 'none'
+      })
+      return
+    }
+
+    if (!currentWord || !currentWord.id) return
+
+    // 标记为已掌握
+    currentWord.masteryConfirmed = true
+
+    // 更新wordList中的数据
+    wordList[currentIndex] = currentWord
+
+    // 更新已掌握统计
+    this.setData({
+      currentWord,
+      wordList,
+      masteredCount: masteredCount + 1
+    })
+
+    // 调用云函数标记掌握状态
+    this.updateMasteryStatusToDatabase(currentWord)
+
+    wx.showToast({
+      title: '✅ 已确认掌握',
+      icon: 'success',
+      duration: 1000
+    })
+
+    // 自动切换到下一个单词
+    setTimeout(() => {
+      this.nextWord()
+    }, 800)
+  },
+
+  // 更新学习次数到数据库
+  async updateLearningCountToDatabase(word) {
+    try {
+      await wx.cloud.callFunction({
+        name: 'vocabulary-integration',
+        data: {
+          action: 'update_learning_count',
+          wordId: word._id,
+          increment: 1
+        }
+      })
+      console.log(`✅ 更新学习次数: ${word.word}`)
+    } catch (error) {
+      console.error('❌ 更新学习次数失败:', error)
     }
   },
 
-  // 更新学习统计
-  updateLearningStats(status) {
-    const { masteredCount, fuzzyCount, forgotCount } = this.data
-    
-    switch (status) {
-      case 'mastered':
-        this.setData({ masteredCount: masteredCount + 1 })
-        break
-      case 'fuzzy':
-        this.setData({ fuzzyCount: fuzzyCount + 1 })
-        break
-      case 'forgot':
-        this.setData({ forgotCount: forgotCount + 1 })
-        break
+  // 更新掌握状态到数据库
+  async updateMasteryStatusToDatabase(word) {
+    try {
+      await wx.cloud.callFunction({
+        name: 'vocabulary-integration',
+        data: {
+          action: 'update_mastery_status',
+          wordId: word._id,
+          masteryConfirmed: true
+        }
+      })
+      console.log(`✅ 更新掌握状态: ${word.word}`)
+    } catch (error) {
+      console.error('❌ 更新掌握状态失败:', error)
+    }
+  },
+
+  // 重置掌握状态
+  async resetMastery() {
+    const { currentWord, currentIndex, wordList, masteredCount } = this.data
+
+    if (!currentWord || !currentWord.id) return
+
+    // 确认操作
+    const confirmResult = await new Promise((resolve) => {
+      wx.showModal({
+        title: '重置确认',
+        content: '确定要将此单词标记为未掌握吗？学习次数记录会保留。',
+        confirmText: '确定重置',
+        cancelText: '取消',
+        success: (res) => resolve(res.confirm)
+      })
+    })
+
+    if (!confirmResult) return
+
+    // 创建新对象，取消掌握标记
+    const updatedWord = {
+      ...currentWord,
+      masteryConfirmed: false
+    }
+
+    // 更新wordList中的数据
+    wordList[currentIndex] = updatedWord
+
+    // 更新已掌握统计（减1）
+    this.setData({
+      currentWord: updatedWord,
+      wordList,
+      masteredCount: Math.max(0, masteredCount - 1)
+    })
+
+    // 检查是否可以确认掌握
+    this.checkCanConfirmMastery()
+
+    // 调用云函数重置掌握状态
+    try {
+      await wx.cloud.callFunction({
+        name: 'vocabulary-integration',
+        data: {
+          action: 'update_mastery_status',
+          wordId: currentWord._id,
+          masteryConfirmed: false
+        }
+      })
+      console.log(`✅ 重置掌握状态: ${currentWord.word}`)
+
+      wx.showToast({
+        title: '✅ 已重置为未掌握',
+        icon: 'success',
+        duration: 1500
+      })
+    } catch (error) {
+      console.error('❌ 重置掌握状态失败:', error)
+      wx.showToast({
+        title: '重置失败，请重试',
+        icon: 'none'
+      })
     }
   },
 
@@ -543,8 +718,7 @@ Page({
     this.setData({
       showComplete: false,
       masteredCount: 0,
-      fuzzyCount: 0,
-      forgotCount: 0,
+      totalLearningCount: 0,
       learningRecord: {}
     })
     this.loadTodayWords(selectedCount)

@@ -82,6 +82,33 @@
       </view>
     </view>
 
+    <!-- 学习次数要求 -->
+    <view class="setting-item">
+      <view class="setting-label">
+        <text class="label-text">确认掌握所需次数</text>
+        <text class="label-value">{{requiredLearningCount}}次</text>
+      </view>
+      <slider
+        class="setting-slider"
+        min="3"
+        max="10"
+        step="1"
+        value="{{requiredLearningCount}}"
+        block-color="#667eea"
+        activeColor="#667eea"
+        backgroundColor="#f0f0f0"
+        bindchange="onRequiredCountChange"
+      />
+      <view class="slider-labels">
+        <text>3次</text>
+        <text>10次</text>
+      </view>
+      <view class="setting-hint">
+        <text class="hint-icon">💡</text>
+        <text class="hint-text">单词学习满{{requiredLearningCount}}次后，才能确认已掌握</text>
+      </view>
+    </view>
+
     <!-- 词汇分配预览 -->
     <view class="breakdown-preview">
       <view class="breakdown-item new">

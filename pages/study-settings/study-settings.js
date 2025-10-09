@@ -41,7 +41,10 @@ Page({
 
     // 来源标签相关
     availableTags: [],
-    selectedTag: ''
+    selectedTag: '',
+
+    // 学习次数要求
+    requiredLearningCount: 5 // 默认5次
   },
 
   onLoad() {
@@ -56,6 +59,9 @@ Page({
       const studyPlanConfig = wx.getStorageSync('studyPlanConfig') || {}
       const userPreferences = wx.getStorageSync('userPreferences') || {}
 
+      // 加载学习次数要求
+      const requiredCount = wx.getStorageSync('requiredLearningCount') || 5
+
       // 合并设置
       this.setData({
         vocabularySettings: {
@@ -66,7 +72,8 @@ Page({
         structureSettings: userPreferences.structureSettings || this.data.structureSettings,
         studyGoals: userPreferences.studyGoals || this.data.studyGoals,
         reviewSettings: userPreferences.reviewSettings || this.data.reviewSettings,
-        selectedTag: studyPlanConfig.selectedTag || ''
+        selectedTag: studyPlanConfig.selectedTag || '',
+        requiredLearningCount: requiredCount
       })
     } catch (error) {
       console.error('加载设置失败:', error)
@@ -184,10 +191,19 @@ Page({
     const { totalCount, newWordPercent } = this.data.vocabularySettings
     const newCount = Math.floor(totalCount * newWordPercent / 100)
     const reviewCount = totalCount - newCount
-    
+
     this.setData({
       vocabularyBreakdown: { newCount, reviewCount }
     })
+  },
+
+  // 学习次数要求调节
+  onRequiredCountChange(e) {
+    const value = parseInt(e.detail.value)
+    this.setData({
+      requiredLearningCount: value
+    })
+    console.log('学习次数要求已更新:', value)
   },
 
   // 保存设置
@@ -209,6 +225,9 @@ Page({
         reviewSettings: this.data.reviewSettings,
         lastUpdated: new Date()
       }
+
+      // 保存学习次数要求
+      wx.setStorageSync('requiredLearningCount', this.data.requiredLearningCount)
 
       wx.setStorageSync('studyPlanConfig', studyPlanConfig)
       wx.setStorageSync('userPreferences', userPreferences)

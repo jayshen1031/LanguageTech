@@ -19,7 +19,8 @@ Page({
     userInfo: {},
     studyDays: 0,
     todayCompleted: false,
-    
+    todayLearnedCount: 0,  // 今日已学习的单词数量
+
     // 认证状态
     isAuthenticated: false,
     showLoginPrompt: false,
@@ -787,59 +788,73 @@ Page({
   // 加载学习天数统计
   async loadStudyDays() {
     try {
-      // 从解析历史统计学习天数
       const db = wx.cloud.database()
-      const historyRes = await db.collection('japanese_parser_history')
-        .field({ createTime: true })
+
+      // 1. 从词汇库统计实际学习记录（以lastLearnedAt为准）
+      const vocabRes = await db.collection('vocabulary_integrated')
+        .field({ lastLearnedAt: true })
         .get()
-      
-      if (historyRes.data.length > 0) {
-        // 统计不同日期的学习记录
-        const dates = new Set()
-        const today = new Date().toDateString()
-        let hasToday = false
-        
-        historyRes.data.forEach(record => {
-          if (record.createTime) {
-            const date = new Date(record.createTime).toDateString()
-            dates.add(date)
-            if (date === today) {
-              hasToday = true
-            }
-          }
-        })
-        
-        // 计算连续学习天数
-        let consecutiveDays = 0
-        const sortedDates = Array.from(dates).sort((a, b) => new Date(b) - new Date(a))
-        let currentDate = new Date()
-        
-        for (let i = 0; i < 365; i++) { // 最多检查365天
-          const dateStr = currentDate.toDateString()
-          if (sortedDates.includes(dateStr)) {
-            consecutiveDays++
-            currentDate.setDate(currentDate.getDate() - 1)
-          } else if (dateStr === today && !hasToday) {
-            // 今天没学习，检查昨天
-            currentDate.setDate(currentDate.getDate() - 1)
-          } else {
-            break
+
+      // 2. 获取今日学习计划量
+      const { selectedTotal } = this.data
+      const today = new Date()
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
+
+      // 3. 统计学习日期和今日学习量
+      const learningDates = new Set()
+      let todayLearnedCount = 0
+
+      vocabRes.data.forEach(word => {
+        if (word.lastLearnedAt) {
+          const learnDate = new Date(word.lastLearnedAt)
+          const dateStr = learnDate.toDateString()
+          learningDates.add(dateStr)
+
+          // 统计今天学习的单词数
+          if (learnDate >= todayStart && learnDate < todayEnd) {
+            todayLearnedCount++
           }
         }
-        
-        this.setData({ 
-          studyDays: consecutiveDays,
-          todayCompleted: hasToday
-        })
-        console.log(`📈 连续学习${consecutiveDays}天, 今日${hasToday ? '已完成' : '待开始'}`)
-      } else {
-        this.setData({ 
-          studyDays: 0,
-          todayCompleted: false
-        })
+      })
+
+      // 4. 判断今日是否完成（学习量达到计划量）
+      const todayCompleted = todayLearnedCount >= selectedTotal
+
+      // 5. 计算连续学习天数
+      let consecutiveDays = 0
+      const sortedDates = Array.from(learningDates).sort((a, b) => new Date(b) - new Date(a))
+      let currentDate = new Date()
+      const todayStr = today.toDateString()
+
+      for (let i = 0; i < 365; i++) { // 最多检查365天
+        const dateStr = currentDate.toDateString()
+        if (sortedDates.includes(dateStr)) {
+          consecutiveDays++
+          currentDate.setDate(currentDate.getDate() - 1)
+        } else if (dateStr === todayStr && !todayCompleted) {
+          // 今天未完成学习，检查昨天
+          currentDate.setDate(currentDate.getDate() - 1)
+        } else {
+          break
+        }
       }
+
+      this.setData({
+        studyDays: consecutiveDays,
+        todayCompleted,
+        todayLearnedCount // 添加今日已学数量，方便显示
+      })
+
+      console.log(`📈 连续学习${consecutiveDays}天, 今日已学${todayLearnedCount}/${selectedTotal}个, ${todayCompleted ? '已完成✅' : '未完成⏳'}`)
+
     } catch (error) {
       console.error('加载学习天数失败:', error)
+      this.setData({
+        studyDays: 0,
+        todayCompleted: false,
+        todayLearnedCount: 0
+      })
     }
   },
 

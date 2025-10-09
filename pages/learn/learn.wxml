@@ -165,43 +165,73 @@
     </button>
   </view>
 
-  <!-- 掌握状态按钮 -->
-  <view class="master-buttons">
-    <button class="btn-master forgot" bindtap="markStatus" data-status="forgot">
-      <text class="icon">😕</text>
-      <text>不认识</text>
-    </button>
-    <button class="btn-master fuzzy" bindtap="markStatus" data-status="fuzzy">
-      <text class="icon">🤔</text>
-      <text>模糊</text>
-    </button>
-    <button class="btn-master mastered" bindtap="markStatus" data-status="mastered">
-      <text class="icon">😊</text>
-      <text>掌握</text>
-    </button>
+  <!-- 学习进度和确认按钮 -->
+  <view class="learning-progress-section">
+    <!-- 学习进度显示 -->
+    <view class="learning-stats">
+      <view class="stat-item">
+        <text class="stat-icon">📚</text>
+        <text class="stat-text">本轮学习 {{currentWord.sessionCount || 0}} 次</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-icon">✅</text>
+        <text class="stat-text">累计学习 {{currentWord.learningCount || 0}} 次</text>
+      </view>
+    </view>
+
+    <!-- 学习操作按钮 -->
+    <view class="learning-action-buttons">
+      <!-- 未掌握时显示学习按钮 -->
+      <block wx:if="{{!currentWord.masteryConfirmed}}">
+        <button class="btn-continue" bindtap="continueLearning">
+          <text class="btn-icon">➕</text>
+          <text>+1学习</text>
+        </button>
+        <button
+          class="btn-confirm-master {{canConfirmMastery ? 'active' : 'disabled'}}"
+          bindtap="confirmMastery"
+          disabled="{{!canConfirmMastery}}">
+          <text class="btn-icon">{{canConfirmMastery ? '🎯' : '🔒'}}</text>
+          <text>{{canConfirmMastery ? '确认已掌握' : '需学习' + requiredLearningCount + '次'}}</text>
+        </button>
+      </block>
+
+      <!-- 已掌握时显示状态 -->
+      <view class="mastered-container" wx:else>
+        <view class="mastered-status">
+          <text class="mastered-icon">✅</text>
+          <text class="mastered-text">已掌握此单词</text>
+          <text class="mastered-count">（累计学习 {{currentWord.learningCount || 0}} 次）</text>
+        </view>
+        <button class="btn-reset-mastery" bindtap="resetMastery">
+          <text class="btn-icon">🔄</text>
+          <text>重置为未掌握</text>
+        </button>
+      </view>
+    </view>
   </view>
 
   <!-- 完成提示 -->
   <view class="complete-modal" wx:if="{{showComplete}}">
     <view class="modal-content">
-      <text class="complete-title">🎉 今日学习完成！</text>
-      <text class="complete-desc">你已经学习了 {{wordList.length}} 个新词</text>
+      <text class="complete-title">🎉 本轮学习完成！</text>
+      <text class="complete-desc">你已学习了 {{wordList.length}} 个单词</text>
       <view class="complete-stats">
         <view class="stat-item">
-          <text class="stat-label">掌握</text>
+          <text class="stat-label">学习次数</text>
+          <text class="stat-value">{{totalLearningCount}}</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">确认掌握</text>
           <text class="stat-value">{{masteredCount}}</text>
         </view>
         <view class="stat-item">
-          <text class="stat-label">模糊</text>
-          <text class="stat-value">{{fuzzyCount}}</text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-label">不认识</text>
-          <text class="stat-value">{{forgotCount}}</text>
+          <text class="stat-label">待复习</text>
+          <text class="stat-value">{{wordList.length - masteredCount}}</text>
         </view>
       </view>
       <view class="complete-buttons">
-        <button class="btn-secondary" bindtap="learnMore">学习更多</button>
+        <button class="btn-secondary" bindtap="learnMore">继续学习</button>
         <button class="btn-primary" bindtap="goBack">结束学习</button>
       </view>
     </view>

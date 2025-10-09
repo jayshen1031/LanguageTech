@@ -28,10 +28,18 @@ exports.main = async (event, context) => {
         // 获取智能学习计划
         return await getSmartLearningPlan(event)
         
+      case 'update_learning_count':
+        // 更新学习次数
+        return await updateLearningCount(event.wordId, event.increment)
+
+      case 'update_mastery_status':
+        // 更新掌握状态
+        return await updateMasteryStatus(event.wordId, event.masteryConfirmed)
+
       case 'test_connection':
         // 测试连接
         return { success: true, message: '云函数连接正常', timestamp: new Date() }
-        
+
       default:
         return { success: false, error: '不支持的操作' }
     }
@@ -467,6 +475,7 @@ async function getSmartLearningPlan(options) {
     // 转换为学习格式
     const learningWords = selectedWords.map((word, index) => ({
       id: word._id,
+      _id: word._id, // 确保有_id字段用于更新操作
       word: word.word,
       kana: word.romaji,
       romaji: word.romaji,
@@ -479,7 +488,9 @@ async function getSmartLearningPlan(options) {
       firstSeen: word.firstSeen,
       lastSeen: word.lastSeen,
       tags: [...(word.tags || []), word.totalOccurrences <= 1 ? '新学' : '复习'],
-      totalOccurrences: word.totalOccurrences
+      totalOccurrences: word.totalOccurrences,
+      learningCount: word.learningCount || 0, // 累计学习次数
+      masteryConfirmed: word.masteryConfirmed || false // 是否已确认掌握
     }))
     
     console.log(`✅ 学习计划生成完成: 新学${plan.newCount}个, 复习${plan.reviewCount}个, 总计${plan.totalCount}个`)
@@ -514,4 +525,78 @@ function shuffleArray(array) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
   return shuffled
+}
+// 更新学习次数
+async function updateLearningCount(wordId, increment = 1) {
+  console.log(`更新单词学习次数: ${wordId}, 增量: ${increment}`)
+  
+  try {
+    const word = await db.collection('vocabulary_integrated')
+      .doc(wordId)
+      .get()
+    
+    if (!word.data) {
+      return {
+        success: false,
+        error: '单词不存在'
+      }
+    }
+    
+    const currentCount = word.data.learningCount || 0
+    const newCount = currentCount + increment
+    
+    await db.collection('vocabulary_integrated')
+      .doc(wordId)
+      .update({
+        data: {
+          learningCount: newCount,
+          lastLearnedAt: new Date()
+        }
+      })
+    
+    console.log(`✅ 学习次数更新: ${currentCount} → ${newCount}`)
+    
+    return {
+      success: true,
+      wordId,
+      oldCount: currentCount,
+      newCount: newCount
+    }
+  } catch (error) {
+    console.error('更新学习次数失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 更新掌握状态
+async function updateMasteryStatus(wordId, masteryConfirmed = true) {
+  console.log(`更新单词掌握状态: ${wordId}, 已掌握: ${masteryConfirmed}`)
+  
+  try {
+    await db.collection('vocabulary_integrated')
+      .doc(wordId)
+      .update({
+        data: {
+          masteryConfirmed: masteryConfirmed,
+          masteredAt: masteryConfirmed ? new Date() : null
+        }
+      })
+    
+    console.log(`✅ 掌握状态更新成功`)
+    
+    return {
+      success: true,
+      wordId,
+      masteryConfirmed
+    }
+  } catch (error) {
+    console.error('更新掌握状态失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
 }
